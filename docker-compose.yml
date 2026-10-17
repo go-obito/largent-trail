@@ -46,8 +46,14 @@ services:
       dockerfile: apps/api/Dockerfile
     env_file: .env
     command: arq largent.workers.settings.WorkerSettings
+    restart: unless-stopped
     volumes:
       - ./apps/api/src:/app/src
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy

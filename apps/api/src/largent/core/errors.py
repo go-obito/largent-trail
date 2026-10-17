@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import structlog
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 PROBLEM_MEDIA_TYPE = "application/problem+json"
@@ -61,11 +62,14 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception("unhandled_exception", path=request.url.path)
+        request_id = getattr(request.state, "request_id", None)
+        logger.exception("unhandled_exception", request_id=request_id)
         response = problem_response(
             status=500,
             title="Internal server error",
             detail="An unexpected error occurred.",
             code="internal_error",
         )
+        if request_id is not None:
+            response.headers["X-Request-ID"] = request_id
         return response

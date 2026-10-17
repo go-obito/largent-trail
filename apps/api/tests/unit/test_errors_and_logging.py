@@ -29,7 +29,9 @@ async def test_validation_error_is_problem_json() -> None:
     assert response.json()["status"] == 422
 
 
-async def test_unhandled_error_is_problem_json_without_exception_text() -> None:
+async def test_unhandled_error_is_problem_json_without_exception_text(
+    capsys: CaptureFixture[str],
+) -> None:
     app = create_app(make_settings())
 
     @app.get("/v1/boom")
@@ -39,12 +41,15 @@ async def test_unhandled_error_is_problem_json_without_exception_text() -> None:
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test"
     ) as client:
-        response = await client.get("/v1/boom")
+        response = await client.get("/v1/boom", headers={"X-Request-ID": "boom-request-id"})
 
+    captured = capsys.readouterr().out
     assert response.status_code == 500
     assert response.headers["content-type"] == "application/problem+json"
+    assert response.headers["x-request-id"] == "boom-request-id"
     assert response.json()["code"] == "internal_error"
     assert "private implementation detail" not in response.text
+    assert "boom-request-id" in captured
 
 
 async def test_request_id_is_propagated_and_body_is_not_logged(capsys: CaptureFixture[str]) -> None:

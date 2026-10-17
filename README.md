@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Largent
 
 Largent is a mobile-first personal-finance PWA for Ghana (GHS). This repository
@@ -28,7 +27,3 @@ make openapi
 `make dev` starts API, Postgres, Redis, and the idle ARQ worker. See
 `docs/product-spec.md` for the current product constraints and `docs/runbooks/`
 for operational notes.
-=======
-# largentv1
-A mobile-first personal finance PWA 
->>>>>>> a0da4d9ca030ac595f07a4c5a84238594b392659

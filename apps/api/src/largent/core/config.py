@@ -8,13 +8,19 @@ from typing import Literal
 from pydantic import AnyUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_CONFIG_PATH = Path(__file__).resolve()
+_ENV_FILE = next(
+    (parent / ".env" for parent in _CONFIG_PATH.parents if (parent / ".env").is_file()),
+    Path(".env"),
+)
+
 
 class Settings(BaseSettings):
     """Settings supplied exclusively by the process environment."""
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
-        env_file=Path(__file__).resolve().parents[5] / ".env",
+        env_file=_ENV_FILE,
         extra="ignore",
         populate_by_name=True,
     )

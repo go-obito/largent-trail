@@ -49,7 +49,7 @@ jobs:
       - name: Test
         run: uv run --directory apps/api pytest
       - name: Dependency audit
-        run: uv run --directory apps/api pip-audit
+        run: uv run --directory apps/api pip-audit --skip-editable
       - name: Secret scan
         uses: gitleaks/gitleaks-action@v2
       - name: Build Docker image

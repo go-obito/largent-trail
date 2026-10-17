@@ -9,6 +9,11 @@ from arq.connections import RedisSettings
 from largent.core.config import Settings
 
 
+async def worker_status(context: dict[str, object]) -> str:
+    """Provide ARQ's required dormant handler without scheduling a B0 job."""
+    return "idle"
+
+
 def redis_settings_from_url(url: str) -> RedisSettings:
     """Translate the validated Redis URL into ARQ's connection settings."""
     parsed = urlparse(url)
@@ -22,7 +27,7 @@ def redis_settings_from_url(url: str) -> RedisSettings:
 
 
 class WorkerSettings:
-    """ARQ's importable worker definition; no jobs exist in B0."""
+    """ARQ's importable worker definition; no jobs are scheduled in B0."""
 
-    functions: list[object] = []
+    functions: list[object] = [worker_status]
     redis_settings = redis_settings_from_url(Settings().redis_url)

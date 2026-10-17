@@ -23,6 +23,7 @@ def configure_logging(log_level: str) -> None:
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso", utc=True),
+            structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, log_level)),
@@ -44,6 +45,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        request.state.request_id = request_id
         started = time.perf_counter()
         tokens = structlog.contextvars.bind_contextvars(request_id=request_id)
         try:

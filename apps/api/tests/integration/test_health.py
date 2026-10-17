@@ -63,3 +63,26 @@ async def test_readiness_names_a_failed_dependency(dependencies: tuple[str, str]
     assert response.headers["content-type"] == "application/problem+json"
     assert response.json()["code"] == "dependency_unavailable"
     assert response.json()["dependencies"] == ["redis"]
+
+
+async def test_readiness_names_postgres_when_redis_is_healthy(
+    dependencies: tuple[str, str],
+) -> None:
+    _, redis_url = dependencies
+    app = create_app(
+        make_settings(
+            database_url="postgresql+asyncpg://app:password@127.0.0.1:1/largent",
+            redis_url=redis_url,
+        )
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/readyz")
+    await app.state.redis.aclose()
+    await app.state.engine.dispose()
+
+    assert response.status_code == 503
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["code"] == "dependency_unavailable"
+    assert response.json()["dependencies"] == ["postgres"]
