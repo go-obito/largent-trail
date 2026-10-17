@@ -1,0 +1,72 @@
+"""Public error and request-log behavior tests."""
+
+from __future__ import annotations
+
+import json
+
+import httpx
+from pytest import CaptureFixture
+from tests.conftest import make_settings
+
+from largent.main import create_app
+
+
+async def test_validation_error_is_problem_json() -> None:
+    app = create_app(make_settings())
+
+    @app.get("/v1/items/{item_id}")
+    async def get_item(item_id: int) -> dict[str, int]:
+        return {"item_id": item_id}
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/v1/items/not-an-integer")
+
+    assert response.status_code == 422
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["code"] == "validation_error"
+    assert response.json()["status"] == 422
+
+
+async def test_unhandled_error_is_problem_json_without_exception_text() -> None:
+    app = create_app(make_settings())
+
+    @app.get("/v1/boom")
+    async def boom() -> None:
+        raise RuntimeError("private implementation detail")
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test"
+    ) as client:
+        response = await client.get("/v1/boom")
+
+    assert response.status_code == 500
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["code"] == "internal_error"
+    assert "private implementation detail" not in response.text
+
+
+async def test_request_id_is_propagated_and_body_is_not_logged(capsys: CaptureFixture[str]) -> None:
+    app = create_app(make_settings())
+
+    @app.post("/v1/echo")
+    async def echo(payload: dict[str, str]) -> dict[str, str]:
+        return payload
+
+    request_id = "test-request-id"
+    body_value = "a-body-value-that-must-not-be-logged"
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/v1/echo", headers={"X-Request-ID": request_id}, json={"note": body_value}
+        )
+
+    captured = capsys.readouterr().out
+    json_lines = [line for line in captured.splitlines() if line.startswith("{")]
+    assert json_lines
+    log = json.loads(json_lines[-1])
+    assert response.headers["x-request-id"] == request_id
+    assert log["request_id"] == request_id
+    assert body_value not in captured

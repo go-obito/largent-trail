@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: test
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://largent_app:largent_app_local_password@localhost:5432/largent
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://largent_migrator:largent_migrator_local_password@localhost:5432/largent
+      REDIS_URL: redis://localhost:6379/0
+      CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: largent
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_local_password
+        options: >-
+          --health-cmd "pg_isready -U postgres -d largent"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --directory apps/api --frozen --all-groups
+      - name: Format
+        run: uv run --directory apps/api ruff format --check
+      - name: Lint
+        run: uv run --directory apps/api ruff check
+      - name: Type check
+        run: uv run --directory apps/api mypy --strict
+      - name: Test
+        run: uv run --directory apps/api pytest
+      - name: Dependency audit
+        run: uv run --directory apps/api pip-audit
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+      - name: Build Docker image
+        run: docker build --file apps/api/Dockerfile --tag largent-api:ci .
+      - name: Verify OpenAPI is current
+        run: |
+          uv run --directory apps/api python scripts/export_openapi.py
+          git diff --exit-code -- apps/api/openapi.json
