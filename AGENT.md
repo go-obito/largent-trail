@@ -223,7 +223,7 @@ Update this checklist at the end of every step.
 - [x] B0 scaffolding
 - [x] B1 tenant plumbing
 - [x] B2 auth verification and user provisioning
-- [ ] B3 accounts and categories
+- [x] B3 accounts and categories
 - [ ] B4 transactions
 - [ ] B5 budgets and daily-target logic
 - [ ] B6 wishlist
