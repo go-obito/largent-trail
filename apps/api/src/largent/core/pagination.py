@@ -10,12 +10,22 @@ import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Protocol, cast
 from uuid import UUID
+
+from fastapi import Request
+
+from largent.core.config import Settings
 
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 MAX_CURSOR_LENGTH = 512
 MIN_KEY_BYTES = 32
+
+
+def get_cursor_signing_keys(request: Request) -> list[bytes]:
+    """FastAPI dependency: the active cursor keys (first signs, all verify)."""
+    return cast(Settings, request.app.state.settings).cursor_signing_key_bytes
 
 
 class InvalidCursor(ValueError):
@@ -86,6 +96,30 @@ def decode_cursor(value: str, keys: Sequence[bytes]) -> PageCursor:
     if not verified:
         raise InvalidCursor("invalid cursor")
     return _parse_payload(payload)
+
+
+class KeysetRow(Protocol):
+    """A row ordered by (position, created_at, id)."""
+
+    @property
+    def position(self) -> int: ...
+
+    @property
+    def created_at(self) -> datetime: ...
+
+    @property
+    def id(self) -> UUID: ...
+
+
+def build_page[T: KeysetRow](
+    rows: Sequence[T], limit: int, keys: Sequence[bytes]
+) -> tuple[list[T], str | None]:
+    """Trim a `limit + 1` fetch to a page and sign the next cursor if more rows remain."""
+    page = list(rows[:limit])
+    if len(rows) <= limit or not page:
+        return page, None
+    last = page[-1]
+    return page, encode_cursor(PageCursor(last.position, last.created_at, last.id), keys)
 
 
 def _parse_payload(payload: bytes) -> PageCursor:

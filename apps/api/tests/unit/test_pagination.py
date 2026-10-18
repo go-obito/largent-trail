@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
 
-from largent.core.pagination import InvalidCursor, PageCursor, decode_cursor, encode_cursor
+from largent.core.pagination import (
+    InvalidCursor,
+    PageCursor,
+    build_page,
+    decode_cursor,
+    encode_cursor,
+)
 
 KEY = b"unit-test-cursor-signing-secret-32-bytes"
 OLD_KEY = b"old-rotation-secret-key-32-bytes-0001"
@@ -114,3 +121,32 @@ def test_missing_or_weak_key_material_is_a_programming_error(keys: list[bytes]) 
 def test_naive_timestamp_cannot_be_encoded() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
         encode_cursor(PageCursor(0, datetime(2026, 10, 18), CURSOR.row_id), [KEY])
+
+
+@dataclass(frozen=True)
+class Row:
+    position: int
+    created_at: datetime
+    id: UUID
+
+
+def _rows(count: int) -> list[Row]:
+    return [Row(index, CURSOR.created_at, UUID(int=index + 1)) for index in range(count)]
+
+
+def test_build_page_signs_a_cursor_for_the_last_returned_row_when_more_remain() -> None:
+    rows = _rows(4)
+
+    page, cursor = build_page(rows, 3, [KEY])
+
+    assert page == rows[:3]
+    assert cursor is not None
+    assert decode_cursor(cursor, [KEY]) == PageCursor(2, CURSOR.created_at, rows[2].id)
+
+
+@pytest.mark.parametrize("count", [0, 1, 3])
+def test_build_page_has_no_cursor_when_the_page_is_the_last(count: int) -> None:
+    page, cursor = build_page(_rows(count), 3, [KEY])
+
+    assert len(page) == count
+    assert cursor is None

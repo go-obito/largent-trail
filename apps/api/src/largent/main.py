@@ -26,10 +26,12 @@ from largent.core.logging import RequestLoggingMiddleware, configure_logging
 from largent.core.redis import check_redis, create_redis
 from largent.core.security import ClerkAuthProvider
 from largent.core.tenancy import get_current_user_id
+from largent.modules.accounts.router import router as accounts_router
 from largent.modules.users.router import router as users_router
 
 api_router = APIRouter(prefix="/v1", dependencies=[Depends(get_current_user_id)])
 api_router.include_router(users_router)
+api_router.include_router(accounts_router, prefix="/accounts", tags=["accounts"])
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

@@ -10,7 +10,15 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
+from largent.core.pagination import InvalidCursor
+from largent.domain.errors import DomainConflict
+
 PROBLEM_MEDIA_TYPE = "application/problem+json"
+
+_CONFLICT_DETAILS = {
+    "duplicate_name": "An active record already uses this name.",
+    "id_conflict": "This ID cannot be used.",
+}
 
 
 class ProblemHTTPException(HTTPException):
@@ -63,6 +71,21 @@ def install_error_handlers(app: FastAPI) -> None:
             title="Validation failed",
             detail="The request could not be validated.",
             code="validation_error",
+        )
+
+    @app.exception_handler(InvalidCursor)
+    async def invalid_cursor_handler(_: Request, __: InvalidCursor) -> JSONResponse:
+        return problem_response(
+            status=400,
+            title="Invalid cursor",
+            detail="The pagination cursor is invalid.",
+            code="invalid_cursor",
+        )
+
+    @app.exception_handler(DomainConflict)
+    async def domain_conflict_handler(_: Request, exc: DomainConflict) -> JSONResponse:
+        return problem_response(
+            status=409, title="Conflict", detail=_CONFLICT_DETAILS[exc.code], code=exc.code
         )
 
     @app.exception_handler(HTTPException)

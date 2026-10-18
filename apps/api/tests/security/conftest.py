@@ -12,10 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import UUID
 
+import httpx
 import pytest
 import pytest_asyncio
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, make_url
 from sqlalchemy.ext.asyncio import (
@@ -25,13 +27,16 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from testcontainers.postgres import PostgresContainer
+from tests.conftest import make_settings
 
-from largent.core.tenancy import SessionFactory, tenant_session
+from largent.core.config import Settings
+from largent.core.tenancy import SessionFactory, get_current_user_id, tenant_session
 from largent.db.rls import enable_tenant_rls
 
 APP_CREDENTIAL = "test-" + "app-password"
 MIGRATOR_CREDENTIAL = "test-" + "migrator-password"
 TenantSessionFactory = Callable[[UUID], AbstractAsyncContextManager[AsyncSession]]
+ApiClientFactory = Callable[..., Awaitable[httpx.AsyncClient]]
 RLS_TABLE_EXCEPTIONS = frozenset({"users"})
 API_DIRECTORY = Path(__file__).resolve().parents[2]
 
@@ -223,6 +228,62 @@ async def tenant_probe(migrator_engine: AsyncEngine) -> AsyncIterator[None]:
     finally:
         async with migrator_engine.begin() as connection:
             await connection.execute(text("DROP TABLE IF EXISTS tenant_probe"))
+
+
+_TENANT_TABLE_NAMES = (
+    "SELECT c.relname FROM pg_class AS c JOIN pg_namespace AS n ON n.oid = c.relnamespace "
+    "WHERE n.nspname = 'public' AND c.relkind = 'r' AND EXISTS ("
+    "SELECT 1 FROM pg_attribute AS a WHERE a.attrelid = c.oid AND a.attname = 'user_id' "
+    "AND a.attnum > 0 AND NOT a.attisdropped)"
+)
+
+
+@pytest_asyncio.fixture
+async def seeded_tenants(tenant_database: TenantDatabaseURLs) -> AsyncIterator[None]:
+    """Give each test users A and B and empty tenant tables (superuser bypasses RLS)."""
+    engine = create_async_engine(tenant_database.admin)
+    try:
+        async with engine.begin() as connection:
+            names: list[str] = list((await connection.execute(text(_TENANT_TABLE_NAMES))).scalars())
+            if names:
+                tables = ", ".join(f'"{name}"' for name in names)
+                await connection.execute(text(f"TRUNCATE {tables} CASCADE"))
+            await connection.execute(
+                text(
+                    "INSERT INTO users (id, auth_provider, auth_subject) VALUES "
+                    "('018f0000-0000-7000-8000-00000000000a', 'test', 'tenant-a'), "
+                    "('018f0000-0000-7000-8000-00000000000b', 'test', 'tenant-b') "
+                    "ON CONFLICT (auth_provider, auth_subject) DO NOTHING"
+                )
+            )
+    finally:
+        await engine.dispose()
+    yield
+
+
+@pytest_asyncio.fixture
+async def api_client(
+    app_session_factory: SessionFactory, seeded_tenants: None
+) -> AsyncIterator[ApiClientFactory]:
+    """Open HTTP clients that act as a given user against the real app and real Postgres."""
+    from largent.main import create_app
+
+    opened: list[tuple[httpx.AsyncClient, FastAPI]] = []
+
+    async def open_client(user_id: UUID, settings: Settings | None = None) -> httpx.AsyncClient:
+        app = create_app(settings or make_settings())
+        app.state.session_factory = app_session_factory
+        app.dependency_overrides[get_current_user_id] = lambda: user_id
+        await app.state.auth_provider.aclose()
+        client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
+        opened.append((client, app))
+        return client
+
+    yield open_client
+    for client, app in opened:
+        await client.aclose()
+        await app.state.engine.dispose()
+        await app.state.redis.aclose()
 
 
 async def tenant_tables_without_rls(engine: AsyncEngine) -> list[str]:
