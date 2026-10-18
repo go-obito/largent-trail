@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import secrets
 import subprocess
 import sys
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
@@ -117,7 +118,7 @@ async def tenant_database(tenant_postgres_url: str) -> AsyncIterator[TenantDatab
             "CLERK_ISSUER": "https://clerk.test",
             "CLERK_AUDIENCE": "largent-api",
             "CLERK_AUTHORIZED_PARTIES": '["http://localhost:3000"]',
-            "CURSOR_SIGNING_KEYS": "test-cursor-signing-secret-32-bytes",
+            "CURSOR_SIGNING_KEYS": secrets.token_urlsafe(48),
         }
     )
     migration = await asyncio.to_thread(

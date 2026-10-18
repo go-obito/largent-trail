@@ -21,17 +21,67 @@ BASE_ENV = {
     "CLERK_AUDIENCE": "largent-api",
     "CLERK_AUTHORIZED_PARTIES": '["http://localhost:3000"]',
 }
+VALID_ENV = {**BASE_ENV, "CURSOR_SIGNING_KEYS": KEY_A}
+REQUIRED_ENV_NAMES = [
+    "ENVIRONMENT",
+    "LOG_LEVEL",
+    "DATABASE_URL",
+    "MIGRATION_DATABASE_URL",
+    "REDIS_URL",
+    "CORS_ALLOWED_ORIGINS",
+    "CLERK_ISSUER",
+    "CLERK_AUDIENCE",
+    "CLERK_AUTHORIZED_PARTIES",
+    "CURSOR_SIGNING_KEYS",
+]
+SETTING_ENV_NAMES = sorted(
+    {
+        name
+        for field_name, field in Settings.model_fields.items()
+        for name in (field_name, field.alias)
+        if name
+    }
+)
+
+
+@pytest.fixture(autouse=True)
+def _clean_settings_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in SETTING_ENV_NAMES:
+        monkeypatch.delenv(name, raising=False)
 
 
 def _settings_from_env(monkeypatch: pytest.MonkeyPatch, **overrides: str) -> Settings:
-    monkeypatch.delenv("CURSOR_SIGNING_KEYS", raising=False)
     for name, value in {**BASE_ENV, **overrides}.items():
         monkeypatch.setenv(name, value)
     return Settings(_env_file=None)
 
 
-def test_missing_required_setting_fails() -> None:
+def test_the_valid_environment_builds_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert _settings_from_env(monkeypatch, CURSOR_SIGNING_KEYS=KEY_A).environment == "test"
+
+
+def test_required_names_cover_every_variable_without_a_default() -> None:
+    required = {field.alias for field in Settings.model_fields.values() if field.is_required()} | {
+        "CLERK_ISSUER",
+        "CLERK_AUDIENCE",
+        "CLERK_AUTHORIZED_PARTIES",
+    }
+
+    assert required == set(REQUIRED_ENV_NAMES)
+
+
+def test_empty_environment_fails() -> None:
     with pytest.raises(ValidationError):
+        Settings(_env_file=None)
+
+
+@pytest.mark.parametrize("missing", REQUIRED_ENV_NAMES)
+def test_missing_required_setting_fails(monkeypatch: pytest.MonkeyPatch, missing: str) -> None:
+    for name, value in VALID_ENV.items():
+        if name != missing:
+            monkeypatch.setenv(name, value)
+
+    with pytest.raises(ValidationError, match=missing):
         Settings(_env_file=None)
 
 
