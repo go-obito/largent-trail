@@ -256,6 +256,26 @@ async def seeded_tenants(tenant_database: TenantDatabaseURLs) -> AsyncIterator[N
                     "ON CONFLICT (auth_provider, auth_subject) DO NOTHING"
                 )
             )
+            # Most tests need an empty category list; seeding tests use `unseeded_tenants`.
+            await connection.execute(
+                text("UPDATE users SET defaults_seeded_at = now() WHERE auth_provider = 'test'")
+            )
+    finally:
+        await engine.dispose()
+    yield
+
+
+@pytest_asyncio.fixture
+async def unseeded_tenants(
+    tenant_database: TenantDatabaseURLs, seeded_tenants: None
+) -> AsyncIterator[None]:
+    """Like `seeded_tenants`, but users A and B have not had default categories seeded yet."""
+    engine = create_async_engine(tenant_database.admin)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text("UPDATE users SET defaults_seeded_at = NULL WHERE auth_provider = 'test'")
+            )
     finally:
         await engine.dispose()
     yield

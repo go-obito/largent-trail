@@ -12,8 +12,15 @@ from largent.core.ids import new_uuid7
 from largent.core.pagination import build_page, decode_cursor
 from largent.domain.errors import DomainConflict
 from largent.modules.categories import repository
+from largent.modules.categories.defaults import DEFAULT_CATEGORIES
 from largent.modules.categories.models import Category, CategoryKind
 from largent.modules.categories.schemas import CategoryCreate
+
+
+async def ensure_defaults(session: AsyncSession, user_id: UUID) -> None:
+    """Seed the default categories exactly once per user, safe under concurrent first requests."""
+    if await repository.claim_default_seeding(session, user_id):
+        await repository.add_default_categories(session, user_id, DEFAULT_CATEGORIES)
 
 
 def _replay(existing: Category, values: dict[str, object]) -> tuple[Category, bool]:
@@ -27,6 +34,7 @@ async def create_category(
     session: AsyncSession, user_id: UUID, payload: CategoryCreate
 ) -> tuple[Category, bool]:
     """Create a category idempotently by its client id; the flag is True when newly created."""
+    await ensure_defaults(session, user_id)
     category_id = payload.id or new_uuid7()
     values = payload.model_dump(exclude={"id"})
     existing = await repository.get_category(session, user_id, category_id, include_deleted=True)
@@ -61,6 +69,7 @@ async def list_categories(
     signing_keys: Sequence[bytes],
 ) -> tuple[list[Category], str | None]:
     decoded = decode_cursor(cursor, signing_keys) if cursor is not None else None
+    await ensure_defaults(session, user_id)
     rows = await repository.list_categories(
         session,
         user_id,

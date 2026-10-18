@@ -2,13 +2,37 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import func, select, tuple_, update
+from sqlalchemy import func, select, text, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from largent.core.ids import new_uuid7
 from largent.core.pagination import PageCursor
 from largent.modules.categories.models import Category, CategoryKind
+
+
+async def claim_default_seeding(session: AsyncSession, user_id: UUID) -> bool:
+    """Atomically mark the user as seeded; only the one caller that flips the marker gets True."""
+    result = await session.execute(
+        text(
+            "UPDATE users SET defaults_seeded_at = now() "
+            "WHERE id = :id AND defaults_seeded_at IS NULL RETURNING id"
+        ),
+        {"id": user_id},
+    )
+    return result.first() is not None
+
+
+async def add_default_categories(
+    session: AsyncSession, user_id: UUID, defaults: Sequence[tuple[CategoryKind, str, int]]
+) -> None:
+    session.add_all(
+        Category(id=new_uuid7(), user_id=user_id, kind=kind, name=name, position=position)
+        for kind, name, position in defaults
+    )
+    await session.flush()
 
 
 async def get_category(
