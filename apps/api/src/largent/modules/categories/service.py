@@ -88,6 +88,9 @@ async def read_category(session: AsyncSession, user_id: UUID, category_id: UUID)
 async def update_category(
     session: AsyncSession, user_id: UUID, category_id: UUID, changes: dict[str, object]
 ) -> Category | None:
+    # Transactions reference (category, kind) together, so a category's kind never changes.
+    if "kind" in changes:
+        raise ValueError("a category's kind is immutable")
     try:
         async with session.begin_nested():
             return await repository.update_category(session, user_id, category_id, changes)
