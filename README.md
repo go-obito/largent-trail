@@ -27,3 +27,12 @@ make openapi
 `make dev` starts API, Postgres, Redis, and the idle ARQ worker. See
 `docs/product-spec.md` for the current product constraints and `docs/runbooks/`
 for operational notes.
+
+## How to add a tenant table
+
+Define tenant-owned models with `TenantMixin` and `largent.db.base.Base`. In the
+table-creation migration, call `enable_tenant_rls(op, "table_name")` after
+creating the table. Add repository or endpoint isolation tests using the fixtures
+and `assert_tenant_isolated` helper in `tests/security/conftest.py`. See
+[`docs/adr/0002-row-level-security-tenancy.md`](docs/adr/0002-row-level-security-tenancy.md)
+for the session and role model.

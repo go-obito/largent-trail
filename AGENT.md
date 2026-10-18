@@ -18,6 +18,8 @@ This is a **from-scratch rebuild** of a single-user prototype. The prototype is 
 
 **In scope now (backend MVP):** auth integration, users, accounts, categories, transactions, budgets, wishlist/needs, dashboard and report aggregates, CSV import, offline sync API, data export, account deletion.
 
+**Backend build status:** B0 complete; B1 complete. B2 (auth verification and user provisioning) is next.
+
 **Deferred. Do not build or scaffold unless explicitly asked:**
 - Bank or mobile-money API sync
 - Multi-currency and FX (but store the currency code, see §5)
