@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import AnyUrl, Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _CONFIG_PATH = Path(__file__).resolve()
 _ENV_FILE = next(
@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     clerk_authorized_parties: list[str] | None = Field(
         default=None, alias="CLERK_AUTHORIZED_PARTIES"
     )
+    cursor_signing_keys: Annotated[list[str], NoDecode] = Field(
+        alias="CURSOR_SIGNING_KEYS", repr=False
+    )
     sentry_dsn: str | None = Field(default=None, alias="SENTRY_DSN")
     otlp_endpoint: str | None = Field(default=None, alias="OTLP_ENDPOINT")
 
@@ -52,6 +55,24 @@ class Settings(BaseSettings):
             if not self.clerk_authorized_parties:
                 raise ValueError("CLERK_AUTHORIZED_PARTIES is required when AUTH_PROVIDER=clerk")
         return self
+
+    @field_validator("cursor_signing_keys", mode="before")
+    @classmethod
+    def validate_cursor_signing_keys(cls, value: object) -> list[str]:
+        if value is None:
+            raise ValueError("CURSOR_SIGNING_KEYS is required")
+        if isinstance(value, str):
+            items = [part.strip() for part in value.split(",") if part.strip()]
+        elif isinstance(value, list):
+            items = [str(part).strip() for part in value if str(part).strip()]
+        else:
+            raise ValueError("CURSOR_SIGNING_KEYS must be a comma-separated list of strings")
+        if not items:
+            raise ValueError("CURSOR_SIGNING_KEYS is required")
+        for key in items:
+            if len(key.encode("utf-8")) < 32:
+                raise ValueError("each CURSOR_SIGNING_KEYS value must be at least 32 bytes")
+        return items
 
     @field_validator("database_url", "migration_database_url")
     @classmethod
@@ -84,3 +105,8 @@ class Settings(BaseSettings):
     def cors_origins(self) -> list[str]:
         """Return normalized strings accepted by Starlette's CORS middleware."""
         return [str(origin).rstrip("/") for origin in self.cors_allowed_origins]
+
+    @property
+    def cursor_signing_key_bytes(self) -> list[bytes]:
+        """Return the active cursor-signing keys as raw bytes for HMAC verification."""
+        return [key.encode("utf-8") for key in self.cursor_signing_keys]

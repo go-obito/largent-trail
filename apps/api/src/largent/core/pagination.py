@@ -1,0 +1,106 @@
+"""Signed opaque keyset cursors for stable tenant-list pagination."""
+
+from __future__ import annotations
+
+import base64
+import binascii
+import hashlib
+import hmac
+import json
+from collections.abc import Sequence
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from uuid import UUID
+
+DEFAULT_LIMIT = 50
+MAX_LIMIT = 200
+MAX_CURSOR_LENGTH = 512
+MIN_KEY_BYTES = 32
+
+
+class InvalidCursor(ValueError):
+    """Raised when a cursor is malformed or its signature is invalid."""
+
+
+@dataclass(frozen=True, slots=True)
+class PageCursor:
+    """Last-seen sort key: rows are ordered by (position, created_at, id)."""
+
+    position: int
+    created_at: datetime
+    row_id: UUID
+
+
+def _require_keys(keys: Sequence[bytes]) -> Sequence[bytes]:
+    if not keys or any(len(key) < MIN_KEY_BYTES for key in keys):
+        raise ValueError(f"cursor signing needs at least one key of {MIN_KEY_BYTES}+ bytes")
+    return keys
+
+
+def _b64encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _b64decode(value: str) -> bytes:
+    return base64.b64decode(value + "=" * (-len(value) % 4), altchars=b"-_", validate=True)
+
+
+def encode_cursor(cursor: PageCursor, keys: Sequence[bytes]) -> str:
+    """Encode a keyset position as `payload.signature`, signed with the first key."""
+    signing_key = _require_keys(keys)[0]
+    if type(cursor.position) is not int or cursor.position < 0:
+        raise ValueError("cursor position must be a non-negative integer")
+    if cursor.created_at.utcoffset() is None:
+        raise ValueError("cursor timestamp must be timezone-aware")
+    payload = json.dumps(
+        {
+            "i": cursor.row_id.hex,
+            "p": cursor.position,
+            "t": cursor.created_at.astimezone(UTC).isoformat(timespec="microseconds"),
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("ascii")
+    signature = hmac.digest(signing_key, payload, hashlib.sha256)
+    return f"{_b64encode(payload)}.{_b64encode(signature)}"
+
+
+def decode_cursor(value: str, keys: Sequence[bytes]) -> PageCursor:
+    """Verify a cursor against every active key and decode it.
+
+    Raises `InvalidCursor` for any bad encoding, signature or payload shape.
+    """
+    active_keys = _require_keys(keys)
+    if not value or len(value) > MAX_CURSOR_LENGTH:
+        raise InvalidCursor("invalid cursor")
+    try:
+        payload_part, signature_part = value.split(".")
+        payload = _b64decode(payload_part)
+        signature = _b64decode(signature_part)
+    except (ValueError, binascii.Error) as exc:
+        raise InvalidCursor("invalid cursor") from exc
+    verified = False
+    for key in active_keys:
+        expected = hmac.digest(key, payload, hashlib.sha256)
+        verified = hmac.compare_digest(signature, expected) or verified
+    if not verified:
+        raise InvalidCursor("invalid cursor")
+    return _parse_payload(payload)
+
+
+def _parse_payload(payload: bytes) -> PageCursor:
+    try:
+        raw: object = json.loads(payload)
+        if not isinstance(raw, dict) or set(raw) != {"i", "p", "t"}:
+            raise ValueError("unexpected cursor shape")
+        position, timestamp, row_id = raw["p"], raw["t"], raw["i"]
+        if type(position) is not int or position < 0:
+            raise ValueError("bad position")
+        if not isinstance(timestamp, str) or not isinstance(row_id, str):
+            raise ValueError("bad field type")
+        created_at = datetime.fromisoformat(timestamp)
+        if created_at.utcoffset() is None:
+            raise ValueError("naive timestamp")
+        return PageCursor(position, created_at, UUID(row_id))
+    except (ValueError, TypeError, UnicodeDecodeError) as exc:
+        raise InvalidCursor("invalid cursor") from exc

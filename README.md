@@ -20,6 +20,12 @@ The API is at <http://localhost:8000>; liveness is
 Set `CLERK_ISSUER`, `CLERK_AUDIENCE`, and the JSON `CLERK_AUTHORIZED_PARTIES` list in
 `.env`; `CLERK_JWKS_URL` is optional and defaults to the issuer's standard JWKS path.
 The example issuer is a placeholder and must be replaced with the Clerk instance issuer.
+Set `CURSOR_SIGNING_KEYS` in `.env` (required in every environment, no default): a
+comma-separated list of secrets, each at least 32 bytes, for example
+`python -c "import secrets; print(secrets.token_urlsafe(48))"`. The API refuses to start if
+it is missing or any key is too short. The first key signs pagination cursors and all keys
+verify them, so rotate by prepending a new key and removing the old one after cursors
+signed with it have expired from clients. Keys are never logged.
 
 ```sh
 make check

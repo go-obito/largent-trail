@@ -18,6 +18,7 @@ jobs:
       CLERK_ISSUER: https://clerk.test
       CLERK_AUDIENCE: largent-api
       CLERK_AUTHORIZED_PARTIES: '["http://localhost:3000"]'
+      CURSOR_SIGNING_KEYS: ci-only-cursor-signing-key-do-not-use-in-prod
     services:
       postgres:
         image: postgres:16

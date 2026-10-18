@@ -18,6 +18,7 @@ def make_settings(**overrides: object) -> Settings:
         "clerk_issuer": "https://clerk.test",
         "clerk_audience": "largent-api",
         "clerk_authorized_parties": ["http://localhost:3000"],
+        "cursor_signing_keys": ["test-cursor-signing-secret-32-bytes"],
     }
     values.update(overrides)
     return Settings.model_validate(values)
