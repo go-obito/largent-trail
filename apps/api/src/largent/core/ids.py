@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import RFC_4122, UUID
 
+from pydantic import AfterValidator
 from uuid_utils import compat
 
 
@@ -24,3 +26,12 @@ def is_uuid7(value: object) -> bool:
 def new_uuid7() -> UUID:
     """Generate a UUIDv7 using the project's uuid-utils dependency."""
     return compat.uuid7()
+
+
+def _require_uuid7(value: UUID) -> UUID:
+    if not is_uuid7(value):
+        raise ValueError("id must be a UUIDv7")
+    return value
+
+
+ClientId = Annotated[UUID, AfterValidator(_require_uuid7)]

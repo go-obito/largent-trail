@@ -49,14 +49,15 @@ async def test_every_real_route_outside_public_allowlist_requires_auth() -> None
     protected_routes = [route for route in routes if route not in PUBLIC_ROUTE_ALLOWLIST]
     assert ("/v1/me", "GET") in protected_routes
     assert ("/v1/me", "PATCH") in protected_routes
-    for method, path in (
-        ("GET", "/v1/accounts"),
-        ("POST", "/v1/accounts"),
-        ("GET", "/v1/accounts/{account_id}"),
-        ("PATCH", "/v1/accounts/{account_id}"),
-        ("DELETE", "/v1/accounts/{account_id}"),
-    ):
-        assert (path, method) in protected_routes
+    for resource, key in (("accounts", "account_id"), ("categories", "category_id")):
+        for method, path in (
+            ("GET", f"/v1/{resource}"),
+            ("POST", f"/v1/{resource}"),
+            ("GET", f"/v1/{resource}/{{{key}}}"),
+            ("PATCH", f"/v1/{resource}/{{{key}}}"),
+            ("DELETE", f"/v1/{resource}/{{{key}}}"),
+        ):
+            assert (path, method) in protected_routes, f"{method} {path} is not registered"
 
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
