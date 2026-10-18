@@ -138,7 +138,7 @@ Reference test cases (must exist as unit tests): weekly budgets ₵78.00 + ₵20
 - Versioned under `/v1`. JSON only. Snake_case fields. Timestamps in UTC ISO-8601; dates as `YYYY-MM-DD`.
 - Errors use **RFC 9457 problem+json** with a stable `code` field. Never leak stack traces.
 - List endpoints use **cursor pagination** (`limit`, `cursor`), never offset.
-- Writes accept an `Idempotency-Key` header or a `client_mutation_id`; replaying the same key returns the original result.
+- Idempotent writes. Creating a synced entity is idempotent by its **client-generated UUIDv7 `id`**: replaying the same `id` with an identical payload returns the original row with 200; the same `id` with a different payload returns 409 `id_conflict`. Sync push (§10) is idempotent by `client_mutation_id`. Any other retryable, non-idempotent write (for example a CSV import commit) accepts an `Idempotency-Key` header; replaying the same key returns the original result.
 - Rate limits per user and per IP (Redis). Stricter on import and auth-adjacent endpoints.
 - Export the OpenAPI schema to `apps/api/openapi.json` on every API change (`make openapi`); the frontend client is generated from it. CI fails if the file is stale.
 - CORS uses an explicit allowlist from config, never `*`.
@@ -151,7 +151,7 @@ Clients are local-first and sync through two endpoints:
 - `GET /v1/sync/pull?cursor=…`: returns all changes (including tombstones) since the cursor, ordered by a per-user monotonic `server_seq`, plus the next cursor.
 
 Rules:
-- Synced tables carry: `id` (client UUIDv7), `created_at`, `updated_at`, `deleted_at` (soft delete), `server_seq`.
+- Synced tables carry: `id` (client UUIDv7), `created_at`, `updated_at`, `deleted_at` (soft delete), and `server_seq`. **Sequencing rule:** tables created before B8 (accounts, categories, transactions, budgets, wishlist) are created without `server_seq`. The B8 migration adds the column, the per-user counter and a backfill to all of them. Every synced table created from B8 onward includes `server_seq` from the start. This is the designed order, not an exception to be re-litigated per step.
 - Conflict policy: **last-write-wins per field** by `updated_at` for most entities. Wishlist ordering and budgets get explicit merge rules documented in an ADR.
 - A `mutations` table keyed by `(user_id, client_mutation_id)` guarantees replays are no-ops.
 - Soft-deleted rows are purged only by a retention job after the retention window, never by normal requests.
@@ -222,7 +222,7 @@ Update this checklist at the end of every step.
 
 - [x] B0 scaffolding
 - [x] B1 tenant plumbing
-- [ ] B2 auth verification and user provisioning
+- [x] B2 auth verification and user provisioning
 - [ ] B3 accounts and categories
 - [ ] B4 transactions
 - [ ] B5 budgets and daily-target logic
