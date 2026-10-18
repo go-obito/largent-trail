@@ -13,6 +13,23 @@ from starlette.responses import JSONResponse
 PROBLEM_MEDIA_TYPE = "application/problem+json"
 
 
+class ProblemHTTPException(HTTPException):
+    """HTTP error carrying a stable RFC 9457 problem identity."""
+
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        title: str,
+        detail: str,
+        code: str,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
+        self.problem_title = title
+        self.problem_code = code
+
+
 def problem_response(
     *,
     status: int,
@@ -51,15 +68,21 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(HTTPException)
     async def http_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
         unauthenticated = exc.status_code == 401
+        problem_title = getattr(exc, "problem_title", None)
+        problem_code = getattr(exc, "problem_code", None)
         detail = (
             exc.detail if isinstance(exc.detail, str) else "The request could not be completed."
         )
-        return problem_response(
+        response = problem_response(
             status=exc.status_code,
-            title="Authentication required" if unauthenticated else "Request failed",
+            title=problem_title
+            or ("Authentication required" if unauthenticated else "Request failed"),
             detail=detail,
-            code="unauthenticated" if unauthenticated else "http_error",
+            code=problem_code or ("unauthenticated" if unauthenticated else "http_error"),
         )
+        if exc.headers:
+            response.headers.update(exc.headers)
+        return response
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:

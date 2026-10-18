@@ -14,14 +14,14 @@ from largent.main import create_app
 async def test_validation_error_is_problem_json() -> None:
     app = create_app(make_settings())
 
-    @app.get("/v1/items/{item_id}")
+    @app.get("/test/items/{item_id}")
     async def get_item(item_id: int) -> dict[str, int]:
         return {"item_id": item_id}
 
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
-        response = await client.get("/v1/items/not-an-integer")
+        response = await client.get("/test/items/not-an-integer")
 
     assert response.status_code == 422
     assert response.headers["content-type"] == "application/problem+json"
@@ -34,14 +34,14 @@ async def test_unhandled_error_is_problem_json_without_exception_text(
 ) -> None:
     app = create_app(make_settings())
 
-    @app.get("/v1/boom")
+    @app.get("/test/boom")
     async def boom() -> None:
         raise RuntimeError("private implementation detail")
 
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test"
     ) as client:
-        response = await client.get("/v1/boom", headers={"X-Request-ID": "boom-request-id"})
+        response = await client.get("/test/boom", headers={"X-Request-ID": "boom-request-id"})
 
     captured = capsys.readouterr().out
     assert response.status_code == 500
@@ -55,7 +55,7 @@ async def test_unhandled_error_is_problem_json_without_exception_text(
 async def test_request_id_is_propagated_and_body_is_not_logged(capsys: CaptureFixture[str]) -> None:
     app = create_app(make_settings())
 
-    @app.post("/v1/echo")
+    @app.post("/test/echo")
     async def echo(payload: dict[str, str]) -> dict[str, str]:
         return payload
 
@@ -65,7 +65,7 @@ async def test_request_id_is_propagated_and_body_is_not_logged(capsys: CaptureFi
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.post(
-            "/v1/echo", headers={"X-Request-ID": request_id}, json={"note": body_value}
+            "/test/echo", headers={"X-Request-ID": request_id}, json={"note": body_value}
         )
 
     captured = capsys.readouterr().out

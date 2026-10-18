@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AnyUrl, Field, field_validator
+from pydantic import AnyUrl, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _CONFIG_PATH = Path(__file__).resolve()
@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=_ENV_FILE,
+        env_ignore_empty=True,
         extra="ignore",
         populate_by_name=True,
     )
@@ -31,8 +32,26 @@ class Settings(BaseSettings):
     migration_database_url: str = Field(alias="MIGRATION_DATABASE_URL")
     redis_url: str = Field(alias="REDIS_URL")
     cors_allowed_origins: list[AnyUrl] = Field(alias="CORS_ALLOWED_ORIGINS")
+    auth_provider: str = Field(default="clerk", alias="AUTH_PROVIDER")
+    clerk_issuer: str | None = Field(default=None, alias="CLERK_ISSUER")
+    clerk_jwks_url: AnyUrl | None = Field(default=None, alias="CLERK_JWKS_URL")
+    clerk_audience: str | None = Field(default=None, alias="CLERK_AUDIENCE")
+    clerk_authorized_parties: list[str] | None = Field(
+        default=None, alias="CLERK_AUTHORIZED_PARTIES"
+    )
     sentry_dsn: str | None = Field(default=None, alias="SENTRY_DSN")
     otlp_endpoint: str | None = Field(default=None, alias="OTLP_ENDPOINT")
+
+    @model_validator(mode="after")
+    def validate_clerk_settings(self) -> Settings:
+        if self.auth_provider == "clerk":
+            if not self.clerk_issuer:
+                raise ValueError("CLERK_ISSUER is required when AUTH_PROVIDER=clerk")
+            if not self.clerk_audience:
+                raise ValueError("CLERK_AUDIENCE is required when AUTH_PROVIDER=clerk")
+            if not self.clerk_authorized_parties:
+                raise ValueError("CLERK_AUTHORIZED_PARTIES is required when AUTH_PROVIDER=clerk")
+        return self
 
     @field_validator("database_url", "migration_database_url")
     @classmethod

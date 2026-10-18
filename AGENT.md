@@ -18,8 +18,6 @@ This is a **from-scratch rebuild** of a single-user prototype. The prototype is 
 
 **In scope now (backend MVP):** auth integration, users, accounts, categories, transactions, budgets, wishlist/needs, dashboard and report aggregates, CSV import, offline sync API, data export, account deletion.
 
-**Backend build status:** B0 complete; B1 complete. B2 (auth verification and user provisioning) is next.
-
 **Deferred. Do not build or scaffold unless explicitly asked:**
 - Bank or mobile-money API sync
 - Multi-currency and FX (but store the currency code, see §5)
@@ -120,6 +118,8 @@ Reference test cases (must exist as unit tests): weekly budgets ₵78.00 + ₵20
 
 - Every tenant table has `user_id UUID NOT NULL` with an index, and **Postgres Row-Level Security** enabled and forced.
 - The application connects as a **non-superuser role without `BYPASSRLS`**. Each request sets `SET LOCAL app.user_id = '<uuid>'` inside its transaction; policies compare `user_id = current_setting('app.user_id')::uuid`.
+- **Explicit exception: the `users` table.** It has no `user_id` column. It is isolated by its own primary key: RLS is enabled and forced, and the `user_self` policy allows `SELECT` and `UPDATE` only where `id = current_setting('app.user_id')`. The app role has no `INSERT` or `DELETE` privilege on it. Users are created and resolved only through the narrow `SECURITY DEFINER` functions `provision_user` and `resolve_user` (B2). These run as `largent_migrator`, which is subject to `FORCE` RLS, so `users` also carries policies `TO largent_migrator` only, granting `SELECT` and `INSERT` (never `UPDATE` or `DELETE`). The app role never matches them, and hard deletion will go through a similar dedicated function (B10). The tenant-table guardrail test keeps an explicit exception list, and `users` is the only entry. Adding to that list requires an ADR.
+- **Composite foreign keys.** Foreign key checks bypass RLS, so a plain FK could let one tenant reference another tenant's row. Every tenant table therefore has `UNIQUE (user_id, id)`, and every child table references its parent with a composite FK `(user_id, parent_id) → parent (user_id, id)`. Cross-tenant references are then impossible at the database level.
 - Services still filter by `user_id` explicitly (defense in depth). RLS is the safety net, not the only check.
 - Never accept `user_id` from request bodies or query strings. It comes only from the verified auth token.
 - **Required test:** user A cannot read, update, or delete user B's data through any endpoint, and a raw query without `app.user_id` set returns nothing. This test must stay green forever.
@@ -215,3 +215,20 @@ A task is done only when: code is merged-ready, `make check` passes, new behavio
 B0 repo, tooling, config, logging, errors, DB and Redis connectivity, Docker, CI, health checks, database roles → B1 tenant plumbing (request-scoped DB session with `SET LOCAL app.user_id`, base tenant-table mixin, RLS policy helper, tenant-isolation test harness) → B2 auth verification and user provisioning → B3 accounts and categories → B4 transactions → B5 budgets and daily-target domain logic → B6 wishlist → B7 reports and dashboard aggregates → B8 sync push/pull → B9 CSV import worker → B10 export, deletion, rate limits, hardening → B11 deploy pipeline and runbooks.
 
 Individual prompts will reference these steps. Do not start a later step before the current one is done and green.
+
+## 18. Status
+
+Update this checklist at the end of every step.
+
+- [x] B0 scaffolding
+- [x] B1 tenant plumbing
+- [ ] B2 auth verification and user provisioning
+- [ ] B3 accounts and categories
+- [ ] B4 transactions
+- [ ] B5 budgets and daily-target logic
+- [ ] B6 wishlist
+- [ ] B7 reports and dashboard aggregates
+- [ ] B8 sync push/pull
+- [ ] B9 CSV import worker
+- [ ] B10 export, deletion, rate limits, hardening
+- [ ] B11 deploy pipeline and runbooks

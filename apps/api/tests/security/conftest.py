@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
+import os
+import subprocess
+import sys
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -27,6 +32,8 @@ from largent.db.rls import enable_tenant_rls
 APP_CREDENTIAL = "test-" + "app-password"
 MIGRATOR_CREDENTIAL = "test-" + "migrator-password"
 TenantSessionFactory = Callable[[UUID], AbstractAsyncContextManager[AsyncSession]]
+RLS_TABLE_EXCEPTIONS = frozenset({"users"})
+API_DIRECTORY = Path(__file__).resolve().parents[2]
 
 
 @dataclass(frozen=True)
@@ -83,7 +90,7 @@ async def tenant_database(tenant_postgres_url: str) -> AsyncIterator[TenantDatab
     await admin_engine.dispose()
 
     base_url = make_url(tenant_postgres_url)
-    yield TenantDatabaseURLs(
+    database_urls = TenantDatabaseURLs(
         admin=tenant_postgres_url,
         app=base_url.set(username="largent_app", password=APP_CREDENTIAL).render_as_string(
             hide_password=False
@@ -92,6 +99,55 @@ async def tenant_database(tenant_postgres_url: str) -> AsyncIterator[TenantDatab
             username="largent_migrator", password=MIGRATOR_CREDENTIAL
         ).render_as_string(hide_password=False),
     )
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "ENVIRONMENT": "test",
+            "LOG_LEVEL": "INFO",
+            "DATABASE_URL": database_urls.app,
+            "MIGRATION_DATABASE_URL": database_urls.migrator,
+            "REDIS_URL": "redis://127.0.0.1:6379/0",
+            "CORS_ALLOWED_ORIGINS": '["http://localhost:3000"]',
+            "AUTH_PROVIDER": "clerk",
+            "CLERK_ISSUER": "https://clerk.test",
+            "CLERK_AUDIENCE": "largent-api",
+            "CLERK_AUTHORIZED_PARTIES": '["http://localhost:3000"]',
+        }
+    )
+    migration = await asyncio.to_thread(
+        subprocess.run,
+        [sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"],
+        cwd=API_DIRECTORY,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if migration.returncode != 0:
+        pytest.fail(f"Empty-database migration failed:\n{migration.stdout}\n{migration.stderr}")
+    downgrade = await asyncio.to_thread(
+        subprocess.run,
+        [sys.executable, "-m", "alembic", "-c", "alembic.ini", "downgrade", "-1"],
+        cwd=API_DIRECTORY,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if downgrade.returncode != 0:
+        pytest.fail(f"One-step migration downgrade failed:\n{downgrade.stdout}\n{downgrade.stderr}")
+    upgrade = await asyncio.to_thread(
+        subprocess.run,
+        [sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"],
+        cwd=API_DIRECTORY,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if upgrade.returncode != 0:
+        pytest.fail(f"Migration re-upgrade failed:\n{upgrade.stdout}\n{upgrade.stderr}")
+    yield database_urls
 
 
 @pytest_asyncio.fixture
@@ -137,17 +193,27 @@ def tenant_b() -> UUID:
 
 @pytest_asyncio.fixture
 async def tenant_probe(migrator_engine: AsyncEngine) -> AsyncIterator[None]:
-    """Create a test-only tenant table as the migrator and enable its policy."""
+    """Create a test-only tenant table and seed its fixed test owners."""
 
     def create_table(connection: Connection) -> None:
         connection.execute(
             text(
                 "CREATE TABLE tenant_probe ("
-                "id uuid PRIMARY KEY, user_id uuid NOT NULL, value text NOT NULL)"
+                "id uuid PRIMARY KEY, user_id uuid NOT NULL "
+                "REFERENCES users(id) ON DELETE CASCADE, "
+                "value text NOT NULL)"
             )
         )
         operations = Operations(MigrationContext.configure(connection))
         enable_tenant_rls(operations, "tenant_probe")
+        connection.execute(
+            text(
+                "INSERT INTO users (id, auth_provider, auth_subject) VALUES "
+                "('018f0000-0000-7000-8000-00000000000a', 'test', 'tenant-a'), "
+                "('018f0000-0000-7000-8000-00000000000b', 'test', 'tenant-b') "
+                "ON CONFLICT (auth_provider, auth_subject) DO NOTHING"
+            )
+        )
 
     async with migrator_engine.begin() as connection:
         await connection.run_sync(create_table)
@@ -167,14 +233,19 @@ async def tenant_tables_without_rls(engine: AsyncEngine) -> list[str]:
                 "JOIN pg_namespace AS n ON n.oid = c.relnamespace "
                 "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') "
                 "AND n.nspname NOT LIKE 'pg_toast%' AND c.relkind IN ('r', 'p') "
-                "AND EXISTS ("
+                "AND ((EXISTS ("
                 "  SELECT 1 FROM pg_attribute AS a "
                 "  WHERE a.attrelid = c.oid AND a.attname = 'user_id' "
                 "  AND a.attnum > 0 AND NOT a.attisdropped"
                 ") AND (NOT c.relrowsecurity OR NOT c.relforcerowsecurity OR NOT EXISTS ("
                 "  SELECT 1 FROM pg_policy AS p "
                 "  WHERE p.polrelid = c.oid AND p.polname = 'tenant_isolation'"
-                ")) ORDER BY c.relname"
+                "))) OR (c.relname = 'users' AND (NOT c.relrowsecurity "
+                "OR NOT c.relforcerowsecurity OR NOT EXISTS ("
+                "SELECT 1 FROM pg_policy AS p WHERE p.polrelid = c.oid "
+                "AND p.polname = 'user_self') OR NOT EXISTS ("
+                "SELECT 1 FROM pg_policy AS p WHERE p.polrelid = c.oid "
+                "AND p.polname = 'user_self_update')))) ORDER BY c.relname"
             )
         )
         return list(result.scalars().all())
@@ -182,7 +253,9 @@ async def tenant_tables_without_rls(engine: AsyncEngine) -> list[str]:
 
 async def assert_tenant_tables_have_rls(engine: AsyncEngine) -> None:
     violations = await tenant_tables_without_rls(engine)
-    assert not violations, f"Tenant tables without forced tenant_isolation RLS: {violations}"
+    assert not violations, (
+        f"Tenant tables without forced tenant_isolation RLS or users self RLS: {violations}"
+    )
 
 
 async def assert_tenant_isolated[T](

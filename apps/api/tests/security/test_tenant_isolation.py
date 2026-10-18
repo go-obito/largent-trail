@@ -18,12 +18,14 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from tests.conftest import make_settings
+from tests.fake_auth import FakeAuthProvider
 from tests.security.conftest import (
     TenantDatabaseURLs,
     TenantSessionFactory,
     assert_tenant_isolated,
 )
 
+from largent.core.security import VerifiedIdentity
 from largent.core.tenancy import (
     SessionFactory,
     get_current_user_id,
@@ -277,49 +279,65 @@ async def test_http_routes_are_tenant_scoped_and_default_to_unauthenticated_prob
     )
     app.state.session_factory = owner_factory
     app.include_router(router)
-    active_user_id = tenant_a
+    await app.state.auth_provider.aclose()
+    app.state.auth_provider = FakeAuthProvider(
+        {
+            "tenant-a-token": VerifiedIdentity("test", "tenant-a"),
+            "tenant-b-token": VerifiedIdentity("test", "tenant-b"),
+        }
+    )
+    active_identity_key = "tenant-a-token"
 
-    def override_user_id() -> UUID:
-        return active_user_id
+    def auth_headers() -> dict[str, str]:
+        return {"Authorization": f"Bearer {active_identity_key}"}
 
-    app.dependency_overrides[get_current_user_id] = override_user_id
     try:
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client:
-            read_response = await client.get(f"/test/tenant-probe/{row_id}")
+            read_response = await client.get(f"/test/tenant-probe/{row_id}", headers=auth_headers())
             update_response = await client.patch(
-                f"/test/tenant-probe/{row_id}", json={"value": "changed"}
+                f"/test/tenant-probe/{row_id}",
+                json={"value": "changed"},
+                headers=auth_headers(),
             )
-            delete_response = await client.delete(f"/test/tenant-probe/{row_id}")
+            delete_response = await client.delete(
+                f"/test/tenant-probe/{row_id}", headers=auth_headers()
+            )
             assert read_response.status_code == 404
             assert update_response.status_code == 404
             assert delete_response.status_code == 204
 
             create_response = await client.post(
-                "/test/tenant-probe", json={"value": "created-by-a"}
+                "/test/tenant-probe", json={"value": "created-by-a"}, headers=auth_headers()
             )
             assert create_response.status_code == 201
             created_id = UUID(create_response.json()["id"])
 
-            active_user_id = tenant_b
-            owner_response = await client.get(f"/test/tenant-probe/{row_id}")
+            active_identity_key = "tenant-b-token"
+            owner_response = await client.get(
+                f"/test/tenant-probe/{row_id}", headers=auth_headers()
+            )
             assert owner_response.status_code == 200
             assert owner_response.json() == {"value": "b"}
 
-            own_row_response = await client.get(f"/test/tenant-probe/{created_id}")
+            own_row_response = await client.get(
+                f"/test/tenant-probe/{created_id}", headers=auth_headers()
+            )
             assert own_row_response.status_code == 404
 
-            active_user_id = tenant_a
-            own_row_response = await client.get(f"/test/tenant-probe/{created_id}")
+            active_identity_key = "tenant-a-token"
+            own_row_response = await client.get(
+                f"/test/tenant-probe/{created_id}", headers=auth_headers()
+            )
             assert own_row_response.status_code == 200
             assert own_row_response.json() == {"value": "created-by-a"}
 
-            app.dependency_overrides.clear()
             unauthenticated = await client.get(f"/test/tenant-probe/{row_id}")
             assert unauthenticated.status_code == 401
             assert unauthenticated.headers["content-type"] == "application/problem+json"
             assert unauthenticated.json()["code"] == "unauthenticated"
     finally:
+        await app.state.auth_provider.aclose()
         await app.state.redis.aclose()
         await app.state.engine.dispose()

@@ -8,7 +8,7 @@ from time import perf_counter
 
 import sentry_sdk
 import structlog
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -24,6 +24,12 @@ from largent.core.db import check_database, create_engine, create_session_factor
 from largent.core.errors import install_error_handlers, problem_response
 from largent.core.logging import RequestLoggingMiddleware, configure_logging
 from largent.core.redis import check_redis, create_redis
+from largent.core.security import ClerkAuthProvider
+from largent.core.tenancy import get_current_user_id
+from largent.modules.users.router import router as users_router
+
+api_router = APIRouter(prefix="/v1", dependencies=[Depends(get_current_user_id)])
+api_router.include_router(users_router)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -52,16 +58,36 @@ def configure_telemetry(settings: Settings, app: FastAPI) -> None:
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build an application without performing network I/O."""
     active_settings = settings or Settings()
+    if active_settings.environment == "production" and active_settings.auth_provider != "clerk":
+        raise RuntimeError("Production requires AUTH_PROVIDER=clerk")
+    if active_settings.auth_provider != "clerk":
+        raise RuntimeError("Unsupported authentication provider")
+
     configure_logging(active_settings.log_level)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
+        await app.state.auth_provider.aclose()
         await app.state.redis.aclose()
         await app.state.engine.dispose()
 
-    app = FastAPI(title="Largent API", version="0.1.0", lifespan=lifespan)
+    production = active_settings.environment == "production"
+    app = FastAPI(
+        title="Largent API",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url=None if production else "/docs",
+        redoc_url=None if production else "/redoc",
+        openapi_url=None if production else "/openapi.json",
+    )
     app.state.settings = active_settings
+    app.state.auth_provider = ClerkAuthProvider(
+        issuer=active_settings.clerk_issuer or "",
+        audience=active_settings.clerk_audience or "",
+        authorized_parties=active_settings.clerk_authorized_parties or [],
+        jwks_url=str(active_settings.clerk_jwks_url) if active_settings.clerk_jwks_url else None,
+    )
     app.state.engine = create_engine(active_settings)
     app.state.session_factory = create_session_factory(app.state.engine)
     app.state.redis = create_redis(active_settings)
@@ -118,4 +144,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return Response(content='{"status":"ok"}', media_type="application/json")
 
+    app.include_router(api_router)
     return app

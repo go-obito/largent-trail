@@ -32,6 +32,31 @@ def enable_tenant_rls(op: Operations, table_name: str) -> None:
     op.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE {table} TO largent_app")
 
 
+def enable_user_self_rls(op: Operations, table_name: str = "users") -> None:
+    """Protect the identity-root table by id and restrict app writes to updates."""
+    table = _quoted_table_name(table_name)
+    self_policy = "id = nullif(current_setting('app.user_id', true), '')::uuid"
+    op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
+    op.execute(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY")
+    op.execute(
+        f"CREATE POLICY user_self ON {table} FOR SELECT TO largent_app USING ({self_policy})"
+    )
+    op.execute(
+        f"CREATE POLICY user_self_update ON {table} FOR UPDATE TO largent_app "
+        f"USING ({self_policy}) WITH CHECK ({self_policy})"
+    )
+    op.execute(
+        f"CREATE POLICY user_provision_select ON {table} FOR SELECT TO largent_migrator "
+        "USING (true)"
+    )
+    op.execute(
+        f"CREATE POLICY user_provision_insert ON {table} FOR INSERT TO largent_migrator "
+        "WITH CHECK (true)"
+    )
+    op.execute(f"REVOKE ALL ON TABLE {table} FROM largent_app")
+    op.execute(f"GRANT SELECT, UPDATE ON TABLE {table} TO largent_app")
+
+
 def disable_tenant_rls(op: Operations, table_name: str) -> None:
     """Remove the tenant policy, RLS enforcement, and app-role table grants."""
     table = _quoted_table_name(table_name)

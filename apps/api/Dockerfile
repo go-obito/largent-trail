@@ -17,7 +17,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN groupadd --gid 10001 largent && useradd --uid 10001 --gid largent --create-home largent
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 largent \
+    && useradd --uid 10001 --gid largent --create-home largent
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY apps/api/alembic ./alembic

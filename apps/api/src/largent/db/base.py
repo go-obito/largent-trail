@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import Uuid
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 from largent.core.db import metadata
@@ -22,4 +22,9 @@ class TenantMixin:
     @declared_attr
     @classmethod
     def user_id(cls) -> Mapped[UUID]:
-        return mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+        return mapped_column(
+            Uuid(as_uuid=True),
+            ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
