@@ -10,6 +10,7 @@ import sys
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -30,6 +31,7 @@ from sqlalchemy.ext.asyncio import (
 from testcontainers.postgres import PostgresContainer
 from tests.conftest import make_settings
 
+from largent.core.clock import utc_now
 from largent.core.config import Settings
 from largent.core.tenancy import SessionFactory, get_current_user_id, tenant_session
 from largent.db.rls import enable_tenant_rls
@@ -259,7 +261,10 @@ async def seeded_tenants(tenant_database: TenantDatabaseURLs) -> AsyncIterator[N
             )
             # Most tests need an empty category list; seeding tests use `unseeded_tenants`.
             await connection.execute(
-                text("UPDATE users SET defaults_seeded_at = now() WHERE auth_provider = 'test'")
+                text(
+                    "UPDATE users SET defaults_seeded_at = now(), timezone = 'Africa/Accra' "
+                    "WHERE auth_provider = 'test'"
+                )
             )
     finally:
         await engine.dispose()
@@ -291,10 +296,14 @@ async def api_client(
 
     opened: list[tuple[httpx.AsyncClient, FastAPI]] = []
 
-    async def open_client(user_id: UUID, settings: Settings | None = None) -> httpx.AsyncClient:
+    async def open_client(
+        user_id: UUID, settings: Settings | None = None, now: datetime | None = None
+    ) -> httpx.AsyncClient:
         app = create_app(settings or make_settings())
         app.state.session_factory = app_session_factory
         app.dependency_overrides[get_current_user_id] = lambda: user_id
+        if now is not None:
+            app.dependency_overrides[utc_now] = lambda: now
         await app.state.auth_provider.aclose()
         client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
         opened.append((client, app))

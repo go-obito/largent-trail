@@ -11,13 +11,20 @@ from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from largent.core.pagination import InvalidCursor
-from largent.domain.errors import DomainConflict
+from largent.domain.errors import DomainConflict, DomainRuleViolation
 
 PROBLEM_MEDIA_TYPE = "application/problem+json"
 
 _CONFLICT_DETAILS = {
     "duplicate_name": "An active record already uses this name.",
     "id_conflict": "This ID cannot be used.",
+}
+
+_RULE_TITLES_AND_DETAILS = {
+    "invalid_reference": ("Invalid reference", "The referenced record cannot be used."),
+    "archived_reference": ("Archived reference", "The referenced record is archived."),
+    "kind_mismatch": ("Kind mismatch", "The category kind does not match the transaction kind."),
+    "invalid_date": ("Invalid date", "The date is outside the allowed range."),
 }
 
 
@@ -86,6 +93,13 @@ def install_error_handlers(app: FastAPI) -> None:
     async def domain_conflict_handler(_: Request, exc: DomainConflict) -> JSONResponse:
         return problem_response(
             status=409, title="Conflict", detail=_CONFLICT_DETAILS[exc.code], code=exc.code
+        )
+
+    @app.exception_handler(DomainRuleViolation)
+    async def domain_rule_handler(_: Request, exc: DomainRuleViolation) -> JSONResponse:
+        title, detail = _RULE_TITLES_AND_DETAILS[exc.code]
+        return problem_response(
+            status=422, title=title, detail=detail, code=exc.code, extensions={"field": exc.field}
         )
 
     @app.exception_handler(HTTPException)

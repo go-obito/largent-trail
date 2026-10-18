@@ -42,6 +42,10 @@ async def read_profile(session: AsyncSession, user_id: UUID) -> User | None:
     return await repository.get_user(session, user_id)
 
 
+async def read_timezone(session: AsyncSession, user_id: UUID) -> str:
+    return await repository.get_timezone(session, user_id)
+
+
 async def update_profile(
     session: AsyncSession,
     user_id: UUID,

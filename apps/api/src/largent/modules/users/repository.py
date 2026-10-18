@@ -15,6 +15,11 @@ async def get_user(session: AsyncSession, user_id: UUID) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def get_timezone(session: AsyncSession, user_id: UUID) -> str:
+    result = await session.execute(select(User.timezone).where(User.id == user_id))
+    return result.scalar_one()
+
+
 async def update_user(
     session: AsyncSession,
     user_id: UUID,

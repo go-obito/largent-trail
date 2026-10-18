@@ -9,7 +9,7 @@ import hmac
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol, cast
 from uuid import UUID
 
@@ -34,11 +34,12 @@ class InvalidCursor(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class PageCursor:
-    """Last-seen sort key: rows are ordered by (position, created_at, id)."""
+    """Last-seen sort key: (position, created_at, id), or (occurred_on, created_at, id) if dated."""
 
     position: int
     created_at: datetime
     row_id: UUID
+    occurred_on: date | None = None
 
 
 def _require_keys(keys: Sequence[bytes]) -> Sequence[bytes]:
@@ -62,22 +63,22 @@ def encode_cursor(cursor: PageCursor, keys: Sequence[bytes]) -> str:
         raise ValueError("cursor position must be a non-negative integer")
     if cursor.created_at.utcoffset() is None:
         raise ValueError("cursor timestamp must be timezone-aware")
-    payload = json.dumps(
-        {
-            "i": cursor.row_id.hex,
-            "p": cursor.position,
-            "t": cursor.created_at.astimezone(UTC).isoformat(timespec="microseconds"),
-        },
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("ascii")
+    payload_fields: dict[str, str | int] = {
+        "i": cursor.row_id.hex,
+        "p": cursor.position,
+        "t": cursor.created_at.astimezone(UTC).isoformat(timespec="microseconds"),
+    }
+    if cursor.occurred_on is not None:
+        payload_fields["d"] = cursor.occurred_on.isoformat()
+    payload = json.dumps(payload_fields, separators=(",", ":"), sort_keys=True).encode("ascii")
     signature = hmac.digest(signing_key, payload, hashlib.sha256)
     return f"{_b64encode(payload)}.{_b64encode(signature)}"
 
 
-def decode_cursor(value: str, keys: Sequence[bytes]) -> PageCursor:
+def decode_cursor(value: str, keys: Sequence[bytes], *, dated: bool = False) -> PageCursor:
     """Verify a cursor against every active key and decode it.
 
+    `dated` selects the cursor shape the endpoint expects; the other shape is rejected.
     Raises `InvalidCursor` for any bad encoding, signature or payload shape.
     """
     active_keys = _require_keys(keys)
@@ -95,7 +96,7 @@ def decode_cursor(value: str, keys: Sequence[bytes]) -> PageCursor:
         verified = hmac.compare_digest(signature, expected) or verified
     if not verified:
         raise InvalidCursor("invalid cursor")
-    return _parse_payload(payload)
+    return _parse_payload(payload, dated=dated)
 
 
 class KeysetRow(Protocol):
@@ -122,19 +123,53 @@ def build_page[T: KeysetRow](
     return page, encode_cursor(PageCursor(last.position, last.created_at, last.id), keys)
 
 
-def _parse_payload(payload: bytes) -> PageCursor:
+class DatedKeysetRow(Protocol):
+    """A row ordered by (occurred_on, created_at, id), newest first."""
+
+    @property
+    def occurred_on(self) -> date: ...
+
+    @property
+    def created_at(self) -> datetime: ...
+
+    @property
+    def id(self) -> UUID: ...
+
+
+def build_dated_page[T: DatedKeysetRow](
+    rows: Sequence[T], limit: int, keys: Sequence[bytes]
+) -> tuple[list[T], str | None]:
+    """Like `build_page`, for rows keyed by (occurred_on, created_at, id)."""
+    page = list(rows[:limit])
+    if len(rows) <= limit or not page:
+        return page, None
+    last = page[-1]
+    cursor = PageCursor(0, last.created_at, last.id, last.occurred_on)
+    return page, encode_cursor(cursor, keys)
+
+
+def _parse_payload(payload: bytes, *, dated: bool) -> PageCursor:
     try:
         raw: object = json.loads(payload)
-        if not isinstance(raw, dict) or set(raw) != {"i", "p", "t"}:
+        if not isinstance(raw, dict) or set(raw) != (
+            {"d", "i", "p", "t"} if dated else {"i", "p", "t"}
+        ):
             raise ValueError("unexpected cursor shape")
         position, timestamp, row_id = raw["p"], raw["t"], raw["i"]
         if type(position) is not int or position < 0:
             raise ValueError("bad position")
         if not isinstance(timestamp, str) or not isinstance(row_id, str):
             raise ValueError("bad field type")
+        occurred_on = _parse_date(raw["d"]) if dated else None
         created_at = datetime.fromisoformat(timestamp)
         if created_at.utcoffset() is None:
             raise ValueError("naive timestamp")
-        return PageCursor(position, created_at, UUID(row_id))
+        return PageCursor(position, created_at, UUID(row_id), occurred_on)
     except (ValueError, TypeError, UnicodeDecodeError) as exc:
         raise InvalidCursor("invalid cursor") from exc
+
+
+def _parse_date(value: object) -> date:
+    if not isinstance(value, str):
+        raise ValueError("bad date")
+    return date.fromisoformat(value)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
@@ -11,6 +11,7 @@ import pytest
 from largent.core.pagination import (
     InvalidCursor,
     PageCursor,
+    build_dated_page,
     build_page,
     decode_cursor,
     encode_cursor,
@@ -147,6 +148,69 @@ def test_build_page_signs_a_cursor_for_the_last_returned_row_when_more_remain() 
 @pytest.mark.parametrize("count", [0, 1, 3])
 def test_build_page_has_no_cursor_when_the_page_is_the_last(count: int) -> None:
     page, cursor = build_page(_rows(count), 3, [KEY])
+
+    assert len(page) == count
+    assert cursor is None
+
+
+DATED_CURSOR = PageCursor(0, CURSOR.created_at, CURSOR.row_id, date(2026, 10, 17))
+
+
+def test_dated_cursor_round_trips_only_through_dated_decoding() -> None:
+    encoded = encode_cursor(DATED_CURSOR, [KEY])
+
+    assert decode_cursor(encoded, [KEY], dated=True) == DATED_CURSOR
+    with pytest.raises(InvalidCursor):
+        decode_cursor(encoded, [KEY])
+
+
+def test_an_undated_cursor_is_rejected_by_dated_decoding() -> None:
+    with pytest.raises(InvalidCursor):
+        decode_cursor(encode_cursor(CURSOR, [KEY]), [KEY], dated=True)
+
+
+def test_a_dated_cursor_with_a_bad_date_is_rejected() -> None:
+    import base64
+    import hashlib
+    import hmac
+
+    for bad in ('"2026-02-30"', "20", '"x"', "null"):
+        payload = (
+            b'{"d":' + bad.encode() + b',"i":"019a0000000070008000000000000001","p":0,'
+            b'"t":"2026-10-18T12:30:00+00:00"}'
+        )
+        signature = hmac.digest(KEY, payload, hashlib.sha256)
+        value = ".".join(
+            base64.urlsafe_b64encode(part).rstrip(b"=").decode() for part in (payload, signature)
+        )
+        with pytest.raises(InvalidCursor):
+            decode_cursor(value, [KEY], dated=True)
+
+
+@dataclass(frozen=True)
+class DatedRow:
+    occurred_on: date
+    created_at: datetime
+    id: UUID
+
+
+def test_build_dated_page_signs_the_last_rows_date_key() -> None:
+    rows = [DatedRow(date(2026, 10, 18 - i), CURSOR.created_at, UUID(int=i + 1)) for i in range(4)]
+
+    page, cursor = build_dated_page(rows, 3, [KEY])
+
+    assert page == rows[:3]
+    assert cursor is not None
+    assert decode_cursor(cursor, [KEY], dated=True) == PageCursor(
+        0, CURSOR.created_at, rows[2].id, rows[2].occurred_on
+    )
+
+
+@pytest.mark.parametrize("count", [0, 1, 3])
+def test_build_dated_page_has_no_cursor_on_the_last_page(count: int) -> None:
+    rows = [DatedRow(date(2026, 10, 18), CURSOR.created_at, UUID(int=i + 1)) for i in range(count)]
+
+    page, cursor = build_dated_page(rows, 3, [KEY])
 
     assert len(page) == count
     assert cursor is None
