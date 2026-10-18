@@ -50,14 +50,15 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(HTTPException)
     async def http_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
+        unauthenticated = exc.status_code == 401
         detail = (
             exc.detail if isinstance(exc.detail, str) else "The request could not be completed."
         )
         return problem_response(
             status=exc.status_code,
-            title="Request failed",
+            title="Authentication required" if unauthenticated else "Request failed",
             detail=detail,
-            code="http_error",
+            code="unauthenticated" if unauthenticated else "http_error",
         )
 
     @app.exception_handler(Exception)
