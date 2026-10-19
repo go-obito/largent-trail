@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 from tests.conftest import make_settings
 
-from largent.core.config import Settings
+from largent.core.config import Settings, WorkerConfig
 
 KEY_A = "a" * 32
 KEY_B = "b" * 32
@@ -30,7 +30,6 @@ REQUIRED_ENV_NAMES = [
     "REDIS_URL",
     "CORS_ALLOWED_ORIGINS",
     "CLERK_ISSUER",
-    "CLERK_AUDIENCE",
     "CLERK_AUTHORIZED_PARTIES",
     "CURSOR_SIGNING_KEYS",
 ]
@@ -63,11 +62,32 @@ def test_the_valid_environment_builds_settings(monkeypatch: pytest.MonkeyPatch) 
 def test_required_names_cover_every_variable_without_a_default() -> None:
     required = {field.alias for field in Settings.model_fields.values() if field.is_required()} | {
         "CLERK_ISSUER",
-        "CLERK_AUDIENCE",
         "CLERK_AUTHORIZED_PARTIES",
     }
 
     assert required == set(REQUIRED_ENV_NAMES)
+
+
+def test_clerk_audience_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name, value in VALID_ENV.items():
+        if name != "CLERK_AUDIENCE":
+            monkeypatch.setenv(name, value)
+
+    assert Settings(_env_file=None).clerk_audience is None
+
+
+def test_worker_config_needs_only_database_and_redis_urls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_ENV["DATABASE_URL"])
+    monkeypatch.setenv("REDIS_URL", BASE_ENV["REDIS_URL"])
+
+    config = WorkerConfig(_env_file=None)
+
+    assert config.redis_url == BASE_ENV["REDIS_URL"]
+    monkeypatch.setenv("REDIS_URL", "http://localhost")
+    with pytest.raises(ValidationError, match="REDIS_URL"):
+        WorkerConfig(_env_file=None)
 
 
 def test_empty_environment_fails() -> None:

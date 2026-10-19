@@ -90,7 +90,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = active_settings
     app.state.auth_provider = ClerkAuthProvider(
         issuer=active_settings.clerk_issuer or "",
-        audience=active_settings.clerk_audience or "",
+        audience=active_settings.clerk_audience,
         authorized_parties=active_settings.clerk_authorized_parties or [],
         jwks_url=str(active_settings.clerk_jwks_url) if active_settings.clerk_jwks_url else None,
     )

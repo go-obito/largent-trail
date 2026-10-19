@@ -70,6 +70,7 @@ def _token(
 
 def _provider(
     jwks: Callable[[], list[dict[str, Any]]],
+    audience: str | None = AUDIENCE,
 ) -> tuple[ClerkAuthProvider, httpx.AsyncClient]:
     def handle(_: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"keys": jwks()})
@@ -77,7 +78,7 @@ def _provider(
     client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
     provider = ClerkAuthProvider(
         issuer=ISSUER,
-        audience=AUDIENCE,
+        audience=audience,
         authorized_parties=[AUTHORIZED_PARTY],
         client=client,
     )
@@ -275,9 +276,70 @@ async def test_unreachable_uncached_jwks_fails_with_provider_unavailable(
         await client.aclose()
 
 
-def test_clerk_provider_requires_issuer_audience_and_authorized_parties() -> None:
-    with pytest.raises(ValueError, match="CLERK_AUDIENCE"):
-        Settings.model_validate(make_settings(clerk_audience=None).model_dump(by_alias=True))
+async def test_token_without_aud_passes_when_audience_is_unset(
+    signing_key: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+) -> None:
+    private_key, jwk = signing_key
+    provider, client = _provider(lambda: [jwk], audience=None)
+    try:
+        identity = await provider.verify(_token(private_key, remove=("aud",)))
+        with_aud = await provider.verify(_token(private_key))
+    finally:
+        await client.aclose()
+    assert identity.subject == "user_123"
+    assert with_aud.subject == "user_123"
+
+
+@pytest.mark.parametrize(
+    ("changes", "remove"),
+    [
+        ({"iss": "https://wrong-issuer.test"}, ()),
+        ({"azp": "https://wrong-party.test"}, ()),
+        ({"exp": int(time.time()) - 30}, ()),
+        ({}, ("nbf",)),
+        ({}, ("sub",)),
+    ],
+)
+async def test_other_checks_still_apply_when_audience_is_unset(
+    signing_key: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    changes: dict[str, object],
+    remove: tuple[str, ...],
+) -> None:
+    private_key, jwk = signing_key
+    provider, client = _provider(lambda: [jwk], audience=None)
+    try:
+        with pytest.raises((InvalidToken, TokenExpired)):
+            await provider.verify(_token(private_key, changes=changes, remove=remove))
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.parametrize(
+    ("changes", "remove"),
+    [({"aud": "wrong-audience"}, ()), ({}, ("aud",))],
+)
+async def test_wrong_or_missing_aud_is_rejected_when_audience_is_set(
+    signing_key: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    changes: dict[str, object],
+    remove: tuple[str, ...],
+) -> None:
+    private_key, jwk = signing_key
+    provider, client = _provider(lambda: [jwk])
+    try:
+        with pytest.raises(InvalidToken):
+            await provider.verify(_token(private_key, changes=changes, remove=remove))
+    finally:
+        await client.aclose()
+
+
+def test_clerk_provider_requires_issuer_and_authorized_parties() -> None:
+    with pytest.raises(ValueError, match="CLERK_ISSUER"):
+        Settings.model_validate(make_settings(clerk_issuer=None).model_dump(by_alias=True))
+    with pytest.raises(ValueError, match="CLERK_AUTHORIZED_PARTIES"):
+        Settings.model_validate(
+            make_settings(clerk_authorized_parties=None).model_dump(by_alias=True)
+        )
+    Settings.model_validate(make_settings(clerk_audience=None).model_dump(by_alias=True))
 
 
 def test_system_iana_timezone_data_is_available() -> None:

@@ -15,6 +15,45 @@ _ENV_FILE = next(
 )
 
 
+def _check_postgres_url(value: str) -> str:
+    if not value.startswith("postgresql+asyncpg://"):
+        msg = "must use the postgresql+asyncpg scheme"
+        raise ValueError(msg)
+    return value
+
+
+def _check_redis_url(value: str) -> str:
+    if not value.startswith(("redis://", "rediss://")):
+        msg = "must use the redis or rediss scheme"
+        raise ValueError(msg)
+    return value
+
+
+class WorkerConfig(BaseSettings):
+    """The subset of process configuration the ARQ worker needs."""
+
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=_ENV_FILE,
+        env_ignore_empty=True,
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    database_url: str = Field(alias="DATABASE_URL")
+    redis_url: str = Field(alias="REDIS_URL")
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_postgres_url(cls, value: str) -> str:
+        return _check_postgres_url(value)
+
+    @field_validator("redis_url")
+    @classmethod
+    def validate_redis_url(cls, value: str) -> str:
+        return _check_redis_url(value)
+
+
 class Settings(BaseSettings):
     """Settings supplied exclusively by the process environment."""
 
@@ -50,8 +89,6 @@ class Settings(BaseSettings):
         if self.auth_provider == "clerk":
             if not self.clerk_issuer:
                 raise ValueError("CLERK_ISSUER is required when AUTH_PROVIDER=clerk")
-            if not self.clerk_audience:
-                raise ValueError("CLERK_AUDIENCE is required when AUTH_PROVIDER=clerk")
             if not self.clerk_authorized_parties:
                 raise ValueError("CLERK_AUTHORIZED_PARTIES is required when AUTH_PROVIDER=clerk")
         return self
@@ -77,18 +114,12 @@ class Settings(BaseSettings):
     @field_validator("database_url", "migration_database_url")
     @classmethod
     def validate_postgres_url(cls, value: str) -> str:
-        if not value.startswith("postgresql+asyncpg://"):
-            msg = "must use the postgresql+asyncpg scheme"
-            raise ValueError(msg)
-        return value
+        return _check_postgres_url(value)
 
     @field_validator("redis_url")
     @classmethod
     def validate_redis_url(cls, value: str) -> str:
-        if not value.startswith(("redis://", "rediss://")):
-            msg = "must use the redis or rediss scheme"
-            raise ValueError(msg)
-        return value
+        return _check_redis_url(value)
 
     @field_validator("cors_allowed_origins")
     @classmethod

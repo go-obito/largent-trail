@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from arq.connections import RedisSettings
 
-from largent.core.config import Settings
+from largent.core.config import WorkerConfig
 
 
 async def worker_status(context: dict[str, object]) -> str:
@@ -30,4 +30,4 @@ class WorkerSettings:
     """ARQ's importable worker definition; no jobs are scheduled in B0."""
 
     functions: list[object] = [worker_status]
-    redis_settings = redis_settings_from_url(Settings().redis_url)
+    redis_settings = redis_settings_from_url(WorkerConfig().redis_url)

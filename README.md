@@ -17,8 +17,11 @@ make dev
 The API is at <http://localhost:8000>; liveness is
 <http://localhost:8000/healthz> and dependency readiness is
 <http://localhost:8000/readyz>. `GET` and `PATCH /v1/me` require a Clerk bearer token.
-Set `CLERK_ISSUER`, `CLERK_AUDIENCE`, and the JSON `CLERK_AUTHORIZED_PARTIES` list in
+Set `CLERK_ISSUER` and the JSON `CLERK_AUTHORIZED_PARTIES` list in
 `.env`; `CLERK_JWKS_URL` is optional and defaults to the issuer's standard JWKS path.
+`CLERK_AUDIENCE` is also optional: when set, tokens must carry a matching `aud` claim and
+are rejected otherwise; when unset, `aud` is not checked (`iss`, `azp`, `exp`, `nbf`, `sub`
+and RS256-only signing are always enforced).
 The example issuer is a placeholder and must be replaced with the Clerk instance issuer.
 Set `CURSOR_SIGNING_KEYS` in `.env` (required in every environment, no default): a
 comma-separated list of secrets, each at least 32 bytes, for example

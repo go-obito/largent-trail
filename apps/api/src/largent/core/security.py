@@ -43,7 +43,7 @@ class ClerkAuthProvider:
         self,
         *,
         issuer: str,
-        audience: str,
+        audience: str | None,
         authorized_parties: list[str],
         jwks_url: str | None = None,
         jwks_ttl_seconds: int = 300,
@@ -76,6 +76,9 @@ class ClerkAuthProvider:
             raise InvalidToken
         key = await self._key_for_kid(header["kid"])
 
+        required = ["sub", "exp", "nbf", "iss"]
+        if self.audience is not None:
+            required.append("aud")
         try:
             claims = jwt.decode(
                 token,
@@ -84,7 +87,8 @@ class ClerkAuthProvider:
                 issuer=self.issuer,
                 audience=self.audience,
                 leeway=10,
-                options={"require": ["sub", "exp", "nbf", "iss", "aud"]},
+                # PyJWT rejects any token carrying aud when no audience is passed.
+                options={"require": required, "verify_aud": self.audience is not None},
             )
         except jwt.ExpiredSignatureError as exc:
             raise TokenExpired from exc
