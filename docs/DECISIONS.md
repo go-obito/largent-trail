@@ -15,3 +15,7 @@ Short implementation decisions that do not need an ADR.
 - `GET /v1/needs` returns `{"items": [...]}`.
 - Deleting a need soft deletes it and renumbers the remaining positions.
 - `allocated_minor` is 0 until the allocation ledger exists (checkpoint 2); `_allocated_by_need` is the single grouped-query seam.
+
+## B7 dashboard
+
+- Dashboard aggregates are read-only and use bounded grouped SQL queries; its seven-day breakdown is zero-filled in the user's local week.

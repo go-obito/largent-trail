@@ -30,6 +30,7 @@ from largent.modules.accounts.router import router as accounts_router
 from largent.modules.budgets.router import router as budgets_router
 from largent.modules.categories.router import router as categories_router
 from largent.modules.needs.router import router as needs_router
+from largent.modules.reports.router import router as reports_router
 from largent.modules.transactions.router import router as transactions_router
 from largent.modules.users.router import router as users_router
 
@@ -40,6 +41,7 @@ api_router.include_router(categories_router, prefix="/categories", tags=["catego
 api_router.include_router(transactions_router, prefix="/transactions", tags=["transactions"])
 api_router.include_router(budgets_router, prefix="/budgets", tags=["budgets"])
 api_router.include_router(needs_router, prefix="/needs", tags=["needs"])
+api_router.include_router(reports_router, tags=["reports"])
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

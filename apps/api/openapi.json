@@ -2089,6 +2089,70 @@
           }
         }
       }
+    },
+    "/v1/dashboard": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Read Dashboard",
+        "operationId": "read_dashboard_v1_dashboard_get",
+        "parameters": [
+          {
+            "name": "balance_range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all_time",
+                "this_week",
+                "this_month"
+              ],
+              "type": "string",
+              "default": "all_time",
+              "title": "Balance Range"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2860,6 +2924,254 @@
         "type": "object",
         "title": "CategoryUpdate",
         "description": "Partial update. `kind` is immutable; `icon: null` clears the icon."
+      },
+      "DashboardDailyTarget": {
+        "properties": {
+          "target_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Minor"
+          },
+          "spent_today_minor": {
+            "type": "integer",
+            "title": "Spent Today Minor"
+          },
+          "left_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left Minor"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "within_target",
+                  "near_limit",
+                  "over_target"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_minor",
+          "spent_today_minor",
+          "left_minor",
+          "status"
+        ],
+        "title": "DashboardDailyTarget"
+      },
+      "DashboardDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "spent_minor": {
+            "type": "integer",
+            "title": "Spent Minor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "spent_minor"
+        ],
+        "title": "DashboardDay"
+      },
+      "DashboardNeed": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "target_minor": {
+            "type": "integer",
+            "title": "Target Minor"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NeedPriority"
+          },
+          "allocated_minor": {
+            "type": "integer",
+            "title": "Allocated Minor"
+          },
+          "remaining_minor": {
+            "type": "integer",
+            "title": "Remaining Minor"
+          },
+          "percent": {
+            "type": "integer",
+            "title": "Percent"
+          },
+          "is_complete": {
+            "type": "boolean",
+            "title": "Is Complete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "target_minor",
+          "priority",
+          "allocated_minor",
+          "remaining_minor",
+          "percent",
+          "is_complete"
+        ],
+        "title": "DashboardNeed"
+      },
+      "DashboardNeeds": {
+        "properties": {
+          "total_target_minor": {
+            "type": "integer",
+            "title": "Total Target Minor"
+          },
+          "total_allocated_minor": {
+            "type": "integer",
+            "title": "Total Allocated Minor"
+          },
+          "unallocated_savings_minor": {
+            "type": "integer",
+            "title": "Unallocated Savings Minor"
+          },
+          "over_allocated": {
+            "type": "boolean",
+            "title": "Over Allocated"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardNeed"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_target_minor",
+          "total_allocated_minor",
+          "unallocated_savings_minor",
+          "over_allocated",
+          "items"
+        ],
+        "title": "DashboardNeeds"
+      },
+      "DashboardRead": {
+        "properties": {
+          "total_balance_minor": {
+            "type": "integer",
+            "title": "Total Balance Minor"
+          },
+          "net_change_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Change Minor"
+          },
+          "week": {
+            "$ref": "#/components/schemas/DashboardWeek"
+          },
+          "daily_target": {
+            "$ref": "#/components/schemas/DashboardDailyTarget"
+          },
+          "daily_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardDay"
+            },
+            "type": "array",
+            "title": "Daily Breakdown"
+          },
+          "budgets": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetRead"
+            },
+            "type": "array",
+            "title": "Budgets"
+          },
+          "recent_transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRead"
+            },
+            "type": "array",
+            "title": "Recent Transactions"
+          },
+          "needs": {
+            "$ref": "#/components/schemas/DashboardNeeds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_balance_minor",
+          "net_change_minor",
+          "week",
+          "daily_target",
+          "daily_breakdown",
+          "budgets",
+          "recent_transactions",
+          "needs"
+        ],
+        "title": "DashboardRead"
+      },
+      "DashboardWeek": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "income_minor": {
+            "type": "integer",
+            "title": "Income Minor"
+          },
+          "spent_minor": {
+            "type": "integer",
+            "title": "Spent Minor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "income_minor",
+          "spent_minor"
+        ],
+        "title": "DashboardWeek"
       },
       "HTTPValidationError": {
         "properties": {
