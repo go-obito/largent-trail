@@ -64,3 +64,25 @@ class DashboardRead(BaseModel):
 
 
 BalanceRange = Literal["all_time", "this_week", "this_month"]
+
+
+class ReportDay(BaseModel):
+    date: date
+    expense_minor: int
+
+
+class CategorySpend(BaseModel):
+    category_id: UUID | None
+    name: str | None
+    total_minor: int
+
+
+class ReportRead(BaseModel):
+    period: Literal["week", "month"]
+    start: date
+    end: date
+    income_minor: int
+    expense_minor: int
+    net_minor: int
+    spending_over_time: list[ReportDay]
+    spending_by_category: list[CategorySpend]

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from largent.domain.daily_target import budget_status, daily_target
 from largent.domain.money import account_balance
 from largent.domain.needs import unallocated
-from largent.domain.periods import days_in_month, month_start, week_end, week_start
+from largent.domain.periods import days_in_month, month_end, month_start, week_end, week_start
 from largent.domain.transaction_rules import local_today
 from largent.modules.accounts.models import Account
 from largent.modules.budgets.models import Budget, BudgetPeriod
@@ -231,4 +231,82 @@ async def dashboard(
         "allocated": allocated,
         "total_allocated": total_allocated,
         "unallocated": unallocated(balance, total_allocated),
+    }
+
+
+async def report(
+    session: AsyncSession, user_id: UUID, now: datetime, period: str, anchor: object
+) -> dict[str, object]:
+    timezone = await users_service.read_timezone(session, user_id)
+    today = local_today(now, timezone)
+    selected = today if anchor is None else anchor
+    if not isinstance(selected, type(today)):
+        raise ValueError("invalid_date")
+    if selected < today.replace(year=today.year - 5) or selected > today.replace(
+        year=today.year + 1
+    ):
+        raise ValueError("invalid_date")
+    start, end = (
+        (week_start(selected), week_end(selected))
+        if period == "week"
+        else (month_start(selected), month_end(selected))
+    )
+    totals = await session.execute(
+        select(_sum(TransactionKind.INCOME), _sum(TransactionKind.EXPENSE)).where(
+            Transaction.user_id == user_id,
+            Transaction.deleted_at.is_(None),
+            Transaction.occurred_on.between(start, end),
+        )
+    )
+    income, expense = (int(value) for value in totals.one())
+    daily_rows = await session.execute(
+        select(Transaction.occurred_on, func.coalesce(func.sum(Transaction.amount_minor), 0))
+        .where(
+            Transaction.user_id == user_id,
+            Transaction.deleted_at.is_(None),
+            Transaction.kind == TransactionKind.EXPENSE,
+            Transaction.occurred_on.between(start, end),
+        )
+        .group_by(Transaction.occurred_on)
+    )
+    daily = {row[0]: int(row[1]) for row in daily_rows.all()}
+    category_rows = await session.execute(
+        select(
+            Transaction.category_id,
+            Category.name,
+            func.coalesce(func.sum(Transaction.amount_minor), 0),
+        )
+        .outerjoin(
+            Category,
+            (Category.user_id == Transaction.user_id) & (Category.id == Transaction.category_id),
+        )
+        .where(
+            Transaction.user_id == user_id,
+            Transaction.deleted_at.is_(None),
+            Transaction.kind == TransactionKind.EXPENSE,
+            Transaction.occurred_on.between(start, end),
+        )
+        .group_by(Transaction.category_id, Category.name)
+        .order_by(func.sum(Transaction.amount_minor).desc())
+    )
+    categories = [
+        {"category_id": row[0], "name": row[1], "total_minor": int(row[2])}
+        for row in category_rows.all()
+    ]
+    count = (end - start).days + 1
+    return {
+        "period": period,
+        "start": start,
+        "end": end,
+        "income_minor": income,
+        "expense_minor": expense,
+        "net_minor": income - expense,
+        "spending_over_time": [
+            {
+                "date": start + __import__("datetime").timedelta(days=index),
+                "expense_minor": daily.get(start + __import__("datetime").timedelta(days=index), 0),
+            }
+            for index in range(count)
+        ],
+        "spending_by_category": categories,
     }

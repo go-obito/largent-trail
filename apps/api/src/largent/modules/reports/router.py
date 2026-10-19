@@ -11,11 +11,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.clock import utc_now
+from largent.core.errors import ProblemHTTPException
 from largent.core.tenancy import get_current_user_id, get_tenant_session
 from largent.domain.needs import need_progress
 from largent.modules.budgets.router import _read as budget_read
 from largent.modules.reports import service
-from largent.modules.reports.schemas import BalanceRange, DashboardRead
+from largent.modules.reports.schemas import BalanceRange, DashboardRead, ReportRead
 from largent.modules.transactions.schemas import TransactionRead
 
 router = APIRouter()
@@ -23,6 +24,7 @@ CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
 Now = Annotated[datetime, Depends(utc_now)]
 DEFAULT_BALANCE_RANGE = Query("all_time")
+DEFAULT_REPORT_PERIOD = Query("week")
 
 
 @router.get("/dashboard", response_model=DashboardRead)
@@ -93,3 +95,31 @@ async def read_dashboard(
             },
         }
     )
+
+
+@router.get("/reports", response_model=ReportRead)
+async def read_report(
+    user_id: CurrentUserId,
+    session: TenantSession,
+    now: Now,
+    period: str = DEFAULT_REPORT_PERIOD,
+    anchor: date | None = None,
+) -> ReportRead:
+    if period not in {"week", "month"}:
+        raise ProblemHTTPException(
+            status_code=422,
+            title="Invalid date",
+            detail="The report period is invalid.",
+            code="invalid_date",
+        )
+    try:
+        return ReportRead.model_validate(
+            await service.report(session, user_id, now, period, anchor)
+        )
+    except ValueError:
+        raise ProblemHTTPException(
+            status_code=422,
+            title="Invalid date",
+            detail="The anchor date is outside the allowed range.",
+            code="invalid_date",
+        ) from None

@@ -2153,6 +2153,82 @@
           }
         }
       }
+    },
+    "/v1/reports": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Read Report",
+        "operationId": "read_report_v1_reports_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "week",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "anchor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anchor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2867,6 +2943,44 @@
         ],
         "title": "CategoryRead"
       },
+      "CategorySpend": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "total_minor": {
+            "type": "integer",
+            "title": "Total Minor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category_id",
+          "name",
+          "total_minor"
+        ],
+        "title": "CategorySpend"
+      },
       "CategoryUpdate": {
         "properties": {
           "name": {
@@ -3479,6 +3593,85 @@
         "type": "object",
         "title": "NeedUpdate",
         "description": "Partial update; `note` may be null to clear it."
+      },
+      "ReportDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "expense_minor": {
+            "type": "integer",
+            "title": "Expense Minor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "expense_minor"
+        ],
+        "title": "ReportDay"
+      },
+      "ReportRead": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month"
+            ],
+            "title": "Period"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "income_minor": {
+            "type": "integer",
+            "title": "Income Minor"
+          },
+          "expense_minor": {
+            "type": "integer",
+            "title": "Expense Minor"
+          },
+          "net_minor": {
+            "type": "integer",
+            "title": "Net Minor"
+          },
+          "spending_over_time": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDay"
+            },
+            "type": "array",
+            "title": "Spending Over Time"
+          },
+          "spending_by_category": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySpend"
+            },
+            "type": "array",
+            "title": "Spending By Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "start",
+          "end",
+          "income_minor",
+          "expense_minor",
+          "net_minor",
+          "spending_over_time",
+          "spending_by_category"
+        ],
+        "title": "ReportRead"
       },
       "TransactionCreate": {
         "properties": {

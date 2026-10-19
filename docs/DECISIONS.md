@@ -19,3 +19,6 @@ Short implementation decisions that do not need an ADR.
 ## B7 dashboard
 
 - Dashboard aggregates are read-only and use bounded grouped SQL queries; its seven-day breakdown is zero-filled in the user's local week.
+- `balance_range=all_time` reports the current balance only; week and month ranges add their income-minus-expense net change without changing that balance.
+- Reports use the user's local date for anchor validation and inclusive week/month boundaries; category history retains archived categories and groups uncategorized expenses under a null category ID.
+- The requested 20,000-row EXPLAIN check could not run here because Docker access is denied before a dev PostgreSQL container can be reached; no index was added without a plan.
