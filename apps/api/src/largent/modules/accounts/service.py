@@ -68,6 +68,11 @@ async def read_account(session: AsyncSession, user_id: UUID, account_id: UUID) -
     return await repository.get_account(session, user_id, account_id)
 
 
+async def pool_accounts(session: AsyncSession, user_id: UUID) -> dict[UUID, int]:
+    """Opening balance per account counted in the savings pool (live and not archived)."""
+    return await repository.pool_accounts(session, user_id)
+
+
 async def update_account(
     session: AsyncSession, user_id: UUID, account_id: UUID, changes: dict[str, object]
 ) -> Account | None:

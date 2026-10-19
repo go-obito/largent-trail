@@ -24,8 +24,13 @@ def place_need(current: Sequence[tuple[UUID, int]], need_id: UUID, rank: int) ->
     return ids
 
 
-def progress(target_minor: int, allocated_minor: int) -> tuple[int, int, bool]:
+def need_progress(target_minor: int, allocated_minor: int) -> tuple[int, int, bool]:
     """Return `(remaining_minor, percent, is_complete)`; any excess stays allocated."""
     remaining = max(0, target_minor - allocated_minor)
     percent = min(100, allocated_minor * 100 // target_minor)
     return remaining, percent, allocated_minor >= target_minor
+
+
+def unallocated(savings_pool_minor: int, total_allocated_minor: int) -> int:
+    """Savings not earmarked for any active need; negative means the pool is over-allocated."""
+    return savings_pool_minor - total_allocated_minor

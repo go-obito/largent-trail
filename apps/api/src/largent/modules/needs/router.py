@@ -2,23 +2,40 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from largent.core.clock import utc_now
 from largent.core.errors import ProblemHTTPException
+from largent.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, get_cursor_signing_keys
 from largent.core.tenancy import get_current_user_id, get_tenant_session
-from largent.domain.needs import progress
+from largent.domain.needs import need_progress
 from largent.modules.needs import service
-from largent.modules.needs.schemas import NeedCreate, NeedList, NeedOrder, NeedRead, NeedUpdate
+from largent.modules.needs.schemas import (
+    AllocationCreate,
+    AllocationPage,
+    AllocationRead,
+    AllocationResult,
+    NeedCreate,
+    NeedDeleteQuery,
+    NeedList,
+    NeedOrder,
+    NeedRead,
+    NeedSummary,
+    NeedUpdate,
+)
 from largent.modules.needs.service import NeedView
 
 router = APIRouter()
 
 CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
+CursorKeys = Annotated[list[bytes], Depends(get_cursor_signing_keys)]
+Now = Annotated[datetime, Depends(utc_now)]
 
 
 def _not_found() -> ProblemHTTPException:
@@ -32,7 +49,7 @@ def _not_found() -> ProblemHTTPException:
 
 def _read(view: NeedView) -> NeedRead:
     need = view.need
-    remaining, percent, is_complete = progress(need.target_minor, view.allocated_minor)
+    remaining, percent, is_complete = need_progress(need.target_minor, view.allocated_minor)
     return NeedRead.model_validate(
         {
             "id": need.id,
@@ -78,6 +95,12 @@ async def reorder_needs(
     return _list(await service.reorder_needs(session, user_id, payload.ids))
 
 
+@router.get("/summary", response_model=NeedSummary)
+async def read_summary(user_id: CurrentUserId, session: TenantSession) -> NeedSummary:
+    summary = await service.read_summary(session, user_id)
+    return NeedSummary.model_validate(summary, from_attributes=True)
+
+
 @router.get("/{need_id}", response_model=NeedRead)
 async def read_need(need_id: UUID, user_id: CurrentUserId, session: TenantSession) -> NeedRead:
     view = await service.read_need(session, user_id, need_id)
@@ -96,7 +119,54 @@ async def update_need(
     return _read(view)
 
 
+@router.post("/{need_id}/allocations", response_model=AllocationResult, status_code=201)
+async def create_allocation(
+    need_id: UUID,
+    payload: AllocationCreate,
+    response: Response,
+    user_id: CurrentUserId,
+    session: TenantSession,
+) -> AllocationResult:
+    result = await service.record_allocation(session, user_id, need_id, payload)
+    if result is None:
+        raise _not_found()
+    view, summary, created = result
+    if not created:
+        response.status_code = 200
+    return AllocationResult(
+        need=_read(view), summary=NeedSummary.model_validate(summary, from_attributes=True)
+    )
+
+
+@router.get("/{need_id}/allocations", response_model=AllocationPage)
+async def list_allocations(
+    need_id: UUID,
+    user_id: CurrentUserId,
+    session: TenantSession,
+    signing_keys: CursorKeys,
+    limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
+    cursor: str | None = None,
+) -> AllocationPage:
+    result = await service.list_allocations(
+        session, user_id, need_id, limit=limit, cursor=cursor, signing_keys=signing_keys
+    )
+    if result is None:
+        raise _not_found()
+    rows, next_cursor = result
+    return AllocationPage(
+        items=[AllocationRead.model_validate(row) for row in rows],
+        limit=limit,
+        next_cursor=next_cursor,
+    )
+
+
 @router.delete("/{need_id}", status_code=204)
-async def delete_need(need_id: UUID, user_id: CurrentUserId, session: TenantSession) -> Response:
-    await service.delete_need(session, user_id, need_id)
+async def delete_need(
+    need_id: UUID,
+    user_id: CurrentUserId,
+    session: TenantSession,
+    now: Now,
+    query: Annotated[NeedDeleteQuery, Query()],
+) -> Response:
+    await service.delete_need(session, user_id, need_id, query, now)
     return Response(status_code=204)

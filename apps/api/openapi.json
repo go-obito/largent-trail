@@ -1640,6 +1640,55 @@
         }
       }
     },
+    "/v1/needs/summary": {
+      "get": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Read Summary",
+        "operationId": "read_summary_v1_needs_summary_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/needs/{need_id}": {
       "get": {
         "tags": [
@@ -1783,6 +1832,77 @@
             }
           },
           {
+            "name": "reconcile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "release",
+                    "purchased"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reconcile"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "occurred_on",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred On"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -1802,6 +1922,160 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/needs/{need_id}/allocations": {
+      "post": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Create Allocation",
+        "operationId": "create_allocation_v1_needs__need_id__allocations_post",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AllocationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllocationResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "List Allocations",
+        "operationId": "list_allocations_v1_needs__need_id__allocations_get",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllocationPage"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2059,6 +2333,130 @@
         "type": "object",
         "title": "AccountUpdate",
         "description": "Partial update: omitted fields are untouched, null is not allowed."
+      },
+      "AllocationCreate": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AllocationKind"
+          },
+          "amount_minor": {
+            "type": "integer",
+            "maximum": 1000000000000.0,
+            "minimum": 1.0,
+            "title": "Amount Minor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "amount_minor"
+        ],
+        "title": "AllocationCreate"
+      },
+      "AllocationKind": {
+        "type": "string",
+        "enum": [
+          "allocate",
+          "release"
+        ],
+        "title": "AllocationKind"
+      },
+      "AllocationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "next_cursor"
+        ],
+        "title": "AllocationPage"
+      },
+      "AllocationRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "need_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Need Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AllocationKind"
+          },
+          "amount_minor": {
+            "type": "integer",
+            "title": "Amount Minor"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "need_id",
+          "kind",
+          "amount_minor",
+          "created_at"
+        ],
+        "title": "AllocationRead"
+      },
+      "AllocationResult": {
+        "properties": {
+          "need": {
+            "$ref": "#/components/schemas/NeedRead"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/NeedSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "need",
+          "summary"
+        ],
+        "title": "AllocationResult"
       },
       "BudgetCreate": {
         "properties": {
@@ -2674,6 +3072,44 @@
           "updated_at"
         ],
         "title": "NeedRead"
+      },
+      "NeedSummary": {
+        "properties": {
+          "savings_pool_minor": {
+            "type": "integer",
+            "title": "Savings Pool Minor"
+          },
+          "total_allocated_minor": {
+            "type": "integer",
+            "title": "Total Allocated Minor"
+          },
+          "unallocated_minor": {
+            "type": "integer",
+            "title": "Unallocated Minor"
+          },
+          "over_allocated": {
+            "type": "boolean",
+            "title": "Over Allocated"
+          },
+          "total_target_minor": {
+            "type": "integer",
+            "title": "Total Target Minor"
+          },
+          "total_remaining_minor": {
+            "type": "integer",
+            "title": "Total Remaining Minor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "savings_pool_minor",
+          "total_allocated_minor",
+          "unallocated_minor",
+          "over_allocated",
+          "total_target_minor",
+          "total_remaining_minor"
+        ],
+        "title": "NeedSummary"
       },
       "NeedUpdate": {
         "properties": {

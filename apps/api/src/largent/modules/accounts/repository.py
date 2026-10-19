@@ -54,6 +54,16 @@ async def add_account(session: AsyncSession, account: Account) -> None:
     await session.flush()
 
 
+async def pool_accounts(session: AsyncSession, user_id: UUID) -> dict[UUID, int]:
+    """Opening balance per live, non-archived account."""
+    statement = select(Account.id, Account.opening_balance_minor).where(
+        Account.user_id == user_id,
+        Account.deleted_at.is_(None),
+        Account.is_archived.is_(False),
+    )
+    return {row[0]: row[1] for row in (await session.execute(statement)).all()}
+
+
 async def update_account(
     session: AsyncSession, user_id: UUID, account_id: UUID, changes: dict[str, object]
 ) -> Account | None:

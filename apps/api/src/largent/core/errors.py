@@ -19,6 +19,7 @@ _CONFLICT_DETAILS = {
     "duplicate_name": "An active record already uses this name.",
     "duplicate_budget": "An active budget already exists for this category and period.",
     "id_conflict": "This ID cannot be used.",
+    "allocation_outstanding": "The need still has allocated savings that must be reconciled.",
 }
 
 _RULE_TITLES_AND_DETAILS = {
@@ -28,6 +29,15 @@ _RULE_TITLES_AND_DETAILS = {
     "invalid_date": ("Invalid date", "The date is outside the allowed range."),
     "limit_reached": ("Limit reached", "The maximum number of active records is reached."),
     "invalid_order": ("Invalid order", "The order must list every active record exactly once."),
+    "insufficient_unallocated": (
+        "Insufficient unallocated savings",
+        "The amount exceeds the savings not yet allocated to needs.",
+    ),
+    "exceeds_target": ("Exceeds target", "The amount exceeds what the need still requires."),
+    "exceeds_allocated": (
+        "Exceeds allocated",
+        "The amount exceeds what is currently allocated to the need.",
+    ),
 }
 
 
@@ -95,7 +105,11 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainConflict)
     async def domain_conflict_handler(_: Request, exc: DomainConflict) -> JSONResponse:
         return problem_response(
-            status=409, title="Conflict", detail=_CONFLICT_DETAILS[exc.code], code=exc.code
+            status=409,
+            title="Conflict",
+            detail=_CONFLICT_DETAILS[exc.code],
+            code=exc.code,
+            extensions=exc.extensions,
         )
 
     @app.exception_handler(DomainRuleViolation)

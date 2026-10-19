@@ -158,7 +158,7 @@ Rules:
 
 ## 11. CSV import
 
-Two-step flow, processed by a worker job:
+Two-step flow (preview, then commit), processed synchronously inside the request because files are capped at 1,000 rows (the worker is reserved for later heavy jobs):
 1. **Preview**: upload CSV, detect delimiter and encoding, return headers and sample rows.
 2. **Commit**: client sends column mapping (date, description, amount, optional debit/credit columns) plus per-row category choices; server validates and inserts.
 
@@ -175,6 +175,9 @@ Constraints carried over from the prototype: **max 2 MB, max 1,000 rows**. Rejec
 - Database backups with a **tested** restore procedure (documented in `docs/runbooks/`).
 
 ## 13. Testing and quality gates
+
+**Fast mode (current policy for feature development, B5 onward):** do **not** write new tests unless a prompt explicitly asks for one. The existing suite and the RLS guardrail test must stay green, and `make check` runs once per checkpoint. Everything below describes the full policy that applies again before public launch, when a test backfill happens as part of B10 hardening (tenant isolation for every module, domain-logic unit tests, sync and import edge cases). Do not delete or weaken existing tests to make a build pass.
+
 
 `make check` must pass before any commit: `ruff format --check`, `ruff check`, `mypy --strict`, unit and integration tests.
 
@@ -212,7 +215,7 @@ A task is done only when: code is merged-ready, `make check` passes, new behavio
 
 ## 17. Build order (backend)
 
-B0 repo, tooling, config, logging, errors, DB and Redis connectivity, Docker, CI, health checks, database roles → B1 tenant plumbing (request-scoped DB session with `SET LOCAL app.user_id`, base tenant-table mixin, RLS policy helper, tenant-isolation test harness) → B2 auth verification and user provisioning → B3 accounts and categories → B4 transactions → B5 budgets and daily-target domain logic → B6 priority needs (B6a core and allocations, B6b link import) → B7 reports and dashboard aggregates → B8 sync push/pull → B9 CSV import worker → B10 export, deletion, rate limits, hardening → B11 deploy pipeline and runbooks.
+B0 repo, tooling, config, logging, errors, DB and Redis connectivity, Docker, CI, health checks, database roles → B1 tenant plumbing (request-scoped DB session with `SET LOCAL app.user_id`, base tenant-table mixin, RLS policy helper, tenant-isolation test harness) → B2 auth verification and user provisioning → B3 accounts and categories → B4 transactions → B5 budgets and daily-target domain logic → B6 priority needs (B6a core and allocations, B6b link import) → B7 reports and dashboard aggregates → B8 sync push/pull → B9 CSV import → B10 export, deletion, rate limits, hardening → B11 deploy pipeline and runbooks.
 
 Individual prompts will reference these steps. Do not start a later step before the current one is done and green.
 
@@ -226,9 +229,9 @@ Update this checklist at the end of every step.
 - [x] B3 accounts and categories
 - [x] B4 transactions
 - [x] B5 budgets and daily-target logic
-- [ ] B6 priority needs
+- [ ] B6 priority needs (B6a core and allocations complete; B6b link import pending)
 - [ ] B7 reports and dashboard aggregates
 - [ ] B8 sync push/pull
-- [ ] B9 CSV import worker
+- [ ] B9 CSV import
 - [ ] B10 export, deletion, rate limits, hardening
 - [ ] B11 deploy pipeline and runbooks
