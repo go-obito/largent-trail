@@ -26,6 +26,8 @@ _RULE_TITLES_AND_DETAILS = {
     "archived_reference": ("Archived reference", "The referenced record is archived."),
     "kind_mismatch": ("Kind mismatch", "The category kind is not valid for this record."),
     "invalid_date": ("Invalid date", "The date is outside the allowed range."),
+    "limit_reached": ("Limit reached", "The maximum number of active records is reached."),
+    "invalid_order": ("Invalid order", "The order must list every active record exactly once."),
 }
 
 

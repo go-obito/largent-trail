@@ -1474,6 +1474,347 @@
           }
         }
       }
+    },
+    "/v1/needs": {
+      "get": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "List Needs",
+        "operationId": "list_needs_v1_needs_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Create Need",
+        "operationId": "create_need_v1_needs_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/needs/order": {
+      "put": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Reorder Needs",
+        "operationId": "reorder_needs_v1_needs_order_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/needs/{need_id}": {
+      "get": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Read Need",
+        "operationId": "read_need_v1_needs__need_id__get",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Update Need",
+        "operationId": "update_need_v1_needs__need_id__patch",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Delete Need",
+        "operationId": "delete_need_v1_needs__need_id__delete",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2134,6 +2475,262 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "NeedCreate": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "target_minor": {
+            "type": "integer",
+            "maximum": 1000000000000.0,
+            "minimum": 1.0,
+            "title": "Target Minor"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NeedPriority",
+            "default": "medium"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 280,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "target_minor"
+        ],
+        "title": "NeedCreate"
+      },
+      "NeedList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NeedRead"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "NeedList"
+      },
+      "NeedOrder": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "title": "NeedOrder",
+        "description": "The complete ordered list of the user's active need IDs."
+      },
+      "NeedPriority": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "NeedPriority"
+      },
+      "NeedRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "target_minor": {
+            "type": "integer",
+            "title": "Target Minor"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NeedPriority"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "allocated_minor": {
+            "type": "integer",
+            "title": "Allocated Minor"
+          },
+          "remaining_minor": {
+            "type": "integer",
+            "title": "Remaining Minor"
+          },
+          "percent": {
+            "type": "integer",
+            "title": "Percent"
+          },
+          "is_complete": {
+            "type": "boolean",
+            "title": "Is Complete"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "target_minor",
+          "priority",
+          "position",
+          "note",
+          "source_url",
+          "allocated_minor",
+          "remaining_minor",
+          "percent",
+          "is_complete",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "NeedRead"
+      },
+      "NeedUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "target_minor": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000000000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Minor"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NeedPriority"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 280,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "NeedUpdate",
+        "description": "Partial update; `note` may be null to clear it."
       },
       "TransactionCreate": {
         "properties": {

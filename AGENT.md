@@ -71,7 +71,7 @@ largent/
         │   │   ├── categories/
         │   │   ├── transactions/
         │   │   ├── budgets/
-        │   │   ├── wishlist/
+        │   │   ├── needs/
         │   │   ├── reports/
         │   │   ├── imports/
         │   │   └── sync/
@@ -112,7 +112,7 @@ Reference test cases (must exist as unit tests): weekly budgets ₵78.00 + ₵20
 
 **Budgets.** Per expense category, `period` is `weekly` or `monthly`, `limit_minor` > 0, one active budget per (user, category, period). Progress and near/over-limit status are computed, not stored.
 
-**Wishlist ("prioritized needs").** Ordered list per user: name, `amount_minor`, `position`, optional `note`, optional `purchased_at`. Reordering uses fractional or gapless positions inside a single transaction. Total planned = sum of unpurchased items.
+**Priority Needs.** Per user, an ordered list of things to buy: name, `target_minor`, `priority` (`high | medium | low`), `position`, optional note and source URL. Display order is `position`; new items and priority changes are auto-placed after the last item of equal or higher priority, and a manual reorder may override that. Savings are tracked with an **append-only allocation ledger** (`allocate` / `release`, positive amounts). `allocated_minor` per need is derived from the ledger. `savings_pool = total balance of non-archived accounts`; `unallocated = savings_pool − sum(allocated of active needs)`. Allocating moves money inside the pool and never changes total savings (no double counting). Allocation cannot exceed `unallocated` or the need's remaining amount. A need is complete when `allocated_minor >= target_minor`; completed needs stay visible with progress capped at 100% until deleted. Deleting a need with allocated savings requires reconciliation: `release` (back to unallocated) or `purchased` (release plus an expense transaction for that amount).
 
 ## 7. Multi-tenancy and data privacy
 
@@ -212,7 +212,7 @@ A task is done only when: code is merged-ready, `make check` passes, new behavio
 
 ## 17. Build order (backend)
 
-B0 repo, tooling, config, logging, errors, DB and Redis connectivity, Docker, CI, health checks, database roles → B1 tenant plumbing (request-scoped DB session with `SET LOCAL app.user_id`, base tenant-table mixin, RLS policy helper, tenant-isolation test harness) → B2 auth verification and user provisioning → B3 accounts and categories → B4 transactions → B5 budgets and daily-target domain logic → B6 wishlist → B7 reports and dashboard aggregates → B8 sync push/pull → B9 CSV import worker → B10 export, deletion, rate limits, hardening → B11 deploy pipeline and runbooks.
+B0 repo, tooling, config, logging, errors, DB and Redis connectivity, Docker, CI, health checks, database roles → B1 tenant plumbing (request-scoped DB session with `SET LOCAL app.user_id`, base tenant-table mixin, RLS policy helper, tenant-isolation test harness) → B2 auth verification and user provisioning → B3 accounts and categories → B4 transactions → B5 budgets and daily-target domain logic → B6 priority needs (B6a core and allocations, B6b link import) → B7 reports and dashboard aggregates → B8 sync push/pull → B9 CSV import worker → B10 export, deletion, rate limits, hardening → B11 deploy pipeline and runbooks.
 
 Individual prompts will reference these steps. Do not start a later step before the current one is done and green.
 
@@ -224,9 +224,9 @@ Update this checklist at the end of every step.
 - [x] B1 tenant plumbing
 - [x] B2 auth verification and user provisioning
 - [x] B3 accounts and categories
-- [x] B4 transactions (B4a table and CRUD API; B4b account balances, delete rules; see ADR 0005)
-- [x] B5 budgets and daily-target logic (see ADR 0006)
-- [ ] B6 wishlist
+- [x] B4 transactions
+- [x] B5 budgets and daily-target logic
+- [ ] B6 priority needs
 - [ ] B7 reports and dashboard aggregates
 - [ ] B8 sync push/pull
 - [ ] B9 CSV import worker
