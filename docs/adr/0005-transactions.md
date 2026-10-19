@@ -66,11 +66,29 @@ Order is `occurred_on DESC, created_at DESC, id DESC`, served by a partial index
 dated and undated cursors are not interchangeable, so a cursor from another list is
 rejected with 400.
 
+## Balances and delete rules (B4b)
+
+**Balance.** Every account response carries `balance_minor`: opening balance plus the
+income total minus the expense total of the account's live (not soft-deleted)
+transactions, computed per request in one grouped query and never stored (§5.5). It is a
+signed integer, because expenses may exceed funds. Archived accounts keep their balance.
+The arithmetic is `domain/money.account_balance`; the accounts router composes it with
+`transactions.service.account_totals`, so no module touches another's repository.
+
+**Deleting an account or category is always allowed.** Soft-deleting a parent never
+blocks and never touches its transactions: they stay readable, listable and editable,
+and still count toward the balance. A deleted account or category can no longer be
+referenced by new transactions or by a PATCH that changes the reference
+(`invalid_reference`). Because of this, no reassignment endpoint exists: a client that
+wants the transactions elsewhere changes `account_id` or `category_id` with the normal
+transaction PATCH. A bulk reassignment can be added later if a screen needs it.
+
 ## Consequences
 
 - Cross-tenant references and kind mismatches fail in Postgres even if a service has
   a bug.
 - Category kind can never be edited; a UI must offer "create a new category" instead.
-- B4b (balances, account and category delete rules, reassignment) builds on these FKs
-  without changing them. Soft-deleting a parent leaves its transactions intact.
+- Soft-deleting a parent leaves its transactions intact.
+- Balances are recomputed on each read; if this proves slow at scale, a derived
+  cache needs a new ADR.
 - Notes and amounts are never logged; only ids and status codes appear in logs.

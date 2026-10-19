@@ -1266,6 +1266,10 @@
             "type": "integer",
             "title": "Opening Balance Minor"
           },
+          "balance_minor": {
+            "type": "integer",
+            "title": "Balance Minor"
+          },
           "currency": {
             "type": "string",
             "const": "GHS",
@@ -1296,6 +1300,7 @@
           "name",
           "type",
           "opening_balance_minor",
+          "balance_minor",
           "currency",
           "is_archived",
           "position",

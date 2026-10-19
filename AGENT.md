@@ -224,7 +224,7 @@ Update this checklist at the end of every step.
 - [x] B1 tenant plumbing
 - [x] B2 auth verification and user provisioning
 - [x] B3 accounts and categories
-- [ ] B4 transactions (B4a done: table and CRUD API; B4b balances, delete rules and reassignment pending)
+- [x] B4 transactions (B4a table and CRUD API; B4b account balances, delete rules; see ADR 0005)
 - [ ] B5 budgets and daily-target logic
 - [ ] B6 wishlist
 - [ ] B7 reports and dashboard aggregates
