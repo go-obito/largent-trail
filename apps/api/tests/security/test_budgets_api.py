@@ -412,6 +412,70 @@ async def test_an_existing_budget_survives_its_category_being_archived_or_delete
     assert edited.json()["limit_minor"] == 100
 
 
+async def test_deleting_a_category_soft_deletes_all_its_budgets_only(
+    api_client: ApiClientFactory, as_tenant: TenantSessionFactory, tenant_a: UUID, tenant_b: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    other_client = await api_client(tenant_b, now=NOW)
+    doomed = await make_category(client, "Doomed")
+    kept = await make_category(client, "Kept")
+    weekly = await make_budget(client, doomed)
+    monthly = await make_budget(client, doomed, period="monthly", is_archived=True)
+    survivor = await make_budget(client, kept)
+    foreign = await make_budget(other_client, await make_category(other_client, "Doomed"))
+
+    assert (await client.delete(f"/v1/categories/{doomed}")).status_code == 204
+
+    for budget in (weekly, monthly):
+        assert (await client.get(f"/v1/budgets/{budget['id']}")).status_code == 404
+    for params in ({}, {"include_archived": True}):
+        listed = (await client.get("/v1/budgets", params=params)).json()["items"]
+        assert [item["id"] for item in listed] == [survivor["id"]]
+    assert (await other_client.get(f"/v1/budgets/{foreign['id']}")).status_code == 200
+    async with as_tenant(tenant_a) as session:
+        rows = (
+            await session.scalars(select(Budget).where(Budget.category_id == UUID(doomed)))
+        ).all()
+        assert len(rows) == 2
+        assert all(row.deleted_at is not None for row in rows)
+    # Deleting again is a no-op.
+    assert (await client.delete(f"/v1/categories/{doomed}")).status_code == 204
+
+
+async def test_archiving_a_category_keeps_its_budgets(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    category_id = await make_category(client)
+    budget = await make_budget(client, category_id)
+
+    await client.patch(f"/v1/categories/{category_id}", json={"is_archived": True})
+
+    listed = (await client.get("/v1/budgets")).json()["items"]
+    assert [item["id"] for item in listed] == [budget["id"]]
+
+
+async def test_moving_a_transaction_to_another_category_does_not_move_budgets(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client)
+    source = await make_category(client, "Source")
+    target = await make_category(client, "Target")
+    budget = await make_budget(client, source)
+    transaction_id = await spend(client, account_id, source, day(), 500)
+
+    moved = await client.patch(f"/v1/transactions/{transaction_id}", json={"category_id": target})
+    assert moved.status_code == 200
+    assert (await client.delete(f"/v1/categories/{source}")).status_code == 204
+
+    assert (await client.get("/v1/budgets")).json()["items"] == []
+    assert (await client.get(f"/v1/budgets/{budget['id']}")).status_code == 404
+    kept = await client.get(f"/v1/transactions/{transaction_id}")
+    assert kept.status_code == 200
+    assert kept.json()["category_id"] == target
+
+
 async def test_spent_covers_this_week_or_month_to_date(
     api_client: ApiClientFactory, tenant_a: UUID
 ) -> None:

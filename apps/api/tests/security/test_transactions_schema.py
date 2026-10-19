@@ -382,7 +382,7 @@ async def test_migration_from_the_b3_revision_goes_up_down_and_up(
 
     await _alembic(b3_database, "upgrade", "head")
     assert await _transactions_state(b3_database) == (True, True)
-    await _alembic(b3_database, "downgrade", "-1")
+    await _alembic(b3_database, "downgrade", B3_REVISION)
     assert await _transactions_state(b3_database) == (False, False)
     await _alembic(b3_database, "upgrade", "head")
     assert await _transactions_state(b3_database) == (True, True)

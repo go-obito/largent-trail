@@ -99,5 +99,9 @@ async def update_category(
 
 
 async def delete_category(session: AsyncSession, user_id: UUID, category_id: UUID) -> None:
-    """Soft delete; deleting a missing, foreign or already-deleted category is a no-op."""
+    """Soft delete the category and its budgets together; a missing or foreign id is a no-op."""
+    # Imported here because budgets.service imports this module.
+    from largent.modules.budgets import service as budgets_service
+
     await repository.soft_delete_category(session, user_id, category_id)
+    await budgets_service.delete_budgets_for_category(session, user_id, category_id)

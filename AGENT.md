@@ -225,7 +225,7 @@ Update this checklist at the end of every step.
 - [x] B2 auth verification and user provisioning
 - [x] B3 accounts and categories
 - [x] B4 transactions (B4a table and CRUD API; B4b account balances, delete rules; see ADR 0005)
-- [ ] B5 budgets and daily-target logic
+- [x] B5 budgets and daily-target logic (see ADR 0006)
 - [ ] B6 wishlist
 - [ ] B7 reports and dashboard aggregates
 - [ ] B8 sync push/pull

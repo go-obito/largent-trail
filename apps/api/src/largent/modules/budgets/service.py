@@ -146,3 +146,10 @@ async def update_budget(
 async def delete_budget(session: AsyncSession, user_id: UUID, budget_id: UUID) -> None:
     """Soft delete; deleting a missing, foreign or already-deleted budget is a no-op."""
     await repository.soft_delete_budget(session, user_id, budget_id)
+
+
+async def delete_budgets_for_category(
+    session: AsyncSession, user_id: UUID, category_id: UUID
+) -> None:
+    """Soft delete every live budget of a category; called when the category is deleted."""
+    await repository.soft_delete_budgets_for_category(session, user_id, category_id)

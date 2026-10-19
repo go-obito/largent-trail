@@ -69,6 +69,21 @@ async def update_budget(
     return (await session.scalars(statement)).one_or_none()
 
 
+async def soft_delete_budgets_for_category(
+    session: AsyncSession, user_id: UUID, category_id: UUID
+) -> None:
+    await session.execute(
+        update(Budget)
+        .where(
+            Budget.user_id == user_id,
+            Budget.category_id == category_id,
+            Budget.deleted_at.is_(None),
+        )
+        .values(deleted_at=func.now(), updated_at=func.now())
+        .execution_options(synchronize_session=False)
+    )
+
+
 async def soft_delete_budget(session: AsyncSession, user_id: UUID, budget_id: UUID) -> None:
     await session.execute(
         update(Budget)
