@@ -148,6 +148,27 @@ def build_dated_page[T: DatedKeysetRow](
     return page, encode_cursor(cursor, keys)
 
 
+class CreatedKeysetRow(Protocol):
+    """A row ordered by (created_at, id), oldest first."""
+
+    @property
+    def created_at(self) -> datetime: ...
+
+    @property
+    def id(self) -> UUID: ...
+
+
+def build_created_page[T: CreatedKeysetRow](
+    rows: Sequence[T], limit: int, keys: Sequence[bytes]
+) -> tuple[list[T], str | None]:
+    """Like `build_page`, for rows without a position, keyed by (created_at, id)."""
+    page = list(rows[:limit])
+    if len(rows) <= limit or not page:
+        return page, None
+    last = page[-1]
+    return page, encode_cursor(PageCursor(0, last.created_at, last.id), keys)
+
+
 def _parse_payload(payload: bytes, *, dated: bool) -> PageCursor:
     try:
         raw: object = json.loads(payload)

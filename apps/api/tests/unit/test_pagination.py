@@ -11,6 +11,7 @@ import pytest
 from largent.core.pagination import (
     InvalidCursor,
     PageCursor,
+    build_created_page,
     build_dated_page,
     build_page,
     decode_cursor,
@@ -211,6 +212,32 @@ def test_build_dated_page_has_no_cursor_on_the_last_page(count: int) -> None:
     rows = [DatedRow(date(2026, 10, 18), CURSOR.created_at, UUID(int=i + 1)) for i in range(count)]
 
     page, cursor = build_dated_page(rows, 3, [KEY])
+
+    assert len(page) == count
+    assert cursor is None
+
+
+@dataclass(frozen=True)
+class CreatedRow:
+    created_at: datetime
+    id: UUID
+
+
+def test_build_created_page_signs_a_position_free_cursor_for_the_last_row() -> None:
+    rows = [CreatedRow(CURSOR.created_at, UUID(int=i + 1)) for i in range(4)]
+
+    page, cursor = build_created_page(rows, 3, [KEY])
+
+    assert page == rows[:3]
+    assert cursor is not None
+    assert decode_cursor(cursor, [KEY]) == PageCursor(0, CURSOR.created_at, rows[2].id)
+
+
+@pytest.mark.parametrize("count", [0, 1, 3])
+def test_build_created_page_has_no_cursor_on_the_last_page(count: int) -> None:
+    rows = [CreatedRow(CURSOR.created_at, UUID(int=i + 1)) for i in range(count)]
+
+    page, cursor = build_created_page(rows, 3, [KEY])
 
     assert len(page) == count
     assert cursor is None

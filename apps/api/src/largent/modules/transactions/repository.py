@@ -89,6 +89,42 @@ async def sum_by_account(
     return {row[0]: (int(row[1]), int(row[2])) for row in rows}
 
 
+async def sum_expenses_by_category(
+    session: AsyncSession,
+    user_id: UUID,
+    category_ids: Sequence[UUID],
+    *,
+    week_from: date,
+    month_from: date,
+    until: date,
+) -> dict[UUID, tuple[int, int]]:
+    """Return `(week_to_date_minor, month_to_date_minor)` per category in one grouped query."""
+    if not category_ids:
+        return {}
+
+    def since(start: date) -> ColumnElement[int]:
+        return func.coalesce(
+            func.sum(case((Transaction.occurred_on >= start, Transaction.amount_minor), else_=0)),
+            0,
+        )
+
+    statement = (
+        select(Transaction.category_id, since(week_from), since(month_from))
+        .where(
+            Transaction.user_id == user_id,
+            Transaction.category_id.in_(category_ids),
+            Transaction.kind == TransactionKind.EXPENSE,
+            Transaction.deleted_at.is_(None),
+            Transaction.occurred_on >= min(week_from, month_from),
+            Transaction.occurred_on <= until,
+        )
+        .group_by(Transaction.category_id)
+    )
+    rows = (await session.execute(statement)).all()
+    # The IN filter excludes uncategorized rows; the check only narrows the column's type.
+    return {row[0]: (int(row[1]), int(row[2])) for row in rows if row[0] is not None}
+
+
 async def add_transaction(session: AsyncSession, transaction: Transaction) -> None:
     session.add(transaction)
     await session.flush()

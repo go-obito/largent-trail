@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-ConflictCode = Literal["duplicate_name", "id_conflict"]
+ConflictCode = Literal["duplicate_name", "duplicate_budget", "id_conflict"]
 RuleCode = Literal["invalid_reference", "archived_reference", "kind_mismatch", "invalid_date"]
 
 

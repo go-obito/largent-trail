@@ -53,6 +53,7 @@ async def test_every_real_route_outside_public_allowlist_requires_auth() -> None
         ("accounts", "account_id"),
         ("categories", "category_id"),
         ("transactions", "transaction_id"),
+        ("budgets", "budget_id"),
     ):
         for method, path in (
             ("GET", f"/v1/{resource}"),

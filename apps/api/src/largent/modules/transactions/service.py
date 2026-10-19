@@ -167,3 +167,18 @@ async def account_totals(
 ) -> dict[UUID, tuple[int, int]]:
     """Income and expense totals per account; accounts without transactions are absent."""
     return await repository.sum_by_account(session, user_id, account_ids)
+
+
+async def expense_totals_by_category(
+    session: AsyncSession,
+    user_id: UUID,
+    category_ids: Sequence[UUID],
+    *,
+    week_from: date,
+    month_from: date,
+    until: date,
+) -> dict[UUID, tuple[int, int]]:
+    """Week-to-date and month-to-date expenses per category; categories without any are absent."""
+    return await repository.sum_expenses_by_category(
+        session, user_id, category_ids, week_from=week_from, month_from=month_from, until=until
+    )

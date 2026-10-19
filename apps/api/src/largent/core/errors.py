@@ -17,13 +17,14 @@ PROBLEM_MEDIA_TYPE = "application/problem+json"
 
 _CONFLICT_DETAILS = {
     "duplicate_name": "An active record already uses this name.",
+    "duplicate_budget": "An active budget already exists for this category and period.",
     "id_conflict": "This ID cannot be used.",
 }
 
 _RULE_TITLES_AND_DETAILS = {
     "invalid_reference": ("Invalid reference", "The referenced record cannot be used."),
     "archived_reference": ("Archived reference", "The referenced record is archived."),
-    "kind_mismatch": ("Kind mismatch", "The category kind does not match the transaction kind."),
+    "kind_mismatch": ("Kind mismatch", "The category kind is not valid for this record."),
     "invalid_date": ("Invalid date", "The date is outside the allowed range."),
 }
 

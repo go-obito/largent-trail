@@ -27,6 +27,7 @@ from largent.core.redis import check_redis, create_redis
 from largent.core.security import ClerkAuthProvider
 from largent.core.tenancy import get_current_user_id
 from largent.modules.accounts.router import router as accounts_router
+from largent.modules.budgets.router import router as budgets_router
 from largent.modules.categories.router import router as categories_router
 from largent.modules.transactions.router import router as transactions_router
 from largent.modules.users.router import router as users_router
@@ -36,6 +37,7 @@ api_router.include_router(users_router)
 api_router.include_router(accounts_router, prefix="/accounts", tags=["accounts"])
 api_router.include_router(categories_router, prefix="/categories", tags=["categories"])
 api_router.include_router(transactions_router, prefix="/transactions", tags=["transactions"])
+api_router.include_router(budgets_router, prefix="/budgets", tags=["budgets"])
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
