@@ -19,7 +19,7 @@ from pydantic import (
 from largent.core.ids import ClientId
 from largent.core.strings import normalize_text
 from largent.domain.money import MAX_AMOUNT_MINOR, Currency
-from largent.modules.accounts.models import AccountType
+from largent.modules.accounts.models import Account, AccountType
 
 AccountName = Annotated[str, BeforeValidator(normalize_text), Field(min_length=1, max_length=60)]
 MinorAmount = Annotated[StrictInt, Field(ge=0, le=MAX_AMOUNT_MINOR)]
@@ -60,17 +60,24 @@ class AccountUpdate(BaseModel):
 
 
 class AccountRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: UUID
     name: str
     type: AccountType
     opening_balance_minor: int
+    balance_minor: int
     currency: Currency
     is_archived: bool
     position: int
     created_at: datetime
     updated_at: datetime
+
+    @classmethod
+    def from_account(cls, account: Account, balance_minor: int) -> AccountRead:
+        columns = {
+            name: getattr(account, name) for name in cls.model_fields if name != "balance_minor"
+        }
+        columns["balance_minor"] = balance_minor
+        return cls.model_validate(columns)
 
 
 class AccountPage(BaseModel):

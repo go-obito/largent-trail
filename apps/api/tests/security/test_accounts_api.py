@@ -54,6 +54,7 @@ async def test_create_read_update_list_and_soft_delete(
         "name",
         "type",
         "opening_balance_minor",
+        "balance_minor",
         "currency",
         "is_archived",
         "position",

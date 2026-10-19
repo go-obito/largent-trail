@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import func, select, tuple_, update
+from sqlalchemy import ColumnElement, case, func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.pagination import PageCursor
@@ -57,6 +58,35 @@ async def list_transactions(
         Transaction.occurred_on.desc(), Transaction.created_at.desc(), Transaction.id.desc()
     ).limit(limit)
     return list((await session.scalars(statement)).all())
+
+
+async def sum_by_account(
+    session: AsyncSession, user_id: UUID, account_ids: Sequence[UUID]
+) -> dict[UUID, tuple[int, int]]:
+    """Return `(income_minor, expense_minor)` per account over live transactions."""
+    if not account_ids:
+        return {}
+
+    def total(kind: TransactionKind) -> ColumnElement[int]:
+        return func.coalesce(
+            func.sum(case((Transaction.kind == kind, Transaction.amount_minor), else_=0)), 0
+        )
+
+    statement = (
+        select(
+            Transaction.account_id,
+            total(TransactionKind.INCOME),
+            total(TransactionKind.EXPENSE),
+        )
+        .where(
+            Transaction.user_id == user_id,
+            Transaction.account_id.in_(account_ids),
+            Transaction.deleted_at.is_(None),
+        )
+        .group_by(Transaction.account_id)
+    )
+    rows = (await session.execute(statement)).all()
+    return {row[0]: (int(row[1]), int(row[2])) for row in rows}
 
 
 async def add_transaction(session: AsyncSession, transaction: Transaction) -> None:

@@ -4,7 +4,22 @@ from __future__ import annotations
 
 import pytest
 
-from largent.domain.money import MAX_AMOUNT_MINOR, format_ghs, validate_minor
+from largent.domain.money import MAX_AMOUNT_MINOR, account_balance, format_ghs, validate_minor
+
+
+@pytest.mark.parametrize(
+    ("opening", "income", "expense", "expected"),
+    [
+        (0, 0, 0, 0),
+        (10_000, 2_500, 1_500, 11_000),
+        (100, 0, 1_300, -1_200),
+        (0, 3 * MAX_AMOUNT_MINOR, 0, 3 * MAX_AMOUNT_MINOR),
+    ],
+)
+def test_account_balance_is_opening_plus_income_minus_expenses(
+    opening: int, income: int, expense: int, expected: int
+) -> None:
+    assert account_balance(opening, income, expense) == expected
 
 
 @pytest.mark.parametrize("value", [True, False, 1.0, "1", None, -1, MAX_AMOUNT_MINOR + 1])

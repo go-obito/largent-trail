@@ -11,14 +11,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from largent.core.errors import ProblemHTTPException
 from largent.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, get_cursor_signing_keys
 from largent.core.tenancy import get_current_user_id, get_tenant_session
+from largent.domain.money import account_balance
 from largent.modules.accounts import service
+from largent.modules.accounts.models import Account
 from largent.modules.accounts.schemas import AccountCreate, AccountPage, AccountRead, AccountUpdate
+from largent.modules.transactions import service as transactions_service
 
 router = APIRouter()
 
 CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
 CursorKeys = Annotated[list[bytes], Depends(get_cursor_signing_keys)]
+
+
+async def _with_balances(
+    session: AsyncSession, user_id: UUID, accounts: list[Account]
+) -> list[AccountRead]:
+    totals = await transactions_service.account_totals(
+        session, user_id, [account.id for account in accounts]
+    )
+    return [
+        AccountRead.from_account(
+            account, account_balance(account.opening_balance_minor, *totals.get(account.id, (0, 0)))
+        )
+        for account in accounts
+    ]
 
 
 def _not_found() -> ProblemHTTPException:
@@ -48,7 +65,7 @@ async def list_accounts(
         signing_keys=signing_keys,
     )
     return AccountPage(
-        items=[AccountRead.model_validate(account) for account in accounts],
+        items=await _with_balances(session, user_id, accounts),
         limit=limit,
         next_cursor=next_cursor,
     )
@@ -61,7 +78,7 @@ async def create_account(
     account, created = await service.create_account(session, user_id, payload)
     if not created:
         response.status_code = 200
-    return AccountRead.model_validate(account)
+    return (await _with_balances(session, user_id, [account]))[0]
 
 
 @router.get("/{account_id}", response_model=AccountRead)
@@ -71,7 +88,7 @@ async def read_account(
     account = await service.read_account(session, user_id, account_id)
     if account is None:
         raise _not_found()
-    return AccountRead.model_validate(account)
+    return (await _with_balances(session, user_id, [account]))[0]
 
 
 @router.patch("/{account_id}", response_model=AccountRead)
@@ -83,7 +100,7 @@ async def update_account(
     )
     if account is None:
         raise _not_found()
-    return AccountRead.model_validate(account)
+    return (await _with_balances(session, user_id, [account]))[0]
 
 
 @router.delete("/{account_id}", status_code=204)

@@ -985,3 +985,167 @@ async def test_scripted_walkthrough_with_bearer_tokens(
     assert deleted.status_code == 204
     assert after.json()["items"] == []
     assert anonymous.status_code == 401
+
+
+async def balance_of(client: httpx.AsyncClient, account_id: str) -> int:
+    response = await client.get(f"/v1/accounts/{account_id}")
+    assert response.status_code == 200, response.text
+    return int(response.json()["balance_minor"])
+
+
+async def test_a_new_account_balance_is_its_opening_balance(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+
+    created = await client.post(
+        "/v1/accounts", json={"name": "Wallet", "type": "cash", "opening_balance_minor": 5000}
+    )
+
+    assert created.status_code == 201
+    assert created.json()["balance_minor"] == 5000
+
+
+async def test_the_balance_is_opening_plus_income_minus_expenses(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client, opening_balance_minor=10_000)
+    await make_transaction(client, account_id, kind="income", amount_minor=2_500)
+    await make_transaction(client, account_id, kind="expense", amount_minor=1_300)
+    await make_transaction(client, account_id, kind="expense", amount_minor=200)
+
+    assert await balance_of(client, account_id) == 11_000
+
+
+async def test_the_balance_can_be_negative(api_client: ApiClientFactory, tenant_a: UUID) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client, opening_balance_minor=100)
+    await make_transaction(client, account_id, kind="expense", amount_minor=1_300)
+
+    assert await balance_of(client, account_id) == -1_200
+
+
+async def test_the_balance_follows_edits_and_deletes_of_transactions(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client, opening_balance_minor=1_000)
+    first = await make_transaction(client, account_id, kind="expense", amount_minor=300)
+    second = await make_transaction(client, account_id, kind="income", amount_minor=500)
+    assert await balance_of(client, account_id) == 1_200
+
+    await client.patch(f"/v1/transactions/{first['id']}", json={"amount_minor": 100})
+    assert await balance_of(client, account_id) == 1_400
+    await client.patch(f"/v1/accounts/{account_id}", json={"opening_balance_minor": 0})
+    assert await balance_of(client, account_id) == 400
+    await client.delete(f"/v1/transactions/{second['id']}")
+    assert await balance_of(client, account_id) == -100
+
+
+async def test_moving_a_transaction_moves_its_balance_effect(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    source = await make_account(client, "Source")
+    target = await make_account(client, "Target")
+    transaction = await make_transaction(client, source, kind="income", amount_minor=700)
+
+    moved = await client.patch(f"/v1/transactions/{transaction['id']}", json={"account_id": target})
+
+    assert moved.status_code == 200
+    assert await balance_of(client, source) == 0
+    assert await balance_of(client, target) == 700
+
+
+async def test_list_returns_each_accounts_own_balance(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    busy = await make_account(client, "Busy", position=0, opening_balance_minor=50)
+    idle = await make_account(client, "Idle", position=1, opening_balance_minor=75)
+    await make_transaction(client, busy, kind="income", amount_minor=1_000)
+
+    items = (await client.get("/v1/accounts")).json()["items"]
+
+    assert [(item["id"], item["balance_minor"]) for item in items] == [(busy, 1_050), (idle, 75)]
+
+
+async def test_an_archived_account_keeps_its_balance(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client)
+    await make_transaction(client, account_id, kind="income", amount_minor=900)
+
+    archived = await client.patch(f"/v1/accounts/{account_id}", json={"is_archived": True})
+
+    assert archived.json()["balance_minor"] == 900
+
+
+async def test_an_idempotent_replay_reports_the_current_balance(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    payload = {"id": str(new_uuid7()), "name": "Wallet", "type": "cash"}
+    created = await client.post("/v1/accounts", json=payload)
+    await make_transaction(client, payload["id"], kind="income", amount_minor=400)
+
+    replayed = await client.post("/v1/accounts", json=payload)
+
+    assert (created.status_code, replayed.status_code) == (201, 200)
+    assert replayed.json()["balance_minor"] == 400
+
+
+async def test_other_tenants_transactions_never_affect_a_balance(
+    api_client: ApiClientFactory, tenant_a: UUID, tenant_b: UUID
+) -> None:
+    client_a = await api_client(tenant_a, now=NOW)
+    client_b = await api_client(tenant_b, now=NOW)
+    mine = await make_account(client_a, "A wallet")
+    theirs = await make_account(client_b, "B wallet")
+    await make_transaction(client_b, theirs, kind="income", amount_minor=9_999)
+    await make_transaction(client_a, mine, kind="income", amount_minor=100)
+
+    assert await balance_of(client_a, mine) == 100
+    assert (await client_a.get(f"/v1/accounts/{theirs}")).status_code == 404
+    assert await balance_of(client_b, theirs) == 9_999
+
+
+async def test_deleting_an_account_leaves_its_transactions_intact(
+    api_client: ApiClientFactory, as_tenant: TenantSessionFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client)
+    transaction = await make_transaction(client, account_id, kind="income", amount_minor=800)
+
+    deleted = await client.delete(f"/v1/accounts/{account_id}")
+
+    assert deleted.status_code == 204
+    assert (await client.get(f"/v1/accounts/{account_id}")).status_code == 404
+    assert (await client.get(f"/v1/transactions/{transaction['id']}")).json() == transaction
+    assert [i["id"] for i in (await client.get("/v1/transactions")).json()["items"]] == [
+        transaction["id"]
+    ]
+    new = await client.post("/v1/transactions", json=body(account_id))
+    assert new.status_code == 422
+    assert new.json()["code"] == "invalid_reference"
+    async with as_tenant(tenant_a) as session:
+        row = await get_transaction(session, tenant_a, UUID(str(transaction["id"])))
+        assert row is not None
+        assert row.deleted_at is None
+
+
+async def test_deleting_a_category_leaves_its_transactions_intact(
+    api_client: ApiClientFactory, tenant_a: UUID
+) -> None:
+    client = await api_client(tenant_a, now=NOW)
+    account_id = await make_account(client)
+    category_id = await make_category(client)
+    transaction = await make_transaction(client, account_id, category_id=category_id)
+
+    deleted = await client.delete(f"/v1/categories/{category_id}")
+
+    assert deleted.status_code == 204
+    assert (await client.get(f"/v1/transactions/{transaction['id']}")).json() == transaction
+    assert await balance_of(client, account_id) == -1_300

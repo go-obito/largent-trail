@@ -15,6 +15,11 @@ def validate_minor(value: object) -> int:
     return value
 
 
+def account_balance(opening_minor: int, income_minor: int, expense_minor: int) -> int:
+    """Derived account balance in pesewas; it is signed because expenses may exceed funds."""
+    return validate_minor(opening_minor) + income_minor - expense_minor
+
+
 def format_ghs(minor: int) -> str:
     """Format integer pesewas as a GHS amount without floating-point arithmetic."""
     value = validate_minor(minor)

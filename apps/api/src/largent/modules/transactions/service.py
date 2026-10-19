@@ -160,3 +160,10 @@ async def update_transaction(
 async def delete_transaction(session: AsyncSession, user_id: UUID, transaction_id: UUID) -> None:
     """Soft delete; deleting a missing, foreign or already-deleted transaction is a no-op."""
     await repository.soft_delete_transaction(session, user_id, transaction_id)
+
+
+async def account_totals(
+    session: AsyncSession, user_id: UUID, account_ids: Sequence[UUID]
+) -> dict[UUID, tuple[int, int]]:
+    """Income and expense totals per account; accounts without transactions are absent."""
+    return await repository.sum_by_account(session, user_id, account_ids)
