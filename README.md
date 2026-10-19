@@ -52,3 +52,11 @@ creating the table. Add repository or endpoint isolation tests using the fixture
 and `assert_tenant_isolated` helper in `tests/security/conftest.py`. See
 [`docs/adr/0002-row-level-security-tenancy.md`](docs/adr/0002-row-level-security-tenancy.md)
 for the session and role model.
+
+Child tables reference parents with composite foreign keys `(user_id, parent_id) ->
+parent (user_id, id)`. When a child must also agree with a parent attribute (a
+transaction's `kind` must equal its category's `kind`), add that attribute to the key:
+put `UNIQUE (user_id, id, kind)` on the parent and reference
+`(user_id, category_id, kind)` from the child, using the same enum type on both sides.
+With a nullable parent column and `MATCH SIMPLE`, a NULL parent is simply not checked.
+See [`docs/adr/0005-transactions.md`](docs/adr/0005-transactions.md).
