@@ -232,3 +232,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Frontend (Node / Next.js)
+node_modules/
+.next/
+out/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+frontend/.env*
+!frontend/.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
