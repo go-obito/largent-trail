@@ -129,7 +129,7 @@ pnpm gen:tokens   # regenerate src/styles/tokens.css from src/styles/palette.ts
 ## 13. Status
 
 - [x] F0 scaffold, tooling, theme, API client, auth shell, PWA basics (auth shell and PWA basics complete)
-- [ ] F1 dashboard
+- [x] F1 dashboard
 - [ ] F2 transactions
 - [ ] F3 budgets and alerts
 - [ ] F4 reports

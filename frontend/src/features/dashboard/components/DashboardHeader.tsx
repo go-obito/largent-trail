@@ -1,9 +1,13 @@
 "use client";
 
+import IconButton from "@mui/material/IconButton";
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 type DashboardHeaderProps = {
+  isRefreshing: boolean;
   name: string;
+  onRefresh: () => void;
   timezone: string;
 };
 
@@ -25,7 +29,12 @@ function localGreeting(timezone: string) {
   return greetingForHour(hour);
 }
 
-export function DashboardHeader({ name, timezone }: DashboardHeaderProps) {
+export function DashboardHeader({
+  isRefreshing,
+  name,
+  onRefresh,
+  timezone,
+}: DashboardHeaderProps) {
   const [greeting, setGreeting] = useState("Hello");
 
   useEffect(() => {
@@ -58,12 +67,29 @@ export function DashboardHeader({ name, timezone }: DashboardHeaderProps) {
           {greeting}, {name}
         </h1>
       </div>
-      <div
-        aria-label={`Profile: ${name}`}
-        className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-semibold text-on-brand"
-        role="img"
-      >
-        {initial}
+      <div className="flex shrink-0 items-center gap-2">
+        <IconButton
+          aria-label={isRefreshing ? "Refreshing dashboard" : "Refresh dashboard"}
+          disabled={isRefreshing}
+          onClick={onRefresh}
+          sx={{ minWidth: 44, minHeight: 44, color: "primary.main" }}
+        >
+          <RefreshCw
+            aria-hidden="true"
+            className={isRefreshing ? "animate-spin motion-reduce:animate-none" : ""}
+            size={20}
+          />
+        </IconButton>
+        <span aria-live="polite" className="sr-only" role="status">
+          {isRefreshing ? "Refreshing dashboard" : ""}
+        </span>
+        <div
+          aria-label={`Profile: ${name}`}
+          className="flex size-12 items-center justify-center rounded-full bg-brand text-lg font-semibold text-on-brand"
+          role="img"
+        >
+          {initial}
+        </div>
       </div>
     </header>
   );

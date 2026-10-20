@@ -9,6 +9,53 @@ import { clearPersistedQueryCache } from "@/app/providers";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 
+function DevTokenButton() {
+  const { getToken } = useAuth();
+  const [isCopying, setIsCopying] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const copyToken = async () => {
+    if (isCopying) {
+      return;
+    }
+
+    setMessage(null);
+    setIsCopying(true);
+    try {
+      const token = await getToken({ skipCache: true });
+      if (!token) {
+        setMessage("Could not copy the API token. Please try again.");
+        return;
+      }
+
+      await navigator.clipboard.writeText(token);
+      setMessage("API token copied to clipboard.");
+    } catch {
+      setMessage("Could not copy the API token. Please try again.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
+  return (
+    <div className="mt-6">
+      <Button
+        disabled={isCopying}
+        onClick={() => void copyToken()}
+        sx={{ minHeight: 44 }}
+        variant="outlined"
+      >
+        {isCopying ? "Copying API token…" : "Copy API token (dev only)"}
+      </Button>
+      {message && (
+        <p aria-live="polite" className="mt-2 text-sm text-muted" role="status">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { userId } = useAuth();
   const clerk = useClerk();
@@ -83,6 +130,7 @@ export default function ProfilePage() {
       >
         {isSigningOut ? "Signing out…" : "Sign out"}
       </Button>
+      {process.env.NODE_ENV !== "production" && <DevTokenButton />}
     </section>
   );
 }

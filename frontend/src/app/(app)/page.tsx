@@ -27,14 +27,19 @@ export default function HomePage() {
   const timezone = me.data?.timezone || DEFAULT_TIMEZONE;
   const data = dashboard.data;
   const sectionStatus = {
-    isError: dashboard.isError,
-    isLoading: dashboard.isPending,
+    isError: dashboard.isError && !data,
+    isLoading: dashboard.isPending && !data,
     onRetry: () => void dashboard.refetch(),
   };
 
   return (
     <div className="space-y-6 pb-4">
-      <DashboardHeader name={name} timezone={timezone} />
+      <DashboardHeader
+        isRefreshing={dashboard.isFetching}
+        name={name}
+        onRefresh={() => void dashboard.refetch()}
+        timezone={timezone}
+      />
       <HeroBalanceCard
         {...sectionStatus}
         data={data}
