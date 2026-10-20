@@ -2,21 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-type GreetingHeaderProps = {
+type DashboardHeaderProps = {
   name: string;
   timezone: string;
 };
 
 function greetingForHour(hour: number) {
-  if (hour < 12) {
-    return "Good morning";
-  }
-  if (hour < 17) {
-    return "Good afternoon";
-  }
-  if (hour < 21) {
-    return "Good evening";
-  }
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
   return "Good night";
 }
 
@@ -31,7 +25,7 @@ function localGreeting(timezone: string) {
   return greetingForHour(hour);
 }
 
-export function GreetingHeader({ name, timezone }: GreetingHeaderProps) {
+export function DashboardHeader({ name, timezone }: DashboardHeaderProps) {
   const [greeting, setGreeting] = useState("Hello");
 
   useEffect(() => {
@@ -39,9 +33,7 @@ export function GreetingHeader({ name, timezone }: GreetingHeaderProps) {
       try {
         setGreeting(localGreeting(timezone));
       } catch (error) {
-        if (!(error instanceof RangeError)) {
-          throw error;
-        }
+        if (!(error instanceof RangeError)) throw error;
         setGreeting(localGreeting("Africa/Accra"));
       }
     };
@@ -60,7 +52,7 @@ export function GreetingHeader({ name, timezone }: GreetingHeaderProps) {
     <header className="mb-8 flex items-center justify-between gap-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-          Your money, in view
+          WEEKLY MONEY OVERVIEW
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
           {greeting}, {name}

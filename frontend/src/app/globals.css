@@ -15,6 +15,9 @@
   --color-focus: var(--color-focus-ring);
   --color-selected: var(--color-selected-surface);
   --color-alert: var(--color-error);
+  --color-status-success: var(--color-success);
+  --color-status-error: var(--color-error);
+  --color-status-warning: var(--color-warning);
 }
 
 @layer base {

@@ -492,6 +492,8 @@ export interface components {
              * Format: uuid
              */
             category_id: string;
+            /** Category Name */
+            category_name: string;
             period: components["schemas"]["BudgetPeriod"];
             /** Limit Minor */
             limit_minor: number;
@@ -701,6 +703,10 @@ export interface components {
             income_minor: number;
             /** Spent Minor */
             spent_minor: number;
+            /** Budget Total Minor */
+            budget_total_minor: number | null;
+            /** Budget Left Minor */
+            budget_left_minor: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -892,8 +898,12 @@ export interface components {
              * Format: uuid
              */
             account_id: string;
+            /** Account Name */
+            account_name: string;
             /** Category Id */
             category_id: string | null;
+            /** Category Name */
+            category_name: string | null;
             kind: components["schemas"]["CategoryKind"];
             /** Amount Minor */
             amount_minor: number;
