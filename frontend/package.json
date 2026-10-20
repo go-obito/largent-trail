@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "check": "pnpm typecheck && pnpm lint",
     "gen:api": "openapi-typescript ../apps/api/openapi.json -o src/lib/api/schema.d.ts",
-    "gen:tokens": "node scripts/gen-tokens.mjs"
+    "gen:tokens": "node scripts/gen-tokens.mjs",
+    "gen:pwa-icons": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.17",
