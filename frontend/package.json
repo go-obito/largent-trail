@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "check": "pnpm typecheck && pnpm lint",
+    "gen:api": "openapi-typescript ../apps/api/openapi.json -o src/lib/api/schema.d.ts",
+    "gen:tokens": "node scripts/gen-tokens.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.17",
