@@ -19,6 +19,8 @@ class DashboardWeek(BaseModel):
     end: date
     income_minor: int
     spent_minor: int
+    budget_total_minor: int | None
+    budget_left_minor: int | None
 
 
 class DashboardDailyTarget(BaseModel):

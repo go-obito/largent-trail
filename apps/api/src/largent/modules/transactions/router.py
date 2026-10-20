@@ -20,6 +20,7 @@ from largent.modules.transactions.schemas import (
     TransactionPage,
     TransactionRead,
     TransactionUpdate,
+    transaction_read,
 )
 
 router = APIRouter()
@@ -65,7 +66,7 @@ async def list_transactions(
         signing_keys=signing_keys,
     )
     return TransactionPage(
-        items=[TransactionRead.model_validate(item) for item in transactions],
+        items=[transaction_read(*item) for item in transactions],
         limit=limit,
         next_cursor=next_cursor,
     )
@@ -82,17 +83,20 @@ async def create_transaction(
     transaction, created = await service.create_transaction(session, user_id, payload, now)
     if not created:
         response.status_code = 200
-    return TransactionRead.model_validate(transaction)
+    result = await service.read_transaction(session, user_id, transaction.id)
+    if result is None:
+        raise RuntimeError("Created transaction could not be read")
+    return transaction_read(*result)
 
 
 @router.get("/{transaction_id}", response_model=TransactionRead)
 async def read_transaction(
     transaction_id: UUID, user_id: CurrentUserId, session: TenantSession
 ) -> TransactionRead:
-    transaction = await service.read_transaction(session, user_id, transaction_id)
-    if transaction is None:
+    result = await service.read_transaction(session, user_id, transaction_id)
+    if result is None:
         raise _not_found()
-    return TransactionRead.model_validate(transaction)
+    return transaction_read(*result)
 
 
 @router.patch("/{transaction_id}", response_model=TransactionRead)
@@ -106,7 +110,10 @@ async def update_transaction(
     transaction = await service.update_transaction(session, user_id, transaction_id, payload, now)
     if transaction is None:
         raise _not_found()
-    return TransactionRead.model_validate(transaction)
+    result = await service.read_transaction(session, user_id, transaction_id)
+    if result is None:
+        raise _not_found()
+    return transaction_read(*result)
 
 
 @router.delete("/{transaction_id}", status_code=204)

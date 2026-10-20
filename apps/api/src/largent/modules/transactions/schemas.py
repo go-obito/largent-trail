@@ -12,7 +12,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StrictInt, m
 from largent.core.ids import ClientId
 from largent.core.strings import normalize_text
 from largent.domain.money import MAX_AMOUNT_MINOR, Currency
-from largent.modules.transactions.models import MAX_NOTE_LENGTH, TransactionKind
+from largent.modules.transactions.models import MAX_NOTE_LENGTH, Transaction, TransactionKind
 
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -72,7 +72,9 @@ class TransactionRead(BaseModel):
 
     id: UUID
     account_id: UUID
+    account_name: str
     category_id: UUID | None
+    category_name: str | None
     kind: TransactionKind
     amount_minor: int
     currency: Currency
@@ -80,6 +82,27 @@ class TransactionRead(BaseModel):
     note: str | None
     created_at: datetime
     updated_at: datetime
+
+
+def transaction_read(
+    transaction: Transaction, account_name: str, category_name: str | None
+) -> TransactionRead:
+    return TransactionRead.model_validate(
+        {
+            "id": transaction.id,
+            "account_id": transaction.account_id,
+            "account_name": account_name,
+            "category_id": transaction.category_id,
+            "category_name": category_name,
+            "kind": transaction.kind,
+            "amount_minor": transaction.amount_minor,
+            "currency": transaction.currency,
+            "occurred_on": transaction.occurred_on,
+            "note": transaction.note,
+            "created_at": transaction.created_at,
+            "updated_at": transaction.updated_at,
+        }
+    )
 
 
 class TransactionPage(BaseModel):

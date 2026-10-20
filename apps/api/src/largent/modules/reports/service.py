@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from largent.domain.daily_target import budget_status, daily_target
+from largent.domain.daily_target import budget_status, daily_target, weekly_budget_total
 from largent.domain.money import account_balance
 from largent.domain.needs import unallocated
 from largent.domain.periods import days_in_month, month_end, month_start, week_end, week_start
@@ -21,6 +21,7 @@ from largent.modules.categories.models import Category
 from largent.modules.needs.models import AllocationKind, Need, NeedAllocation
 from largent.modules.reports.schemas import BalanceRange
 from largent.modules.transactions.models import Transaction, TransactionKind
+from largent.modules.transactions.repository import recent_transactions_with_names
 from largent.modules.users import service as users_service
 
 
@@ -113,17 +114,16 @@ async def dashboard(
     spent_today = by_day.get(today, 0)
 
     budget_rows = await session.execute(
-        select(Budget)
+        select(Budget, Category.name.label("category_name"))
         .join(Category, (Category.user_id == Budget.user_id) & (Category.id == Budget.category_id))
         .where(
             Budget.user_id == user_id,
             Budget.deleted_at.is_(None),
             Budget.is_archived.is_(False),
-            Category.deleted_at.is_(None),
         )
     )
-    budgets = list(budget_rows.scalars().all())
-    category_ids = [budget.category_id for budget in budgets]
+    budgets = list(budget_rows.tuples().all())
+    category_ids = [budget.category_id for budget, _ in budgets]
     category_spend: dict[UUID, tuple[int, int]] = {}
     if category_ids:
         spending_rows = await session.execute(
@@ -157,33 +157,27 @@ async def dashboard(
     budget_views = []
     weekly_limits: list[int] = []
     monthly_limits: list[int] = []
-    for budget in budgets:
+    for budget, category_name in budgets:
         week_spent, month_spent = category_spend.get(budget.category_id, (0, 0))
         period_spent = week_spent if budget.period is BudgetPeriod.WEEKLY else month_spent
         budget_views.append(
-            BudgetView(budget, period_spent, budget_status(period_spent, budget.limit_minor))
+            BudgetView(
+                budget, category_name, period_spent, budget_status(period_spent, budget.limit_minor)
+            )
         )
         (weekly_limits if budget.period is BudgetPeriod.WEEKLY else monthly_limits).append(
             budget.limit_minor
         )
+    budget_total = (
+        weekly_budget_total(weekly_limits, monthly_limits, days_in_month(today))
+        if weekly_limits or monthly_limits
+        else None
+    )
     daily = daily_target(
         weekly_limits, monthly_limits, spent - spent_today, spent_today, today, days_in_month(today)
     )
 
-    recent = list(
-        (
-            await session.scalars(
-                select(Transaction)
-                .where(Transaction.user_id == user_id, Transaction.deleted_at.is_(None))
-                .order_by(
-                    Transaction.occurred_on.desc(),
-                    Transaction.created_at.desc(),
-                    Transaction.id.desc(),
-                )
-                .limit(5)
-            )
-        ).all()
-    )
+    recent = await recent_transactions_with_names(session, user_id, limit=5)
     needs = list(
         (
             await session.scalars(
@@ -222,6 +216,7 @@ async def dashboard(
         "net_change": net_change,
         "income": income,
         "spent": spent,
+        "budget_total": budget_total,
         "daily": daily,
         "day_spend": by_day,
         "budget_views": budget_views,

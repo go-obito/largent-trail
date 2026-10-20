@@ -30,6 +30,7 @@ class BudgetView:
     """A budget with its spending for the current period, derived and never stored."""
 
     budget: Budget
+    category_name: str
     spent_minor: int
     status: BudgetStatus
 
@@ -53,7 +54,10 @@ async def _require_usable_category(session: AsyncSession, user_id: UUID, categor
 
 
 async def _with_progress(
-    session: AsyncSession, user_id: UUID, budgets: Sequence[Budget], now: datetime
+    session: AsyncSession,
+    user_id: UUID,
+    budgets: Sequence[repository.BudgetWithCategoryName],
+    now: datetime,
 ) -> list[BudgetView]:
     """Attach week- or month-to-date spending to each budget using one grouped query."""
     if not budgets:
@@ -62,21 +66,26 @@ async def _with_progress(
     totals = await transactions_service.expense_totals_by_category(
         session,
         user_id,
-        list({budget.category_id for budget in budgets}),
+        list({budget.category_id for budget, _ in budgets}),
         week_from=week_start(today),
         month_from=month_start(today),
         until=today,
     )
     views: list[BudgetView] = []
-    for budget in budgets:
+    for budget, category_name in budgets:
         week_spent, month_spent = totals.get(budget.category_id, (0, 0))
         spent = week_spent if budget.period is BudgetPeriod.WEEKLY else month_spent
-        views.append(BudgetView(budget, spent, budget_status(spent, budget.limit_minor)))
+        views.append(
+            BudgetView(budget, category_name, spent, budget_status(spent, budget.limit_minor))
+        )
     return views
 
 
 async def _view(session: AsyncSession, user_id: UUID, budget: Budget, now: datetime) -> BudgetView:
-    return (await _with_progress(session, user_id, [budget], now))[0]
+    named_budget = await repository.get_budget_with_category_name(session, user_id, budget.id)
+    if named_budget is None:
+        raise RuntimeError("Budget category could not be read")
+    return (await _with_progress(session, user_id, [named_budget], now))[0]
 
 
 async def create_budget(
@@ -124,15 +133,17 @@ async def list_budgets(
     rows = await repository.list_budgets(
         session, user_id, limit=limit + 1, cursor=decoded, include_archived=include_archived
     )
-    page, next_cursor = build_created_page(rows, limit, signing_keys)
-    return await _with_progress(session, user_id, page, now), next_cursor
+    page, next_cursor = build_created_page([budget for budget, _ in rows], limit, signing_keys)
+    names = {budget.id: name for budget, name in rows}
+    named_page = [(budget, names[budget.id]) for budget in page]
+    return await _with_progress(session, user_id, named_page, now), next_cursor
 
 
 async def read_budget(
     session: AsyncSession, user_id: UUID, budget_id: UUID, now: datetime
 ) -> BudgetView | None:
-    budget = await repository.get_budget(session, user_id, budget_id)
-    return None if budget is None else await _view(session, user_id, budget, now)
+    budget = await repository.get_budget_with_category_name(session, user_id, budget_id)
+    return None if budget is None else (await _with_progress(session, user_id, [budget], now))[0]
 
 
 async def update_budget(

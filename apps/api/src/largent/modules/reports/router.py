@@ -17,7 +17,7 @@ from largent.domain.needs import need_progress
 from largent.modules.budgets.router import _read as budget_read
 from largent.modules.reports import service
 from largent.modules.reports.schemas import BalanceRange, DashboardRead, ReportRead
-from largent.modules.transactions.schemas import TransactionRead
+from largent.modules.transactions.schemas import transaction_read
 
 router = APIRouter()
 CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
@@ -64,6 +64,10 @@ async def read_dashboard(
                 "end": data["week_end"],
                 "income_minor": data["income"],
                 "spent_minor": data["spent"],
+                "budget_total_minor": data["budget_total"],
+                "budget_left_minor": (
+                    None if data["budget_total"] is None else data["budget_total"] - data["spent"]
+                ),
             },
             "daily_target": {
                 "target_minor": daily.target_minor,
@@ -83,9 +87,7 @@ async def read_dashboard(
                 for offset in range(7)
             ],
             "budgets": [budget_read(view) for view in data["budget_views"]],
-            "recent_transactions": [
-                TransactionRead.model_validate(item) for item in data["recent"]
-            ],
+            "recent_transactions": [transaction_read(*item) for item in data["recent"]],
             "needs": {
                 "total_target_minor": data["total_target"],
                 "total_allocated_minor": data["total_allocated"],

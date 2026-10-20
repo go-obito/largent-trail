@@ -100,7 +100,7 @@ async def list_transactions(
     category_id: UUID | None,
     kind: TransactionKind | None,
     signing_keys: Sequence[bytes],
-) -> tuple[list[Transaction], str | None]:
+) -> tuple[list[repository.TransactionWithNames], str | None]:
     decoded = decode_cursor(cursor, signing_keys, dated=True) if cursor is not None else None
     rows = await repository.list_transactions(
         session,
@@ -113,13 +113,14 @@ async def list_transactions(
         category_id=category_id,
         kind=kind,
     )
-    return build_dated_page(rows, limit, signing_keys)
+    page, next_cursor = build_dated_page([row[0] for row in rows], limit, signing_keys)
+    return rows[: len(page)], next_cursor
 
 
 async def read_transaction(
     session: AsyncSession, user_id: UUID, transaction_id: UUID
-) -> Transaction | None:
-    return await repository.get_transaction(session, user_id, transaction_id)
+) -> repository.TransactionWithNames | None:
+    return await repository.get_transaction_with_names(session, user_id, transaction_id)
 
 
 async def update_transaction(

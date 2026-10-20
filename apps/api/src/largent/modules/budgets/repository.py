@@ -4,11 +4,33 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import func, select, tuple_, update
+from sqlalchemy import Select, func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.pagination import PageCursor
 from largent.modules.budgets.models import Budget, BudgetPeriod
+from largent.modules.categories.models import Category
+
+BudgetWithCategoryName = tuple[Budget, str]
+
+
+def _with_category_name() -> Select[Budget, str]:
+    return select(Budget, Category.name.label("category_name")).join(
+        Category, (Category.user_id == Budget.user_id) & (Category.id == Budget.category_id)
+    )
+
+
+async def get_budget_with_category_name(
+    session: AsyncSession, user_id: UUID, budget_id: UUID
+) -> BudgetWithCategoryName | None:
+    statement = _with_category_name().where(
+        Budget.user_id == user_id,
+        Budget.id == budget_id,
+        Budget.deleted_at.is_(None),
+    )
+    result = await session.execute(statement)
+    row = result.one_or_none()
+    return None if row is None else (row[0], row[1])
 
 
 async def get_budget(
@@ -27,8 +49,8 @@ async def list_budgets(
     limit: int,
     cursor: PageCursor | None,
     include_archived: bool,
-) -> list[Budget]:
-    statement = select(Budget).where(Budget.user_id == user_id, Budget.deleted_at.is_(None))
+) -> list[BudgetWithCategoryName]:
+    statement = _with_category_name().where(Budget.user_id == user_id, Budget.deleted_at.is_(None))
     if not include_archived:
         statement = statement.where(Budget.is_archived.is_(False))
     if cursor is not None:
@@ -36,7 +58,8 @@ async def list_budgets(
             tuple_(Budget.created_at, Budget.id) > tuple_(cursor.created_at, cursor.row_id)
         )
     statement = statement.order_by(Budget.created_at, Budget.id).limit(limit)
-    return list((await session.scalars(statement)).all())
+    rows = (await session.execute(statement)).all()
+    return [(row[0], row[1]) for row in rows]
 
 
 async def active_budget_exists(

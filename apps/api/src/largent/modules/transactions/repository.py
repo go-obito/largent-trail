@@ -6,11 +6,71 @@ from collections.abc import Sequence
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, case, func, select, tuple_, update
+from sqlalchemy import ColumnElement, Select, case, func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.pagination import PageCursor
+from largent.modules.accounts.models import Account
+from largent.modules.categories.models import Category
 from largent.modules.transactions.models import Transaction, TransactionKind
+
+TransactionWithNames = tuple[Transaction, str, str | None]
+
+
+def _with_names() -> Select[Transaction, str, str]:
+    return (
+        select(
+            Transaction,
+            Account.name.label("account_name"),
+            Category.name.label("category_name"),
+        )
+        .outerjoin(
+            Account,
+            (Account.user_id == Transaction.user_id) & (Account.id == Transaction.account_id),
+        )
+        .outerjoin(
+            Category,
+            (Category.user_id == Transaction.user_id) & (Category.id == Transaction.category_id),
+        )
+    )
+
+
+def _named_transaction(
+    transaction: Transaction, account_name: str | None, category_name: str | None
+) -> TransactionWithNames:
+    if account_name is None:
+        raise RuntimeError("Transaction account is missing")
+    return transaction, account_name, category_name
+
+
+async def get_transaction_with_names(
+    session: AsyncSession, user_id: UUID, transaction_id: UUID
+) -> TransactionWithNames | None:
+    statement = _with_names().where(
+        Transaction.user_id == user_id,
+        Transaction.id == transaction_id,
+        Transaction.deleted_at.is_(None),
+    )
+    result = await session.execute(statement)
+    row = result.one_or_none()
+    return None if row is None else _named_transaction(row[0], row[1], row[2])
+
+
+async def recent_transactions_with_names(
+    session: AsyncSession, user_id: UUID, *, limit: int
+) -> list[TransactionWithNames]:
+    statement = (
+        _with_names()
+        .where(Transaction.user_id == user_id, Transaction.deleted_at.is_(None))
+        .order_by(
+            Transaction.occurred_on.desc(),
+            Transaction.created_at.desc(),
+            Transaction.id.desc(),
+        )
+        .limit(limit)
+    )
+    rows = (await session.execute(statement)).all()
+    return [_named_transaction(row[0], row[1], row[2]) for row in rows]
 
 
 async def get_transaction(
@@ -35,8 +95,8 @@ async def list_transactions(
     account_id: UUID | None,
     category_id: UUID | None,
     kind: TransactionKind | None,
-) -> list[Transaction]:
-    statement = select(Transaction).where(
+) -> list[TransactionWithNames]:
+    statement = _with_names().where(
         Transaction.user_id == user_id, Transaction.deleted_at.is_(None)
     )
     if date_from is not None:
@@ -57,7 +117,8 @@ async def list_transactions(
     statement = statement.order_by(
         Transaction.occurred_on.desc(), Transaction.created_at.desc(), Transaction.id.desc()
     ).limit(limit)
-    return list((await session.scalars(statement)).all())
+    rows = (await session.execute(statement)).all()
+    return [_named_transaction(row[0], row[1], row[2]) for row in rows]
 
 
 async def sum_by_account(

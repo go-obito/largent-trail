@@ -2700,6 +2700,10 @@
             "format": "uuid",
             "title": "Category Id"
           },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name"
+          },
           "period": {
             "$ref": "#/components/schemas/BudgetPeriod"
           },
@@ -2744,6 +2748,7 @@
         "required": [
           "id",
           "category_id",
+          "category_name",
           "period",
           "limit_minor",
           "currency",
@@ -3276,6 +3281,28 @@
           "spent_minor": {
             "type": "integer",
             "title": "Spent Minor"
+          },
+          "budget_total_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Total Minor"
+          },
+          "budget_left_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Left Minor"
           }
         },
         "type": "object",
@@ -3283,7 +3310,9 @@
           "start",
           "end",
           "income_minor",
-          "spent_minor"
+          "spent_minor",
+          "budget_total_minor",
+          "budget_left_minor"
         ],
         "title": "DashboardWeek"
       },
@@ -3793,6 +3822,10 @@
             "format": "uuid",
             "title": "Account Id"
           },
+          "account_name": {
+            "type": "string",
+            "title": "Account Name"
+          },
           "category_id": {
             "anyOf": [
               {
@@ -3804,6 +3837,17 @@
               }
             ],
             "title": "Category Id"
+          },
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Name"
           },
           "kind": {
             "$ref": "#/components/schemas/CategoryKind"
@@ -3848,7 +3892,9 @@
         "required": [
           "id",
           "account_id",
+          "account_name",
           "category_id",
+          "category_name",
           "kind",
           "amount_minor",
           "currency",

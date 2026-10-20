@@ -51,6 +51,7 @@ class BudgetRead(BaseModel):
 
     id: UUID
     category_id: UUID
+    category_name: str
     period: BudgetPeriod
     limit_minor: int
     currency: Currency
