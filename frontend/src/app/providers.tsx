@@ -1,0 +1,103 @@
+"use client";
+
+import { ClerkProvider, useAuth } from "@clerk/nextjs";
+import { del, get, set } from "idb-keyval";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  PersistQueryClientProvider,
+  type PersistedClient,
+  type Persister,
+} from "@tanstack/react-query-persist-client";
+import { ThemeProvider } from "@mui/material/styles";
+import { theme } from "../styles/theme";
+
+const QUERY_CACHE_KEY = "largent-query-cache";
+
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        staleTime: 30_000,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+}
+
+function storageKey(userId: string) {
+  return `${QUERY_CACHE_KEY}:${userId}`;
+}
+
+function createPersister(userId: string): Persister {
+  const key = storageKey(userId);
+
+  return {
+    persistClient: async (client: PersistedClient) => set(key, client),
+    restoreClient: async () => get<PersistedClient | undefined>(key),
+    removeClient: async () => del(key),
+  };
+}
+
+function QueryPersistence({ children }: { children: ReactNode }) {
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const [queryClient] = useState(createQueryClient);
+  const lastUserId = useRef<string | null>(null);
+  const persister = useMemo(
+    () => (userId ? createPersister(userId) : null),
+    [userId],
+  );
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    const previousUserId = lastUserId.current;
+    if (previousUserId && previousUserId !== userId) {
+      queryClient.clear();
+      void del(storageKey(previousUserId)).catch((error: unknown) => {
+        console.error("Failed to clear the signed-out user's query cache.", error);
+      });
+    }
+
+    if (!isSignedIn || !userId) {
+      queryClient.clear();
+      lastUserId.current = null;
+      return;
+    }
+
+    lastUserId.current = userId;
+  }, [isLoaded, isSignedIn, queryClient, userId]);
+
+  if (isLoaded && isSignedIn && userId && persister) {
+    return (
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000 }}
+        onError={() => {
+          console.error("Failed to restore or persist the query cache.");
+        }}
+      >
+        {children}
+      </PersistQueryClientProvider>
+    );
+  }
+
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ClerkProvider>
+      <ThemeProvider
+        theme={theme}
+        defaultMode="system"
+        disableTransitionOnChange
+      >
+        <QueryPersistence>{children}</QueryPersistence>
+      </ThemeProvider>
+    </ClerkProvider>
+  );
+}

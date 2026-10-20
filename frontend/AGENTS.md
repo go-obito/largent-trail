@@ -1,3 +1,5 @@
+Also read `AGENT.md` in this folder before every task.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

@@ -22,6 +22,7 @@
     "@serwist/next": "^9.5.13",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-query-persist-client": "^5.104.4",
+    "idb-keyval": "^6.3.0",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
     "openapi-fetch": "^0.17.0",
@@ -35,7 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -1,0 +1,80 @@
+/* Generated from palette.ts. Do not edit manually. */
+:root {
+  --color-background: #F5F7FB;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #E2E9F7;
+  --color-primary: #315DE8;
+  --color-secondary: #8FA8FF;
+  --color-accent: #B2C0FF;
+  --color-text-primary: #1D2738;
+  --color-text-secondary: #647086;
+  --color-border: #DCE3EF;
+  --color-success: #187443;
+  --color-error: #B42332;
+  --color-warning: #946000;
+  --color-info: #315DE8;
+  --color-disabled: #A5ADBB;
+  --color-on-primary: #FFFFFF;
+  --color-primary-hover: #244AC7;
+  --color-primary-pressed: #1D3CA8;
+  --color-focus-ring: #7694FF;
+  --color-selected-surface: #E2E9FF;
+  --color-hero: #111521;
+  --color-on-hero: #F1F3FA;
+  --color-income: var(--color-success);
+  --color-expense: var(--color-error);
+  --radius-card: 24px;
+  --radius-control: 14px;
+  --radius-pill: 999px;
+  --touch-target: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --color-background: #111521;
+  --color-surface: #1D2435;
+  --color-surface-elevated: #282F43;
+  --color-primary: #8CA5FF;
+  --color-secondary: #B2C0FF;
+  --color-accent: #B2C0FF;
+  --color-text-primary: #F1F3FA;
+  --color-text-secondary: #AAB3C7;
+  --color-border: #343C51;
+  --color-success: #6ED6A0;
+  --color-error: #FF7B86;
+  --color-warning: #F5C66B;
+  --color-info: #8CA5FF;
+  --color-disabled: #596176;
+  --color-on-primary: #111521;
+  --color-primary-hover: #A2B5FF;
+  --color-primary-pressed: #C0CCFF;
+  --color-focus-ring: #8CA5FF;
+  --color-selected-surface: #283552;
+  --color-hero: #282F43;
+  --color-on-hero: #F1F3FA;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-background: #111521;
+  --color-surface: #1D2435;
+  --color-surface-elevated: #282F43;
+  --color-primary: #8CA5FF;
+  --color-secondary: #B2C0FF;
+  --color-accent: #B2C0FF;
+  --color-text-primary: #F1F3FA;
+  --color-text-secondary: #AAB3C7;
+  --color-border: #343C51;
+  --color-success: #6ED6A0;
+  --color-error: #FF7B86;
+  --color-warning: #F5C66B;
+  --color-info: #8CA5FF;
+  --color-disabled: #596176;
+  --color-on-primary: #111521;
+  --color-primary-hover: #A2B5FF;
+  --color-primary-pressed: #C0CCFF;
+  --color-focus-ring: #8CA5FF;
+  --color-selected-surface: #283552;
+  --color-hero: #282F43;
+  --color-on-hero: #F1F3FA;
+}
