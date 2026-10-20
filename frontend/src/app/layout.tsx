@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
+import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +19,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <Providers>{children}</Providers>
+        </AppRouterCacheProvider>
+      </body>
     </html>
   );
 }

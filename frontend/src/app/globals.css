@@ -1,6 +1,37 @@
-@import "tailwindcss";
+@layer theme, base, mui, components, utilities;
 
-body {
-  min-height: 100dvh;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-page: var(--color-background);
+  --color-panel: var(--color-surface);
+  --color-panel-raised: var(--color-surface-elevated);
+  --color-brand: var(--color-primary);
+  --color-on-brand: var(--color-on-primary);
+  --color-foreground: var(--color-text-primary);
+  --color-muted: var(--color-text-secondary);
+  --color-outline: var(--color-border);
+  --color-focus: var(--color-focus-ring);
+  --color-selected: var(--color-selected-surface);
+  --color-alert: var(--color-error);
+}
+
+@layer base {
+  html {
+    min-height: 100%;
+    background: var(--color-background);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
 }

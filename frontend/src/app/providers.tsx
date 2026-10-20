@@ -2,7 +2,14 @@
 
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { del, get, set } from "idb-keyval";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   PersistQueryClientProvider,
@@ -28,6 +35,10 @@ function createQueryClient() {
 
 function storageKey(userId: string) {
   return `${QUERY_CACHE_KEY}:${userId}`;
+}
+
+export function clearPersistedQueryCache(userId: string) {
+  return del(storageKey(userId));
 }
 
 function createPersister(userId: string): Persister {
@@ -96,7 +107,9 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultMode="system"
         disableTransitionOnChange
       >
-        <QueryPersistence>{children}</QueryPersistence>
+        <Suspense fallback={<main aria-busy="true" className="min-h-dvh bg-page" />}>
+          <QueryPersistence>{children}</QueryPersistence>
+        </Suspense>
       </ThemeProvider>
     </ClerkProvider>
   );
