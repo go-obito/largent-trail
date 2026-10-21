@@ -1,11 +1,16 @@
-import { PlaceholderPage } from "@/components/PlaceholderPage";
+import { TransactionForm } from "@/features/transactions/components/TransactionForm";
 
-export default function NewTransactionPage() {
+export default async function NewTransactionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
+  const { kind } = await searchParams;
+
   return (
-    <PlaceholderPage
-      caption="Transactions"
-      description="Add transaction, coming in the next step."
-      title="Add transaction"
+    <TransactionForm
+      initialKind={kind === "income" ? "income" : "expense"}
+      mode="create"
     />
   );
 }

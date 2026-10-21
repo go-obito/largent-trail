@@ -38,6 +38,14 @@ function ensurePage(data: AccountPage | undefined, status: number): AccountPage 
   return data;
 }
 
+function ensureAccount(data: AccountRead | undefined, status: number): AccountRead {
+  if (!data) {
+    throw new ApiError(status, null, "The API response did not include the account.");
+  }
+
+  return data;
+}
+
 async function fetchAllAccounts(
   client: ReturnType<typeof createApiClient>,
 ): Promise<AccountRead[]> {
@@ -92,7 +100,7 @@ export function useCreateAccount() {
       if (error) {
         throw new ApiError(response.status, null, response.statusText || "The API request failed.", error);
       }
-      return data;
+      return ensureAccount(data, response.status);
     },
     onSuccess: async () => {
       await Promise.all([

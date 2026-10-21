@@ -125,7 +125,7 @@ export function DailySpendingCard({
             <Button
               className="mt-4 w-full"
               component={Link}
-              href="/transactions/new"
+              href="/transactions/new?kind=expense"
               sx={{ minHeight: 44 }}
               variant="outlined"
             >
