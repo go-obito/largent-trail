@@ -3,7 +3,8 @@ import Link from "next/link";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
-import { formatDateInTimezone } from "@/lib/date";
+import { addDaysToDate, formatDateInTimezone } from "@/lib/date";
+import { todayInTz } from "@/lib/dates";
 import { DashboardSection } from "./DashboardSection";
 
 type DashboardRead = components["schemas"]["DashboardRead"];
@@ -35,7 +36,7 @@ export function RecentActivityCard({
       {data && (
         <section className="card-surface p-5">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-xl font-bold text-foreground">Recent activity</h2>
+            <h2 className="text-lg font-bold text-foreground">Recent transactions</h2>
             <Button
               component={Link}
               href="/transactions"
@@ -50,6 +51,18 @@ export function RecentActivityCard({
             <ul className="mt-4 divide-y divide-outline">
               {transactions.map((transaction) => {
                 const isIncome = transaction.kind === "income";
+                const title = transaction.note?.trim() || transaction.category_name || "Uncategorized";
+                const subtitle = transaction.note?.trim()
+                  ? transaction.category_name || transaction.account_name
+                  : transaction.account_name;
+                const today = todayInTz(timezone);
+                const transactionDate =
+                  transaction.occurred_on === today
+                    ? "Today"
+                    : transaction.occurred_on === addDaysToDate(today, -1)
+                      ? "Yesterday"
+                      : formatDateInTimezone(transaction.occurred_on, timezone)
+                          .replace(/, \d{4}$/, "");
                 return (
                   <li
                     key={transaction.id}
@@ -58,20 +71,14 @@ export function RecentActivityCard({
                     <CategoryBadge name={transaction.category_name || "Uncategorized"} size={44} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-foreground">
-                        {transaction.category_name || "Uncategorized"}
+                        {title}
                       </p>
                       <p className="mt-1 text-sm text-muted">
-                        {transaction.account_name} ·{" "}
-                        {formatDateInTimezone(
-                          transaction.occurred_on,
-                          timezone,
-                        )}
+                        {subtitle}
                       </p>
-                      {transaction.note && (
-                        <p className="mt-1 break-words text-sm text-muted">
-                          {transaction.note}
-                        </p>
-                      )}
+                      <p className="mt-1 text-xs text-muted">
+                        {transactionDate}
+                      </p>
                     </div>
                     <p
                       className={`shrink-0 text-right font-semibold ${

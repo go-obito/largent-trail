@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useRef } from "react";
 import { useMe, useUpdateMe } from "@/features/me/api";
 import { AppNavigation } from "./AppNavigation";
+import { PageContainer } from "./PageContainer";
 import { OfflineBanner } from "./states/OfflineBanner";
 import { ToastViewport } from "./states/ToastViewport";
 
@@ -38,9 +39,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh bg-page text-foreground md:pl-20 lg:pl-60">
       <AppNavigation />
       <ToastViewport />
-      <main className="mx-auto flex min-h-dvh w-full max-w-[1280px] flex-col px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-10">
-        <OfflineBanner />
-        <div className="flex-1">{children}</div>
+      <main className="min-h-dvh w-full pt-[calc(5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-10 md:pb-10 lg:pt-24">
+        <PageContainer>
+          <OfflineBanner />
+          <div className="flex-1">{children}</div>
+        </PageContainer>
       </main>
     </div>
   );

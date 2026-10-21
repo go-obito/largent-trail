@@ -45,26 +45,25 @@ export function HeroBalanceCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="rounded-3xl bg-[var(--color-hero)] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6">
+        <section className="rounded-3xl bg-[linear-gradient(115deg,color-mix(in_srgb,var(--color-hero)_78%,var(--color-primary)),var(--color-hero))] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] opacity-75">
-                <span aria-hidden="true" className="size-2 rounded-full bg-status-success" />
-                Total balance
+              <p className="text-sm font-semibold opacity-80">
+                Total Balance
               </p>
-              <p className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              <p className="money mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                 {formatGhs(data.total_balance_minor)}
               </p>
-              {range !== "all_time" && data.net_change_minor !== null && (
+              {data.net_change_minor !== null && (
                 <p
-                  className={`mt-2 text-sm font-semibold ${
-                    data.net_change_minor >= 0
-                      ? "text-status-success"
-                      : "text-status-error"
-                  }`}
+                  className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-[var(--color-on-hero)]"
                 >
                   {signedAmount(data.net_change_minor)}{" "}
-                  {range === "this_week" ? "this week" : "this month"}
+                  {range === "all_time"
+                    ? "net change"
+                    : range === "this_week"
+                      ? "this week"
+                      : "this month"}
                 </p>
               )}
             </div>
@@ -93,26 +92,6 @@ export function HeroBalanceCard({
             </FormControl>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 divide-x divide-outline/30 border-t border-outline/30 pt-4">
-            <div className="pr-4">
-              <p className="flex items-center gap-2 text-sm opacity-75">
-                <span aria-hidden="true" className="size-2 rounded-full bg-status-success" />
-                Income this week
-              </p>
-              <p className="mt-2 text-lg font-semibold text-status-success">
-                +{formatGhs(data.week.income_minor)}
-              </p>
-            </div>
-            <div className="pl-4">
-              <p className="flex items-center gap-2 text-sm opacity-75">
-                <span aria-hidden="true" className="size-2 rounded-full bg-status-error" />
-                Spent this week
-              </p>
-              <p className="mt-2 text-lg font-semibold text-status-error">
-                −{formatGhs(data.week.spent_minor)}
-              </p>
-            </div>
-          </div>
         </section>
       )}
     </DashboardSection>

@@ -8,6 +8,7 @@ import { useMe } from "@/features/me/api";
 import { clearPersistedQueryCache } from "@/app/providers";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 function DevTokenButton() {
   const { getToken } = useAuth();
@@ -117,6 +118,17 @@ export default function ProfilePage() {
           </div>
         ))}
       </dl>
+      <div className="card-surface mt-5 flex items-center justify-between gap-4 p-5">
+        <div>
+          <h3 className="font-semibold text-foreground">Theme</h3>
+          <p className="mt-1 text-sm text-muted">
+            Choose light, dark, or follow your device.
+          </p>
+        </div>
+        <div className="w-32 shrink-0">
+          <ThemeSwitcher />
+        </div>
+      </div>
       {signOutError && (
         <p aria-live="polite" className="mt-4 text-sm text-alert" role="alert">
           {signOutError}

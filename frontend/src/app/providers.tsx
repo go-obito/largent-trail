@@ -17,6 +17,7 @@ import {
   type Persister,
 } from "@tanstack/react-query-persist-client";
 import { ThemeProvider } from "@mui/material/styles";
+import { useColorScheme } from "@mui/material/styles";
 import { theme } from "../styles/theme";
 
 const QUERY_CACHE_KEY = "largent-query-cache";
@@ -99,14 +100,41 @@ function QueryPersistence({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
+function ThemePreferenceSync() {
+  const { mode } = useColorScheme();
+
+  useEffect(() => {
+    if (!mode) return;
+    const root = document.documentElement;
+    const meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    const updateThemeColor = (dark: boolean) => {
+      root.style.colorScheme = dark ? "dark" : "light";
+      if (meta) meta.content = dark ? "#111521" : "#F5F7FB";
+    };
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => updateThemeColor(mode === "system" ? media.matches : mode === "dark");
+    update();
+    if (mode === "system") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+  }, [mode]);
+
+  return null;
+}
+
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider>
       <ThemeProvider
         theme={theme}
         defaultMode="system"
+        modeStorageKey="largent-theme"
         disableTransitionOnChange
       >
+        <ThemePreferenceSync />
         <Suspense
           fallback={
             <main

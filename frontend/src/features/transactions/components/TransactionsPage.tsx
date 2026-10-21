@@ -482,7 +482,7 @@ export function TransactionsPage() {
         onClose={() => setFiltersOpen(false)}
         open={filtersOpen}
       >
-        <div className="mx-auto max-h-[85dvh] w-full max-w-[640px] overflow-y-auto rounded-t-3xl bg-panel p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <div className="mx-auto max-h-[85dvh] w-full max-w-full overflow-y-auto rounded-t-3xl bg-panel p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-foreground">Filters</h2>
             <Button

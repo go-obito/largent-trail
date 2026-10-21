@@ -33,10 +33,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#315DE8" },
-    { media: "(prefers-color-scheme: dark)", color: "#111521" },
-  ],
 };
 
 export default function RootLayout({
@@ -44,6 +40,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html className={inter.variable} lang="en">
+      <head>
+        <meta content="#F5F7FB" name="theme-color" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{const p=localStorage.getItem("largent-theme");const d=window.matchMedia("(prefers-color-scheme: dark)").matches;const t=p==="light"||p==="dark"?p:(d?"dark":"light");const r=document.documentElement;r.setAttribute("data-theme",t);r.style.colorScheme=t;const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#111521":"#F5F7FB"})();`,
+          }}
+        />
+      </head>
       <body>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <Providers>{children}</Providers>

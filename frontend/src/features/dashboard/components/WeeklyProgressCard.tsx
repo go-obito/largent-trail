@@ -45,7 +45,7 @@ export function WeeklyProgressCard({
     >
       {data && (
         <section className="card-surface p-5">
-          <h2 className="text-xl font-bold text-foreground">Weekly progress</h2>
+          <h2 className="text-lg font-bold text-foreground">Weekly breakdown</h2>
           <LinearProgress
             aria-label="Weekly budget progress"
             sx={{ mt: 4, height: 8, borderRadius: 99 }}
@@ -74,7 +74,7 @@ export function WeeklyProgressCard({
           )}
 
           <div className="mt-7 flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-foreground">Daily breakdown</h3>
+            <h3 className="font-semibold text-foreground">Spending by day</h3>
             <span className="text-sm text-muted">This week</span>
           </div>
           {days.length > 0 ? (
