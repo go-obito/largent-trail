@@ -13,7 +13,7 @@ test:
 	uv run --directory apps/api pytest
 
 migrate:
-	docker compose exec api alembic -c alembic.ini upgrade head
+	docker compose run --build --rm migrate
 
 revision:
 	docker compose exec api alembic -c alembic.ini revision --autogenerate -m "$(m)"

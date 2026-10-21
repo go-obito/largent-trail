@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from time import perf_counter
 
 import sentry_sdk
 import structlog
+from alembic.script import ScriptDirectory
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry import trace
@@ -15,12 +17,18 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
 from largent.core.config import Settings
-from largent.core.db import check_database, create_engine, create_session_factory
+from largent.core.db import (
+    check_database,
+    create_engine,
+    create_session_factory,
+    get_schema_revision,
+)
 from largent.core.errors import install_error_handlers, problem_response
 from largent.core.logging import RequestLoggingMiddleware, configure_logging
 from largent.core.redis import check_redis, create_redis
@@ -76,13 +84,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         raise RuntimeError("Unsupported authentication provider")
 
     configure_logging(active_settings.log_level)
+    expected_revision = ScriptDirectory(
+        str(Path(__file__).resolve().parents[2] / "alembic")
+    ).get_current_head()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        yield
-        await app.state.auth_provider.aclose()
-        await app.state.redis.aclose()
-        await app.state.engine.dispose()
+        logger = structlog.get_logger(__name__)
+        try:
+            try:
+                actual_revision = await get_schema_revision(app.state.engine)
+            except SQLAlchemyError as error:
+                logger.warning(
+                    "database_schema_revision_check_failed",
+                    error_type=type(error).__name__,
+                )
+            else:
+                if actual_revision != expected_revision:
+                    logger.warning(
+                        "database_schema_revision_mismatch",
+                        expected_revision=expected_revision,
+                        actual_revision=actual_revision,
+                    )
+            yield
+        finally:
+            await app.state.auth_provider.aclose()
+            await app.state.redis.aclose()
+            await app.state.engine.dispose()
 
     production = active_settings.environment == "production"
     app = FastAPI(

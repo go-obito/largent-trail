@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+from unittest.mock import AsyncMock
 
 import httpx
-from pytest import CaptureFixture
+from pytest import CaptureFixture, MonkeyPatch
 from tests.conftest import make_settings
 
 from largent.main import create_app
@@ -75,3 +76,19 @@ async def test_request_id_is_propagated_and_body_is_not_logged(capsys: CaptureFi
     assert response.headers["x-request-id"] == request_id
     assert log["request_id"] == request_id
     assert body_value not in captured
+
+
+async def test_schema_revision_mismatch_warns_without_blocking_startup(
+    capsys: CaptureFixture[str], monkeypatch: MonkeyPatch
+) -> None:
+    app = create_app(make_settings())
+    monkeypatch.setattr(
+        "largent.main.get_schema_revision", AsyncMock(return_value="stale-revision")
+    )
+
+    async with app.router.lifespan_context(app):
+        assert app.state.engine is not None
+
+    captured = capsys.readouterr().out
+    assert "database_schema_revision_mismatch" in captured
+    assert "stale-revision" in captured

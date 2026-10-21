@@ -36,3 +36,15 @@ async def check_database(engine: AsyncEngine) -> None:
     """Raise if Postgres cannot execute a trivial statement."""
     async with engine.connect() as connection:
         await connection.execute(text("SELECT 1"))
+
+
+async def get_schema_revision(engine: AsyncEngine) -> str | None:
+    """Return the database's Alembic revision, or None when it has not been initialized."""
+    async with engine.connect() as connection:
+        version_table_exists = await connection.scalar(
+            text("SELECT to_regclass('public.alembic_version') IS NOT NULL")
+        )
+        if not version_table_exists:
+            return None
+        revision = await connection.scalar(text("SELECT version_num FROM public.alembic_version"))
+        return str(revision) if revision is not None else None

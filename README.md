@@ -11,8 +11,13 @@ Prerequisites: Docker Desktop with Compose, GNU Make, and [uv](https://docs.astr
 
 ```sh
 cp .env.example .env
-make dev
+docker compose up --build
 ```
+
+`docker compose up` runs the one-shot migration service first; the API and worker
+start only after migrations complete successfully. `make dev` is also available
+as a convenience wrapper. Production deployments run migrations as a separate,
+explicit deployment step; see [B11 in the decisions](docs/DECISIONS.md).
 
 The API is at <http://localhost:8000>; liveness is
 <http://localhost:8000/healthz> and dependency readiness is
@@ -36,6 +41,8 @@ make migrate
 make openapi
 ```
 
+`make migrate` runs the same migration service directly.
+
 The API image installs the operating-system IANA timezone database for profile
 validation. Windows development installs the `tzdata` Python package through the dev
 group only; Linux development and production use system timezone data.
@@ -43,7 +50,8 @@ group only; Linux development and production use system timezone data.
 Runtime dependency notes: `pyjwt[crypto]` provides hardened RS256/JWKS JWT
 verification; `httpx` is a runtime dependency for asynchronous JWKS retrieval.
 
-`make dev` starts API, Postgres, Redis, and the idle ARQ worker. See
+`docker compose up --build` starts Postgres, Redis, migrations, API, and the idle
+ARQ worker in dependency order. See
 `docs/product-spec.md` for the current product constraints and `docs/runbooks/`
 for operational notes.
 

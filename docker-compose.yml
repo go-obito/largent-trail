@@ -1,3 +1,9 @@
+x-api-image: &api-image
+    image: largent-api:dev
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+
 services:
   postgres:
     image: postgres:16
@@ -24,10 +30,16 @@ services:
       timeout: 3s
       retries: 20
 
+  migrate:
+    <<: *api-image
+    env_file: .env
+    command: alembic -c alembic.ini upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    <<: *api-image
     env_file: .env
     command: uvicorn largent.main:create_app --factory --host 0.0.0.0 --port 8000 --reload
     ports:
@@ -39,11 +51,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   worker:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    <<: *api-image
     env_file: .env
     command: arq largent.workers.settings.WorkerSettings
     restart: unless-stopped
@@ -59,6 +71,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
