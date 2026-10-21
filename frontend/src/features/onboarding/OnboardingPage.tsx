@@ -3,17 +3,10 @@
 import { useAuth } from "@clerk/nextjs";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import {
-  Check,
-  Pause,
-  Play,
-  RotateCcw,
-  UserRound,
-  Wallet,
-} from "lucide-react";
+import { Check, UserRound, Wallet } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { Logo } from "@/components/brand/Logo";
@@ -34,151 +27,32 @@ const steps = [
   { number: 5, label: "All set" },
 ] as const;
 
-const videoAspectRatio = 1;
-const videoSource = "/Manage%20money%20onboarding%20video.mp4#t=0.001";
+const illustrationSize = 500;
 
-type IntroVideoProps = {
-  active: boolean;
-};
-
-function IntroVideo({ active }: IntroVideoProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const autoplayAttempted = useRef(false);
-  const [isReady, setIsReady] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasEnded, setHasEnded] = useState(false);
-  const [hasFailed, setHasFailed] = useState(false);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!active || !isReady || !video || autoplayAttempted.current) return;
-
-    autoplayAttempted.current = true;
-    const saveData = (
-      navigator as Navigator & { connection?: { saveData?: boolean } }
-    ).connection?.saveData;
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion || saveData === true) return;
-
-    void video
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-      })
-      .catch(() => {
-        setIsPlaying(false);
-      });
-  }, [active, isReady]);
-
-  async function playVideo() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      await video.play();
-      setHasEnded(false);
-      setIsPlaying(true);
-    } catch {
-      setIsPlaying(false);
-      showToast("The intro couldn't be played. You can continue without it.", "error");
-    }
-  }
-
-  function togglePlayback() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      void playVideo();
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  }
-
-  function replayVideo() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.currentTime = 0;
-    void playVideo();
-  }
-
-  if (hasFailed) {
-    return <IllustrationCard />;
-  }
-
+function IntroAnimation() {
   return (
     <section
-      aria-label="Largent introduction video"
-      className="card-surface overflow-hidden p-2 sm:p-3"
+      aria-label="Largent introduction animation"
+      className="card-surface overflow-hidden p-2 sm:p-3 motion-reduce:hidden"
     >
       <div
-        className="relative overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-panel-raised"
-        style={{ aspectRatio: videoAspectRatio }}
+        className="overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-panel-raised"
+        style={{ aspectRatio: 1 }}
       >
-        <video
-          aria-describedby="onboarding-video-description"
-          className="size-full object-cover"
-          muted
-          onEnded={() => {
-            setIsPlaying(false);
-            setHasEnded(true);
-          }}
-          onError={() => setHasFailed(true)}
-          onLoadedData={() => setIsReady(true)}
-          playsInline
-          preload="metadata"
-          ref={videoRef}
-        >
-          <source src={videoSource} type="video/mp4" />
-          Your browser does not support the intro video.
-        </video>
-        {!isPlaying && (
-          <Button
-            className="absolute inset-x-4 bottom-4 mx-auto w-fit"
-            onClick={() => {
-              if (hasEnded) replayVideo();
-              else void playVideo();
-            }}
-            startIcon={<Play aria-hidden="true" size={18} />}
-            variant="contained"
-          >
-            {hasEnded ? "Replay intro" : "Play intro"}
-          </Button>
-        )}
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="size-full object-contain"
+          height={illustrationSize}
+          src="/manage-money-animate.svg"
+          width={illustrationSize}
+        />
       </div>
-      <p className="sr-only" id="onboarding-video-description">
-        A short animated introduction to managing money with Largent.
+      <p className="sr-only">
+        An animation introducing Largent and everyday money management.
       </p>
-      <div className="flex items-center justify-between gap-3 px-2 pt-2">
+      <div className="px-2 pt-2">
         <span className="text-sm text-muted">A quick introduction</span>
-        <div className="flex items-center gap-1">
-          {hasEnded && (
-            <Button
-              onClick={replayVideo}
-              size="small"
-              startIcon={<RotateCcw aria-hidden="true" size={16} />}
-              variant="text"
-            >
-              Replay
-            </Button>
-          )}
-          <IconButton
-            aria-label={isPlaying ? "Pause intro video" : "Play intro video"}
-            onClick={togglePlayback}
-            size="large"
-          >
-            {isPlaying ? (
-              <Pause aria-hidden="true" size={20} />
-            ) : (
-              <Play aria-hidden="true" size={20} />
-            )}
-          </IconButton>
-        </div>
       </div>
     </section>
   );
@@ -186,7 +60,7 @@ function IntroVideo({ active }: IntroVideoProps) {
 
 function IllustrationCard() {
   return (
-    <section className="card-surface flex aspect-square flex-col items-center justify-center gap-5 overflow-hidden bg-gradient-to-br from-selected to-panel p-8 text-center">
+    <section className="card-surface hidden aspect-square flex-col items-center justify-center gap-5 overflow-hidden bg-gradient-to-br from-selected to-panel p-8 text-center motion-reduce:flex">
       <div className="flex size-20 items-center justify-center rounded-3xl bg-panel text-brand shadow-sm">
         <Wallet aria-hidden="true" size={40} strokeWidth={1.7} />
       </div>
@@ -407,7 +281,8 @@ export function OnboardingPage() {
           )}
 
           <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2 lg:gap-12">
-            <IntroVideo active={progress.step === 1} />
+            <IntroAnimation />
+            <IllustrationCard />
             <section
               aria-labelledby="onboarding-step-title"
               className="card-surface p-6 sm:p-8 lg:p-10"

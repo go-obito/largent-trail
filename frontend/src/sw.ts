@@ -26,7 +26,7 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
     {
-      matcher: ({ request }) => request.destination === "video",
+      matcher: ({ url }) => url.pathname === "/manage-money-animate.svg",
       handler: new NetworkOnly(),
     },
     {

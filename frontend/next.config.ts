@@ -5,7 +5,6 @@ import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 
 const publicAssets = [
-  "manage-money-animate.svg",
   "manage-money-script.svg",
   "transaction-icon.png",
   "wallet-icon.png",
