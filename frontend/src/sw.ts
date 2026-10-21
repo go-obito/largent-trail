@@ -26,6 +26,10 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
     {
+      matcher: ({ request }) => request.destination === "video",
+      handler: new NetworkOnly(),
+    },
+    {
       matcher: ({ request, url }) =>
         request.destination === "image" && !isProtectedPath(url.pathname),
       handler: new CacheFirst({
