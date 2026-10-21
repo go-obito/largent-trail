@@ -37,7 +37,7 @@ export function PrioritizedNeedsCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="rounded-3xl border border-outline bg-panel p-5">
+        <section className="card-surface p-5">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-xl font-bold text-foreground">Prioritized needs</h2>
             <Button

@@ -56,7 +56,7 @@ export function DailySpendingCard({
             </IconButton>
           </div>
 
-          <div className="rounded-3xl border border-outline bg-panel p-5">
+          <div className="card-surface p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">

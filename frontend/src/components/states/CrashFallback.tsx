@@ -20,7 +20,7 @@ export function CrashFallback({ error, reset }: CrashFallbackProps) {
       role="alert"
       className="flex min-h-dvh items-center justify-center bg-page px-5 py-10 text-foreground"
     >
-      <section className="w-full max-w-md rounded-3xl border border-outline bg-panel p-6 text-center">
+      <section className="card-surface w-full max-w-md p-6 text-center">
         <h1 className="text-xl font-semibold">We couldn&apos;t load this page</h1>
         <p className="mt-2 text-sm leading-6 text-muted">
           Something went wrong. Try again, or return to sign in.

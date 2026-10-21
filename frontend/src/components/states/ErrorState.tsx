@@ -14,7 +14,7 @@ export function ErrorState({
   return (
     <section
       aria-live="polite"
-      className="rounded-3xl border border-outline bg-panel p-6 text-center"
+      className="card-surface p-6 text-center"
     >
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-muted">{description}</p>

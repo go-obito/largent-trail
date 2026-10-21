@@ -104,7 +104,7 @@ export default function ProfilePage() {
       <h2 className="mb-5 text-3xl font-bold tracking-tight text-foreground">
         Profile
       </h2>
-      <dl className="divide-y divide-outline rounded-3xl border border-outline bg-panel px-5">
+      <dl className="card-surface divide-y divide-outline px-5">
         {details.map(({ label, value }) => (
           <div
             key={label}

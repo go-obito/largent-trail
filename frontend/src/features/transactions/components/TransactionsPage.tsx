@@ -382,7 +382,7 @@ export function TransactionsPage() {
                 <h2 className="sticky top-0 z-10 -mx-1 bg-page/95 px-1 py-2 text-sm font-semibold text-muted backdrop-blur">
                   {title}
                 </h2>
-                <ul className="divide-y divide-outline rounded-3xl border border-outline bg-panel px-4">
+              <ul className="card-surface divide-y divide-outline px-4">
                   {dayTransactions.map((transaction) => {
                     const isIncome = transaction.kind === "income";
                     const Icon = categoryIcon(

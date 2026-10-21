@@ -100,7 +100,7 @@ function BudgetCard({
   };
 
   return (
-    <article className="rounded-3xl border border-outline bg-panel p-5">
+    <article className="card-surface p-5">
       <Link
         aria-label={`Edit ${budget.category_name} ${budget.period} budget`}
         className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -282,7 +282,7 @@ export function BudgetsPage() {
         </Button>
       </header>
 
-      <aside className="rounded-3xl border border-outline bg-panel p-4 text-sm leading-6 text-muted">
+      <aside className="card-surface p-4 text-sm leading-6 text-muted">
         Weekly budgets set your daily spending target. Monthly budgets count
         toward it, spread over the month.
       </aside>
@@ -348,7 +348,7 @@ export function BudgetsPage() {
       )}
 
       {archivedBudgets.length > 0 && (
-        <details className="rounded-3xl border border-outline bg-panel p-5">
+        <details className="card-surface p-5">
           <summary className="min-h-11 cursor-pointer font-semibold text-foreground">
             Archived ({archivedBudgets.length})
           </summary>

@@ -63,8 +63,11 @@ export const theme = createTheme({
   },
   defaultColorScheme: "light",
   typography: {
-    fontFamily:
-      'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    fontFamily: "var(--font-inter), Inter, sans-serif",
+    h1: { fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.2 },
+    h2: { fontSize: "1.125rem", fontWeight: 600, lineHeight: 1.3 },
+    body1: { fontSize: "0.875rem", lineHeight: 1.5 },
+    caption: { fontSize: "0.75rem", lineHeight: 1.35 },
   },
   shape: {
     borderRadius: Number.parseInt(shape.radiusControl, 10),

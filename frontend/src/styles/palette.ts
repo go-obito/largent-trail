@@ -64,7 +64,7 @@ export const palette = {
 
 // Shape tokens (not theme dependent)
 export const shape = {
-  radiusCard: "24px",
+  radiusCard: "20px",
   radiusControl: "14px",
   radiusPill: "999px",
   touchTarget: "44px",
