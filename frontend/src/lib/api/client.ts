@@ -12,13 +12,20 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string | null;
   readonly title: string;
+  readonly details: unknown;
 
-  constructor(status: number, code: string | null, title: string) {
+  constructor(
+    status: number,
+    code: string | null,
+    title: string,
+    details?: unknown,
+  ) {
     super(title);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.title = title;
+    this.details = details;
   }
 }
 
@@ -53,9 +60,11 @@ async function apiErrorFromResponse(
     return null;
   }
 
+  let value: unknown;
   let details: ProblemDetails;
   try {
-    details = problemDetails(await response.clone().json(), response);
+    value = await response.clone().json();
+    details = problemDetails(value, response);
   } catch (error) {
     if (!(error instanceof SyntaxError)) {
       throw error;
@@ -63,7 +72,7 @@ async function apiErrorFromResponse(
     details = problemDetails(null, response);
   }
 
-  return new ApiError(response.status, details.code, details.title);
+  return new ApiError(response.status, details.code, details.title, value);
 }
 
 function authenticatedFetch(
