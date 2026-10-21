@@ -26,3 +26,9 @@ Short implementation decisions that do not need an ADR.
 ## B11 production migrations
 
 - Production deployments apply database migrations as a separate, explicit deployment step. The development Compose stack runs a one-shot migration service before the API and worker, but production does not auto-migrate during API startup.
+
+## B9 CSV import schema
+
+- Import batches store only the owning user, account, idempotency key, outcome counts, and undo timestamps; uploaded names and contents are not persisted in PostgreSQL.
+- Batch and transaction ownership is enforced with composite foreign keys, and `import_batches` uses forced tenant RLS.
+- Transaction import hashes are indexed only for live rows with a non-null hash; batch IDs are generated server-side as UUIDv7.
