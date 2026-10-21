@@ -3,19 +3,25 @@
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Drawer from "@mui/material/Drawer";
 import Fab from "@mui/material/Fab";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Popover from "@mui/material/Popover";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import { ArrowLeft, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Ellipsis, Plus, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { EmptyState } from "@/components/states/EmptyState";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
@@ -24,6 +30,7 @@ import { useAccounts } from "@/features/accounts/api";
 import { useCategories } from "@/features/categories/api";
 import { useMe } from "@/features/me/api";
 import {
+  useDeleteTransaction,
   useTransactions,
   type TransactionFilters,
 } from "@/features/transactions/api";
@@ -36,19 +43,13 @@ import {
   startOfWeekInTimezone,
 } from "@/lib/date";
 import { formatGhs } from "@/lib/money";
+import { showToast } from "@/lib/toast";
 
 type TransactionRead = components["schemas"]["TransactionRead"];
 type TransactionKind = components["schemas"]["CategoryKind"];
 type Period = "week" | "month" | "last30" | "all" | "custom";
 
 const DEFAULT_TIMEZONE = "Africa/Accra";
-const quickPeriods: { value: Exclude<Period, "custom">; label: string }[] = [
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "last30", label: "Last 30 days" },
-  { value: "all", label: "All" },
-];
-
 function getPeriod(value: string | null, hasDates: boolean): Period {
   if (
     value === "week" ||
@@ -93,11 +94,26 @@ function groupTransactions(transactions: TransactionRead[]) {
   return [...groups.entries()];
 }
 
+function transactionTime(createdAt: string, timezone: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(createdAt));
+}
+
 export function TransactionsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [actionTransaction, setActionTransaction] =
+    useState<TransactionRead | null>(null);
+  const [deleteTransaction, setDeleteTransaction] =
+    useState<TransactionRead | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const me = useMe();
   const accounts = useAccounts();
@@ -131,6 +147,7 @@ export function TransactionsPage() {
     [accountId, categoryId, from, kind, to],
   );
   const transactionsQuery = useTransactions(filters);
+  const deleteMutation = useDeleteTransaction();
   const transactionPages = transactionsQuery.data?.pages;
   const transactions = useMemo(
     () => transactionPages?.flatMap((page) => page.items) ?? [],
@@ -151,12 +168,12 @@ export function TransactionsPage() {
   const header = (
     <header className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-          Activity
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Transactions
         </h1>
+        <p className="mt-1 text-sm text-muted">
+          View, add and manage all your transactions.
+        </p>
       </div>
       <Button
         className="hidden md:inline-flex"
@@ -166,7 +183,7 @@ export function TransactionsPage() {
         sx={{ minHeight: 44 }}
         variant="contained"
       >
-        Add
+        Add Transaction
       </Button>
     </header>
   );
@@ -215,6 +232,201 @@ export function TransactionsPage() {
     const range = getDateRange(nextPeriod, today);
     updateQuery({ period: nextPeriod, from: range.from, to: range.to });
   };
+
+  const openActions = (
+    event: MouseEvent<HTMLElement>,
+    transaction: TransactionRead,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setActionTransaction(transaction);
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTransaction) return;
+    setDeleteError(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTransaction.id);
+      setDeleteTransaction(null);
+      showToast("Transaction deleted", "success");
+    } catch {
+      setDeleteError("We couldn't delete this transaction. Please try again.");
+    }
+  };
+
+  const filterControls = (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <ToggleButtonGroup
+        aria-label="Transaction type"
+        exclusive
+        onChange={(_, value: TransactionKind | "all" | null) =>
+          updateQuery({ kind: value === "all" ? null : value })
+        }
+        size="small"
+        value={kind ?? "all"}
+      >
+        <ToggleButton aria-label="All transactions" value="all">
+          All
+        </ToggleButton>
+        <ToggleButton aria-label="Income transactions" value="income">
+          Income
+        </ToggleButton>
+        <ToggleButton aria-label="Expense transactions" value="expense">
+          Expense
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <div className="flex items-center gap-2">
+        <FormControl size="small" sx={{ minWidth: 148 }}>
+          <Select
+            aria-label="Transaction period"
+            onChange={(event) => {
+              const value = event.target.value as Period;
+              if (value === "custom") {
+                setFiltersOpen(true);
+              } else {
+                selectPeriod(value);
+              }
+            }}
+            value={period}
+          >
+            <MenuItem value="week">This week</MenuItem>
+            <MenuItem value="month">This month</MenuItem>
+            <MenuItem value="last30">Last 30 days</MenuItem>
+            <MenuItem value="all">All time</MenuItem>
+            <MenuItem value="custom">Custom range</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          aria-label={`Open filters${filterCount ? `, ${filterCount} active` : ""}`}
+          className="hidden md:inline-flex"
+          onClick={(event) => setFilterAnchor(event.currentTarget)}
+          startIcon={<SlidersHorizontal aria-hidden="true" size={18} />}
+          sx={{ minHeight: 44, flexShrink: 0 }}
+          variant="outlined"
+        >
+          Filters
+          {filterCount > 0 && (
+            <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-on-primary">
+              {filterCount}
+            </span>
+          )}
+        </Button>
+        <Button
+          aria-label={`Open filters${filterCount ? `, ${filterCount} active` : ""}`}
+          className="md:hidden"
+          onClick={() => setFiltersOpen(true)}
+          sx={{ minWidth: 44, minHeight: 44 }}
+          variant="outlined"
+        >
+          <SlidersHorizontal aria-hidden="true" size={18} />
+        </Button>
+      </div>
+    </div>
+  );
+
+  const filterFields = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <TextField
+          fullWidth
+          label="From"
+          onChange={(event) => {
+            const nextFrom = event.target.value || null;
+            updateQuery({
+              from: nextFrom,
+              period: nextFrom || to ? "custom" : "all",
+            });
+          }}
+          slotProps={{
+            htmlInput: { max: to },
+            inputLabel: { shrink: true },
+          }}
+          type="date"
+          value={from ?? ""}
+        />
+        <TextField
+          fullWidth
+          label="To"
+          onChange={(event) => {
+            const nextTo = event.target.value || null;
+            updateQuery({
+              to: nextTo,
+              period: nextTo || from ? "custom" : "all",
+            });
+          }}
+          slotProps={{
+            htmlInput: { min: from },
+            inputLabel: { shrink: true },
+          }}
+          type="date"
+          value={to ?? ""}
+        />
+      </div>
+      {accounts.isError && (
+        <Alert
+          action={
+            <Button color="inherit" onClick={() => void accounts.refetch()} size="small">
+              Retry
+            </Button>
+          }
+          severity="error"
+        >
+          Accounts couldn&apos;t be loaded.
+        </Alert>
+      )}
+      <FormControl fullWidth disabled={!accounts.isSuccess}>
+        <InputLabel id="transaction-account-label">Account</InputLabel>
+        <Select
+          id="transaction-account"
+          label="Account"
+          labelId="transaction-account-label"
+          onChange={(event) => updateQuery({ account_id: event.target.value || null })}
+          value={accountId ?? ""}
+        >
+          <MenuItem value="">All accounts</MenuItem>
+          {accounts.data?.map((account) => (
+            <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      {categories.isError && (
+        <Alert
+          action={
+            <Button color="inherit" onClick={() => void categories.refetch()} size="small">
+              Retry
+            </Button>
+          }
+          severity="error"
+        >
+          Categories couldn&apos;t be loaded.
+        </Alert>
+      )}
+      <FormControl fullWidth disabled={!categories.isSuccess}>
+        <InputLabel id="transaction-category-label">Category</InputLabel>
+        <Select
+          id="transaction-category"
+          label="Category"
+          labelId="transaction-category-label"
+          onChange={(event) => updateQuery({ category_id: event.target.value || null })}
+          value={categoryId ?? ""}
+        >
+          <MenuItem value="">All categories</MenuItem>
+          {categories.data?.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              <span className="flex items-center gap-2">
+                <CategoryBadge icon={category.icon} name={category.name} size={36} />
+                {category.name}
+              </span>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <Button fullWidth onClick={clearFilters} sx={{ minHeight: 44 }} variant="outlined">
+        Clear all
+      </Button>
+    </div>
+  );
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -273,59 +485,7 @@ export function TransactionsPage() {
       {header}
 
       <section aria-label="Transaction filters" className="space-y-3">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {quickPeriods.map(({ value, label }) => (
-            <button
-              key={value}
-              aria-pressed={period === value}
-              className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                period === value
-                  ? "border-primary bg-selected text-foreground"
-                  : "border-outline bg-panel text-muted hover:bg-panel-raised"
-              }`}
-              onClick={() => selectPeriod(value)}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between gap-3">
-          <ToggleButtonGroup
-            aria-label="Transaction type"
-            exclusive
-            onChange={(_, value: TransactionKind | null) =>
-              updateQuery({ kind: value })
-            }
-            size="small"
-            value={kind ?? "all"}
-          >
-            <ToggleButton aria-label="All transactions" value="all">
-              All
-            </ToggleButton>
-            <ToggleButton aria-label="Income transactions" value="income">
-              Income
-            </ToggleButton>
-            <ToggleButton aria-label="Expense transactions" value="expense">
-              Expense
-            </ToggleButton>
-          </ToggleButtonGroup>
-          <Button
-            aria-label={`Open filters${filterCount ? `, ${filterCount} active` : ""}`}
-            onClick={() => setFiltersOpen(true)}
-            startIcon={<SlidersHorizontal aria-hidden="true" size={18} />}
-            sx={{ minHeight: 44, flexShrink: 0 }}
-            variant="outlined"
-          >
-            Filters
-            {filterCount > 0 && (
-              <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-on-primary">
-                {filterCount}
-              </span>
-            )}
-          </Button>
-        </div>
+        {filterControls}
       </section>
 
       {transactionsQuery.isError && transactionsQuery.data && (
@@ -367,7 +527,7 @@ export function TransactionsPage() {
           </EmptyState>
         )
       ) : (
-        <div className="space-y-5">
+        <div className="hidden space-y-5 lg:block">
           {groups.map(([date, dayTransactions]) => {
             const yesterday = addDaysToDate(today, -1);
             const title =
@@ -375,14 +535,25 @@ export function TransactionsPage() {
                 ? "Today"
                 : date === yesterday
                   ? "Yesterday"
-                  : formatDateInTimezone(date, timezone, true);
+                  : formatDateInTimezone(date, timezone);
 
             return (
               <section key={date} aria-label={title}>
                 <h2 className="sticky top-0 z-10 -mx-1 bg-page/95 px-1 py-2 text-sm font-semibold text-muted backdrop-blur">
                   {title}
                 </h2>
-              <ul className="card-surface divide-y divide-outline px-4">
+              <div className="card-surface overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left">
+                  <thead className="border-b border-outline text-xs uppercase tracking-wide text-muted">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Date</th>
+                      <th className="px-4 py-3 font-semibold">Description</th>
+                      <th className="px-4 py-3 font-semibold">Category</th>
+                      <th className="px-4 py-3 text-right font-semibold">Amount</th>
+                      <th className="w-14 px-2 py-3"><span className="sr-only">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline">
                   {dayTransactions.map((transaction) => {
                     const isIncome = transaction.kind === "income";
                     const category = categories.data?.find(
@@ -390,41 +561,75 @@ export function TransactionsPage() {
                     );
 
                     return (
-                      <li key={transaction.id}>
-                        <Link
-                          aria-label={`Edit ${transaction.category_name || "uncategorized transaction"} for ${formatGhs(Math.abs(transaction.amount_minor))}`}
-                          className="flex min-h-[76px] items-center gap-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                          href={`/transactions/${transaction.id}/edit`}
-                        >
-                          <CategoryBadge
-                            icon={category?.icon}
-                            name={transaction.category_name || "Uncategorized"}
-                            size={44}
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate font-semibold text-foreground">
-                              {transaction.category_name || "Uncategorized"}
-                            </span>
-                            {transaction.note && (
-                              <span className="mt-0.5 block truncate text-sm text-muted">
-                                {transaction.note}
-                              </span>
-                            )}
-                            <span className="mt-0.5 block truncate text-sm text-muted">
-                              {transaction.account_name}
-                            </span>
-                          </span>
-                          <span
-                            className={`shrink-0 text-right font-semibold ${
-                              isIncome
-                                ? "text-status-success"
-                                : "text-status-error"
-                            }`}
+                      <tr
+                        key={transaction.id}
+                        className="cursor-pointer hover:bg-panel-raised/60"
+                        onClick={() => router.push(`/transactions/${transaction.id}/edit`)}
+                      >
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-muted">
+                          {formatDateInTimezone(transaction.occurred_on, timezone)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            className="flex min-h-11 items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-focus"
+                            href={`/transactions/${transaction.id}/edit`}
                           >
-                            {isIncome ? "+" : "−"}
-                            {formatGhs(Math.abs(transaction.amount_minor))}
+                            <CategoryBadge icon={category?.icon} name={transaction.category_name || "Uncategorized"} size={36} />
+                            <span className="min-w-0">
+                              <span className="block truncate font-semibold text-foreground">{transaction.note || transaction.category_name || "Uncategorized"}</span>
+                              <span className="block truncate text-sm text-muted">{transaction.account_name}</span>
+                            </span>
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted">{transaction.category_name || "Uncategorized"}</td>
+                        <td className={`money whitespace-nowrap px-4 py-3 text-right font-semibold ${isIncome ? "text-status-success" : "text-status-error"}`}>
+                          {isIncome ? "+" : "−"}{formatGhs(Math.abs(transaction.amount_minor))}
+                        </td>
+                        <td className="px-2 py-3 text-center">
+                          <Button aria-label={`Actions for ${transaction.category_name || "transaction"}`} onClick={(event) => openActions(event, transaction)} sx={{ minWidth: 44, minHeight: 44 }}>
+                            <Ellipsis aria-hidden="true" size={18} />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  </tbody>
+                </table>
+              </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {transactions.length > 0 && (
+        <div className="space-y-5 lg:hidden">
+          {groups.map(([date, dayTransactions]) => {
+            const yesterday = addDaysToDate(today, -1);
+            const title =
+              date === today ? "Today" : date === yesterday ? "Yesterday" : formatDateInTimezone(date, timezone);
+            return (
+              <section key={date} aria-label={title}>
+                <h2 className="sticky top-0 z-10 -mx-1 bg-page/95 px-1 py-2 text-sm font-semibold text-muted backdrop-blur">{title}</h2>
+                <ul className="card-surface divide-y divide-outline px-4">
+                  {dayTransactions.map((transaction) => {
+                    const category = categories.data?.find((item) => item.id === transaction.category_id);
+                    const isIncome = transaction.kind === "income";
+                    return (
+                      <li key={transaction.id} className="flex min-h-[76px] items-center gap-2 py-2">
+                        <Link className="flex min-w-0 flex-1 items-center gap-3 py-1 focus-visible:outline-2 focus-visible:outline-focus" href={`/transactions/${transaction.id}/edit`}>
+                          <CategoryBadge icon={category?.icon} name={transaction.category_name || "Uncategorized"} size={44} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold text-foreground">{transaction.note || transaction.category_name || "Uncategorized"}</span>
+                            <span className="mt-0.5 block truncate text-sm text-muted">{transaction.category_name || "Uncategorized"} · {transactionTime(transaction.created_at, timezone)}</span>
+                          </span>
+                          <span className={`money shrink-0 text-right text-sm font-semibold ${isIncome ? "text-status-success" : "text-status-error"}`}>
+                            {isIncome ? "+" : "−"}{formatGhs(Math.abs(transaction.amount_minor))}
                           </span>
                         </Link>
+                        <Button aria-label={`Actions for ${transaction.category_name || "transaction"}`} onClick={(event) => openActions(event, transaction)} sx={{ minWidth: 40, minHeight: 44 }}>
+                          <Ellipsis aria-hidden="true" size={18} />
+                        </Button>
                       </li>
                     );
                   })}
@@ -494,130 +699,55 @@ export function TransactionsPage() {
               Done
             </Button>
           </div>
-          <div className="mt-5 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <TextField
-                fullWidth
-                label="From"
-                onChange={(event) => {
-                  const nextFrom = event.target.value || null;
-                  updateQuery({
-                    from: nextFrom,
-                    period: nextFrom || to ? "custom" : "all",
-                  });
-                }}
-                slotProps={{
-                  htmlInput: { max: to },
-                  inputLabel: { shrink: true },
-                }}
-                type="date"
-                value={from ?? ""}
-              />
-              <TextField
-                fullWidth
-                label="To"
-                onChange={(event) => {
-                  const nextTo = event.target.value || null;
-                  updateQuery({
-                    to: nextTo,
-                    period: nextTo || from ? "custom" : "all",
-                  });
-                }}
-                slotProps={{
-                  htmlInput: { min: from },
-                  inputLabel: { shrink: true },
-                }}
-                type="date"
-                value={to ?? ""}
-              />
-            </div>
-
-            {accounts.isError && (
-              <Alert
-                action={
-                  <Button
-                    color="inherit"
-                    onClick={() => void accounts.refetch()}
-                    size="small"
-                  >
-                    Retry
-                  </Button>
-                }
-                severity="error"
-              >
-                Accounts couldn&apos;t be loaded.
-              </Alert>
-            )}
-            <FormControl fullWidth disabled={!accounts.isSuccess}>
-              <InputLabel id="transaction-account-label">Account</InputLabel>
-              <Select
-                id="transaction-account"
-                label="Account"
-                labelId="transaction-account-label"
-                onChange={(event) =>
-                  updateQuery({ account_id: event.target.value || null })
-                }
-                value={accountId ?? ""}
-              >
-                <MenuItem value="">All accounts</MenuItem>
-                {accounts.data?.map((account) => (
-                  <MenuItem key={account.id} value={account.id}>
-                    {account.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {categories.isError && (
-              <Alert
-                action={
-                  <Button
-                    color="inherit"
-                    onClick={() => void categories.refetch()}
-                    size="small"
-                  >
-                    Retry
-                  </Button>
-                }
-                severity="error"
-              >
-                Categories couldn&apos;t be loaded.
-              </Alert>
-            )}
-            <FormControl fullWidth disabled={!categories.isSuccess}>
-              <InputLabel id="transaction-category-label">Category</InputLabel>
-              <Select
-                id="transaction-category"
-                label="Category"
-                labelId="transaction-category-label"
-                onChange={(event) =>
-                  updateQuery({ category_id: event.target.value || null })
-                }
-                value={categoryId ?? ""}
-              >
-                <MenuItem value="">All categories</MenuItem>
-                {categories.data?.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    <span className="flex items-center gap-2">
-                      <CategoryBadge icon={category.icon} name={category.name} size={36} />
-                      {category.name}
-                    </span>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Button
-              fullWidth
-              onClick={clearFilters}
-              sx={{ minHeight: 44 }}
-              variant="outlined"
-            >
-              Clear all
-            </Button>
-          </div>
+          <div className="mt-5">{filterFields}</div>
         </div>
       </Drawer>
+
+      <Popover
+        anchorEl={filterAnchor}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        onClose={() => setFilterAnchor(null)}
+        open={Boolean(filterAnchor)}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <div className="w-[340px] space-y-4 p-5">{filterFields}</div>
+      </Popover>
+
+      <Menu anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)} open={Boolean(menuAnchor)}>
+        <MenuItem
+          component={Link}
+          href={actionTransaction ? `/transactions/${actionTransaction.id}/edit` : "/transactions"}
+          onClick={() => setMenuAnchor(null)}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setMenuAnchor(null);
+            setDeleteError(null);
+            setDeleteTransaction(actionTransaction);
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
+
+      <Dialog
+        onClose={() => !deleteMutation.isPending && setDeleteTransaction(null)}
+        open={Boolean(deleteTransaction)}
+      >
+        <DialogTitle>Delete transaction?</DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-muted">This transaction will be permanently deleted.</p>
+          {deleteError && <Alert className="mt-3" severity="error">{deleteError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={deleteMutation.isPending} onClick={() => setDeleteTransaction(null)}>Cancel</Button>
+          <Button color="error" disabled={deleteMutation.isPending} onClick={() => void confirmDelete()} variant="contained">
+            {deleteMutation.isPending ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

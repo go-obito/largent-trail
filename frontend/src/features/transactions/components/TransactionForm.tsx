@@ -416,7 +416,7 @@ function TransactionFormEditor({
   }
 
   return (
-    <section className="pb-28 md:pb-4">
+    <section className="mx-auto w-full max-w-[560px] pb-28 md:pb-4">
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
           Transactions
@@ -437,7 +437,7 @@ function TransactionFormEditor({
         </Alert>
       )}
 
-      <form className="space-y-5" noValidate onSubmit={form.handleSubmit(submit)}>
+      <form className="card-surface space-y-5 p-5 md:p-6" noValidate onSubmit={form.handleSubmit(submit)}>
         <fieldset>
           <legend className="mb-2 text-sm font-medium text-foreground">Transaction type</legend>
           <div

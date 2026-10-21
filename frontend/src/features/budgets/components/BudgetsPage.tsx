@@ -4,13 +4,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Fab from "@mui/material/Fab";
-import { Plus } from "lucide-react";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { Ellipsis, Plus } from "lucide-react";
 import { EmptyState } from "@/components/states/EmptyState";
-import { CategoryBadge } from "@/components/CategoryBadge";
+import { CategoryBadge, categoryPresentation } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
+import { SpendingOverviewCard } from "@/features/dashboard/components/SpendingOverviewCard";
 import { useCategories } from "@/features/categories/api";
+import { useReport, type ReportPeriod } from "@/features/reports/api";
 import { useMe } from "@/features/me/api";
 import {
   budgetPercent,
@@ -19,9 +27,15 @@ import {
   statusLabel,
   statusRank,
 } from "@/features/budgets/helpers";
-import { useBudgets } from "@/features/budgets/api";
+import {
+  useBudgets,
+  useDeleteBudget,
+  useUpdateBudget,
+} from "@/features/budgets/api";
 import type { components } from "@/lib/api/schema";
+import { todayInTz } from "@/lib/dates";
 import { formatGhs } from "@/lib/money";
+import { showToast } from "@/lib/toast";
 
 type BudgetRead = components["schemas"]["BudgetRead"];
 type BudgetStatus = BudgetRead["status"];
@@ -35,7 +49,7 @@ const statusClass: Record<BudgetStatus, string> = {
 };
 
 const progressClass: Record<BudgetStatus, string> = {
-  within: "bg-primary",
+  within: "",
   near_limit: "bg-status-warning",
   over_limit: "bg-status-error",
 };
@@ -50,6 +64,99 @@ function statusAttentionClass(status: BudgetStatus) {
   return status === "over_limit"
     ? "border-status-error bg-[color-mix(in_srgb,var(--color-error)_10%,var(--color-surface))]"
     : "border-status-warning bg-[color-mix(in_srgb,var(--color-warning)_10%,var(--color-surface))]";
+}
+
+function BudgetActions({
+  budget,
+  isOnline,
+}: {
+  budget: BudgetRead;
+  isOnline: boolean;
+}) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const update = useUpdateBudget();
+  const remove = useDeleteBudget();
+
+  const archive = async () => {
+    setActionError(null);
+    try {
+      await update.mutateAsync({
+        id: budget.id,
+        changes: { is_archived: !budget.is_archived },
+      });
+      setAnchor(null);
+      showToast(budget.is_archived ? "Budget restored" : "Budget archived", "success");
+    } catch {
+      setActionError("We couldn't update this budget. Please try again.");
+    }
+  };
+
+  const deleteBudget = async () => {
+    setActionError(null);
+    try {
+      await remove.mutateAsync(budget.id);
+      setConfirmDelete(false);
+      showToast("Budget deleted", "success");
+    } catch {
+      setActionError("We couldn't delete this budget. Please try again.");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        aria-label={`Actions for ${budget.category_name} budget`}
+        disabled={!isOnline}
+        onClick={(event) => setAnchor(event.currentTarget)}
+        sx={{ minWidth: 44, minHeight: 44, flexShrink: 0 }}
+      >
+        <Ellipsis aria-hidden="true" size={18} />
+      </Button>
+      <Menu anchorEl={anchor} onClose={() => setAnchor(null)} open={Boolean(anchor)}>
+        <MenuItem
+          component={Link}
+          href={`/budgets/${budget.id}/edit`}
+          onClick={() => setAnchor(null)}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem onClick={() => void archive()}>
+          {budget.is_archived ? "Restore" : "Archive"}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            setConfirmDelete(true);
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
+      <Dialog
+        onClose={() => !remove.isPending && setConfirmDelete(false)}
+        open={confirmDelete}
+      >
+        <DialogTitle>Delete budget?</DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-muted">
+            This will permanently delete the {budget.category_name} budget.
+          </p>
+          {actionError && <p aria-live="polite" className="mt-3 text-sm text-alert" role="alert">{actionError}</p>}
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={remove.isPending} onClick={() => setConfirmDelete(false)}>Cancel</Button>
+          <Button color="error" disabled={!isOnline || remove.isPending} onClick={() => void deleteBudget()} variant="contained">
+            {remove.isPending ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {actionError && !confirmDelete && (
+        <p aria-live="polite" className="mt-2 text-sm text-alert" role="alert">{actionError}</p>
+      )}
+    </>
+  );
 }
 
 function useConnectionStatus() {
@@ -73,14 +180,17 @@ function BudgetCard({
   budget,
   categories,
   timezone,
+  isOnline,
 }: {
   budget: BudgetRead;
   categories: ReturnType<typeof useCategories>["data"];
   timezone: string;
+  isOnline: boolean;
 }) {
   const iconKey =
     categories?.find((category) => category.id === budget.category_id)?.icon ??
     null;
+  const categoryColor = categoryPresentation(budget.category_name, iconKey).color;
   const percent = budgetPercent(budget.spent_minor, budget.limit_minor);
   const barPercent = Math.min(100, Math.max(0, percent));
   const isOver = budget.status === "over_limit";
@@ -99,27 +209,34 @@ function BudgetCard({
 
   return (
     <article className="card-surface p-5">
-      <Link
-        aria-label={`Edit ${budget.category_name} ${budget.period} budget`}
-        className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-        href={`/budgets/${budget.id}/edit`}
-      >
-        <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3">
+        <Link
+          aria-label={`Edit ${budget.category_name} ${budget.period} budget`}
+          className="flex min-w-0 flex-1 items-start gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          href={`/budgets/${budget.id}/edit`}
+        >
           <CategoryBadge icon={iconKey} name={budget.category_name} size={44} />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold text-foreground">
               {budget.category_name}
             </span>
-            <span className="mt-0.5 block text-sm capitalize text-muted">
-              {budget.period}
+            <span className="mt-1 inline-flex rounded-full bg-panel-raised px-2.5 py-1 text-xs font-medium capitalize text-muted">
+              {budget.period === "weekly" ? "Weekly" : "Monthly"}
             </span>
           </span>
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClass[budget.status]} ${tintClass[budget.status]}`}
-          >
-            {statusLabel(budget.status)}
-          </span>
-        </div>
+        </Link>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClass[budget.status]} ${tintClass[budget.status]}`}
+        >
+          {statusLabel(budget.status)}
+        </span>
+        <BudgetActions budget={budget} isOnline={isOnline} />
+      </div>
+      <Link
+        aria-label={`View ${budget.category_name} budget details`}
+        className="block rounded-xl focus-visible:outline-2 focus-visible:outline-focus"
+        href={`/budgets/${budget.id}/edit`}
+      >
         <span className="mt-4 block text-sm font-medium text-foreground">
           {formatGhs(budget.spent_minor)} of {formatGhs(budget.limit_minor)}
         </span>
@@ -133,7 +250,10 @@ function BudgetCard({
         >
           <span
             className={`block h-full rounded-full ${progressClass[budget.status]}`}
-            style={{ width: `${barPercent}%` }}
+            style={{
+              width: `${barPercent}%`,
+              ...(budget.status === "within" ? { backgroundColor: categoryColor } : {}),
+            }}
           />
         </span>
         <span className="mt-2 flex items-center justify-between gap-2 text-sm">
@@ -162,11 +282,13 @@ function BudgetSection({
   categories,
   period,
   timezone,
+  isOnline,
 }: {
   budgets: BudgetRead[];
   categories: ReturnType<typeof useCategories>["data"];
   period: BudgetPeriod;
   timezone: string;
+  isOnline: boolean;
 }) {
   const title = period === "weekly" ? "Weekly" : "Monthly";
   const periodBudgets = budgets.filter((budget) => budget.period === period);
@@ -187,6 +309,7 @@ function BudgetSection({
               budget={budget}
               categories={categories}
               timezone={timezone}
+              isOnline={isOnline}
             />
           ))}
         </div>
@@ -205,6 +328,9 @@ export function BudgetsPage() {
   const budgetsQuery = useBudgets();
   const categoriesQuery = useCategories("expense");
   const meQuery = useMe();
+  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("month");
+  const today = todayInTz(meQuery.data?.timezone || "Africa/Accra");
+  const reportQuery = useReport(reportPeriod, today);
   const budgets = budgetsQuery.data ?? noBudgets;
   const activeBudgets = useMemo(
     () => budgets.filter((budget) => !budget.is_archived),
@@ -255,12 +381,12 @@ export function BudgetsPage() {
     <div className="space-y-6 pb-4">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Plan
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Budgets
           </h1>
+          <p className="mt-1 text-sm text-muted">
+            Plan your spending and stay on track.
+          </p>
         </div>
         <Button
           className="hidden md:inline-flex"
@@ -270,14 +396,18 @@ export function BudgetsPage() {
           sx={{ minHeight: 44 }}
           variant="contained"
         >
-          Add budget
+          Add Budget
         </Button>
       </header>
 
-      <aside className="card-surface p-4 text-sm leading-6 text-muted">
-        Weekly budgets set your daily spending target. Monthly budgets count
-        toward it, spread over the month.
-      </aside>
+      <SpendingOverviewCard
+        data={reportQuery.data}
+        isError={reportQuery.isError}
+        isLoading={reportQuery.isPending}
+        onPeriodChange={setReportPeriod}
+        onRetry={() => void reportQuery.refetch()}
+        period={reportPeriod}
+      />
 
       {budgetsQuery.isError && budgetsQuery.data && (
         <p
@@ -324,17 +454,20 @@ export function BudgetsPage() {
         </EmptyState>
       ) : (
         <>
+          <h2 className="text-lg font-bold text-foreground">Category Budgets</h2>
           <BudgetSection
             budgets={activeBudgets}
             categories={categoriesQuery.data}
             period="weekly"
             timezone={timezone}
+            isOnline={isOnline}
           />
           <BudgetSection
             budgets={activeBudgets}
             categories={categoriesQuery.data}
             period="monthly"
             timezone={timezone}
+            isOnline={isOnline}
           />
         </>
       )}
@@ -351,6 +484,7 @@ export function BudgetsPage() {
                 budget={budget}
                 categories={categoriesQuery.data}
                 timezone={timezone}
+                isOnline={isOnline}
               />
             ))}
           </div>

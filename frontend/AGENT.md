@@ -132,9 +132,9 @@ pnpm gen:tokens   # regenerate src/styles/tokens.css from src/styles/palette.ts
 - [x] F1 dashboard
 - [x] F2 transactions (checkpoints 1-3: data layer, add/edit flows, list and filters complete)
 - [x] F3 budgets and alerts (checkpoints 2-3: budgets screen, forms and alerts complete)
-- [ ] F4 reports
+- [x] F4 reports
 - [ ] F5 priority needs (allocation, link import)
 - [ ] F6 CSV import wizard (needs backend B9)
-- [ ] F7 onboarding and profile
+- [ ] F7 onboarding (profile screen complete)
 - [ ] F8 PWA polish (install prompt, offline reads, share target)
 - [ ] F9 deploy
