@@ -7,7 +7,7 @@ import {
   dateInTimezone,
   formatDateInTimezone,
   weekdayInTimezone,
-} from "./date";
+} from "@/lib/date";
 import { DashboardSection } from "./DashboardSection";
 
 type DashboardRead = components["schemas"]["DashboardRead"];

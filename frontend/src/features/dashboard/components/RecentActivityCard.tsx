@@ -2,7 +2,7 @@ import Button from "@mui/material/Button";
 import Link from "next/link";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
-import { formatDateInTimezone } from "./date";
+import { formatDateInTimezone } from "@/lib/date";
 import { DashboardSection } from "./DashboardSection";
 
 type DashboardRead = components["schemas"]["DashboardRead"];

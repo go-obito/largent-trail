@@ -29,7 +29,7 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useAccounts, useCreateAccount } from "@/features/accounts/api";
 import { useCategories } from "@/features/categories/api";
-import { dateInTimezone } from "@/features/dashboard/components/date";
+import { dateInTimezone } from "@/lib/date";
 import { useMe } from "@/features/me/api";
 import {
   useCreateTransaction,
