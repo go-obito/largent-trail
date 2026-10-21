@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import { Check, UserRound, Wallet } from "lucide-react";
@@ -10,7 +10,11 @@ import { useEffect, useState } from "react";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { Logo } from "@/components/brand/Logo";
+import { useAccounts } from "@/features/accounts/api";
+import { useMe } from "@/features/me/api";
 import { showToast } from "@/lib/toast";
+import { OnboardingAccountForm } from "./OnboardingAccountForm";
+import { OnboardingDetailsForm } from "./OnboardingDetailsForm";
 import {
   ONBOARDING_STEP_COUNT,
   type OnboardingStep,
@@ -80,16 +84,14 @@ function stepContent(step: OnboardingStep) {
   switch (step) {
     case 2:
       return {
-        title: "Your details",
-        description:
-          "This setup step is coming in a later checkpoint. You can keep using Largent and update your details anytime.",
+        title: "Let's set you up",
+        description: "Personalize your name and the time zone Largent uses.",
         icon: <UserRound aria-hidden="true" size={28} />,
       };
     case 3:
       return {
-        title: "First account",
-        description:
-          "Your first account can also be created inline from the transaction form, so you can safely skip this step.",
+        title: "Where is your money?",
+        description: "Add the places you keep money. You can add more later.",
         icon: <Wallet aria-hidden="true" size={28} />,
       };
     case 4:
@@ -148,11 +150,16 @@ function previousStep(step: OnboardingStep): OnboardingStep {
 
 export function OnboardingPage() {
   const { userId } = useAuth();
+  const { isLoaded: isClerkUserLoaded, user } = useUser();
   const router = useRouter();
   const onboarding = useOnboardingState(userId);
   const progress = useOnboardingStep(userId);
+  const me = useMe();
+  const accounts = useAccounts();
   const [isOnline, setIsOnline] = useState(true);
   const content = stepContent(progress.step);
+  const needsUser = progress.step === 2;
+  const needsAccounts = progress.step === 3;
 
   useEffect(() => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine);
@@ -194,6 +201,34 @@ export function OnboardingPage() {
     );
   }
 
+  if (
+    (needsUser && (!isClerkUserLoaded || (!me.data && me.isPending))) ||
+    (needsAccounts && !accounts.data && accounts.isPending)
+  ) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
+        <LoadingSkeleton label="Loading your account setup" rows={3} />
+      </main>
+    );
+  }
+
+  if (
+    (needsUser && (!me.data || me.isError)) ||
+    (needsAccounts && (!accounts.data || accounts.isError))
+  ) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
+        <ErrorState
+          description="We couldn't load your account setup. Check your connection and try again."
+          onRetry={() => {
+            void Promise.all([me.refetch(), accounts.refetch()]);
+          }}
+          title="Unable to load onboarding details"
+        />
+      </main>
+    );
+  }
+
   function handleSkip() {
     if (onboarding.skip()) {
       router.replace("/");
@@ -218,7 +253,7 @@ export function OnboardingPage() {
     if (progress.step > 1) progress.setStep(previousStep(progress.step));
   }
 
-  const isWriteStep = progress.step === 2 || progress.step === 3 || progress.step === 4;
+  const isWriteStep = progress.step === 4;
 
   return (
     <main className="min-h-dvh bg-page px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-foreground sm:px-6">
@@ -311,28 +346,47 @@ export function OnboardingPage() {
                   You&apos;re offline. Connect to continue, or skip for now.
                 </p>
               )}
-              <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-                <Button
-                  className="min-h-11"
-                  disabled={progress.step === 1}
-                  onClick={handleBack}
-                  variant="outlined"
-                >
-                  Back
-                </Button>
-                <Button
-                  className="min-h-11"
-                  disabled={isWriteStep && !isOnline}
-                  onClick={handleNext}
-                  variant="contained"
-                >
-                  {progress.step === 1
-                    ? "Get started"
-                    : progress.step === ONBOARDING_STEP_COUNT
-                      ? "Finish"
-                      : "Next"}
-                </Button>
-              </div>
+              {progress.step === 2 && me.data && (
+                <OnboardingDetailsForm
+                  clerkName={user?.fullName?.trim() ?? ""}
+                  isOnline={isOnline}
+                  onBack={handleBack}
+                  onContinue={() => progress.setStep(3)}
+                  user={me.data}
+                />
+              )}
+              {progress.step === 3 && accounts.data && (
+                <OnboardingAccountForm
+                  accounts={accounts.data}
+                  isOnline={isOnline}
+                  onBack={handleBack}
+                  onContinue={() => progress.setStep(4)}
+                />
+              )}
+              {progress.step !== 2 && progress.step !== 3 && (
+                <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                  <Button
+                    className="min-h-11"
+                    disabled={progress.step === 1}
+                    onClick={handleBack}
+                    variant="outlined"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="min-h-11"
+                    disabled={isWriteStep && !isOnline}
+                    onClick={handleNext}
+                    variant="contained"
+                  >
+                    {progress.step === 1
+                      ? "Get started"
+                      : progress.step === ONBOARDING_STEP_COUNT
+                        ? "Finish"
+                        : "Next"}
+                  </Button>
+                </div>
+              )}
             </section>
           </div>
         </section>

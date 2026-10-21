@@ -51,3 +51,9 @@ Reviewed 2026-10-20 against the official package documentation.
 ## F4 reports
 
 - Give the report's net amount the dashboard hero treatment in a two-column totals layout; income and total spent stack beside it as supporting figures, matching the report hierarchy sketch.
+
+## F7 onboarding checkpoint 2
+
+- Save changed display name and timezone through `PATCH /v1/me`; use the device IANA timezone only as an explicit shortcut, and keep account creation online-first.
+- Create first accounts with a stable client UUIDv7 across retries and show existing accounts and API balances before allowing the user to continue.
+- Keep onboarding completion in the per-user browser flag until the API has an onboarded field. Recommend adding `users.onboarded_at` before relying on this state across devices.

@@ -12,7 +12,7 @@ type AccountCreate = components["schemas"]["AccountCreate"];
 type AccountRead = components["schemas"]["AccountRead"];
 type AccountPage = components["schemas"]["AccountPage"];
 type CreateAccountInput = Pick<AccountCreate, "name" | "type"> &
-  Partial<Omit<AccountCreate, "id" | "name" | "type">>;
+  Partial<Omit<AccountCreate, "id" | "name" | "type">> & { id?: string };
 
 export const accountKeys = {
   all: ["accounts"] as const,
@@ -86,7 +86,7 @@ export function useCreateAccount() {
     mutationFn: async (input: CreateAccountInput) => {
       requireOnline();
       const body: AccountCreate = {
-        id: uuidv7(),
+        id: input.id ?? uuidv7(),
         name: input.name,
         type: input.type,
         opening_balance_minor: input.opening_balance_minor ?? 0,
