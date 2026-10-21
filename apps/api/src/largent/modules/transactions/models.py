@@ -72,6 +72,12 @@ class Transaction(TenantMixin, SyncedMixin, Base):
             "occurred_on",
             postgresql_where=text("deleted_at IS NULL"),
         ),
+        Index(
+            "ix_transactions_user_id_import_hash",
+            "user_id",
+            "import_hash",
+            postgresql_where=text("import_hash IS NOT NULL AND deleted_at IS NULL"),
+        ),
     )
 
     account_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
@@ -83,3 +89,4 @@ class Transaction(TenantMixin, SyncedMixin, Base):
     currency: Mapped[str] = mapped_column(CHAR(3), server_default="GHS")
     occurred_on: Mapped[date] = mapped_column(Date)
     note: Mapped[str | None] = mapped_column(Text)
+    import_hash: Mapped[str | None] = mapped_column(Text)

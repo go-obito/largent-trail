@@ -232,6 +232,6 @@ Update this checklist at the end of every step.
 - [x] B6 priority needs (B6a core and allocations complete; B6b link import pending)
 - [x] B7 reports and dashboard aggregates (transaction/account/category names and weekly budget totals in responses)
 - [ ] B8 sync push/pull
-- [ ] B9 CSV import
+- [ ] B9 CSV import (preview and parse checkpoints complete; commit checkpoint remains)
 - [ ] B10 export, deletion, rate limits, hardening
 - [ ] B11 deploy pipeline and runbooks

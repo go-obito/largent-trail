@@ -52,10 +52,12 @@ class ProblemHTTPException(HTTPException):
         detail: str,
         code: str,
         headers: dict[str, str] | None = None,
+        extensions: Mapping[str, object] | None = None,
     ) -> None:
         super().__init__(status_code=status_code, detail=detail, headers=headers)
         self.problem_title = title
         self.problem_code = code
+        self.problem_extensions = extensions
 
 
 def problem_response(
@@ -133,6 +135,7 @@ def install_error_handlers(app: FastAPI) -> None:
             or ("Authentication required" if unauthenticated else "Request failed"),
             detail=detail,
             code=problem_code or ("unauthenticated" if unauthenticated else "http_error"),
+            extensions=getattr(exc, "problem_extensions", None),
         )
         if exc.headers:
             response.headers.update(exc.headers)

@@ -2090,6 +2090,148 @@
         }
       }
     },
+    "/v1/imports/preview": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Preview Import",
+        "description": "Inspect a raw CSV upload and retain its normalized text for 30 minutes.",
+        "operationId": "preview_import_v1_imports_preview_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "file_too_large"
+          },
+          "422": {
+            "description": "not_csv, too_many_rows, too_many_columns, or cell_too_long"
+          },
+          "429": {
+            "description": "rate_limited",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until another preview request is allowed.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "Raw CSV request body, not multipart. Maximum 2 MB; at most 1,000 data rows.",
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              },
+              "example": "date,description,amount\n21/10/2026,Coffee,-12.50\n"
+            },
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/imports/{preview_id}/parse": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Parse Import",
+        "description": "Validate selected columns and return row results without inserting transactions.",
+        "operationId": "parse_import_v1_imports__preview_id__parse_post",
+        "parameters": [
+          {
+            "name": "preview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Preview Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportParseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportParseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "preview_not_found"
+          },
+          "422": {
+            "description": "invalid_mapping or row-level parse errors"
+          }
+        }
+      }
+    },
     "/v1/dashboard": {
       "get": {
         "tags": [
@@ -3329,6 +3471,375 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "ImportParseRequest": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id",
+            "description": "Active account that will own imported transactions."
+          },
+          "mapping": {
+            "properties": {
+              "date": {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Zero-based index of the date column.",
+                "examples": [
+                  0
+                ]
+              },
+              "description": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Optional zero-based index of the description column.",
+                "examples": [
+                  1,
+                  null
+                ]
+              },
+              "amount": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based amount column index for signed mode.",
+                "examples": [
+                  2,
+                  null
+                ]
+              },
+              "debit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based debit column index for debit_credit mode.",
+                "examples": [
+                  2,
+                  null
+                ]
+              },
+              "credit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based credit column index for debit_credit mode.",
+                "examples": [
+                  3,
+                  null
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "date"
+            ],
+            "title": "Mapping",
+            "description": "Column indexes are zero-based and refer to positions, never header text. Indexes must be distinct and in range; description is optional. Use amount for signed mode, or debit and credit for debit_credit mode.",
+            "examples": [
+              {
+                "amount": 2,
+                "date": 0,
+                "description": 1
+              },
+              {
+                "credit": 3,
+                "date": 0,
+                "debit": 2,
+                "description": 1
+              }
+            ]
+          },
+          "date_format": {
+            "type": "string",
+            "enum": [
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+              "YYYY-MM-DD",
+              "DD-MM-YYYY",
+              "D MMM YYYY"
+            ],
+            "title": "Date Format",
+            "description": "Strict date format; dates are never guessed between day-first and month-first.",
+            "default": "DD/MM/YYYY",
+            "examples": [
+              "DD/MM/YYYY",
+              "YYYY-MM-DD"
+            ]
+          },
+          "amount_mode": {
+            "type": "string",
+            "enum": [
+              "signed",
+              "debit_credit"
+            ],
+            "title": "Amount Mode",
+            "description": "Signed amounts infer kind from sign; debit_credit uses the selected column.",
+            "examples": [
+              "signed",
+              "debit_credit"
+            ]
+          },
+          "invert_sign": {
+            "type": "boolean",
+            "title": "Invert Sign",
+            "description": "Flip signed-mode amounts when the source records expenses as positive.",
+            "default": false
+          },
+          "default_category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Category Id",
+            "description": "Fallback category for valid rows when no usage-based suggestion exists."
+          },
+          "has_header": {
+            "type": "boolean",
+            "title": "Has Header",
+            "description": "Whether to skip the first CSV row as headers. Defaults to true; set false to import it as data. When false, preview display headers are synthetic.",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "account_id",
+          "mapping",
+          "amount_mode"
+        ],
+        "title": "ImportParseRequest"
+      },
+      "ImportParseResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImportParsedRow"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Parsed rows in original file order."
+          },
+          "rows": {
+            "type": "integer",
+            "title": "Rows",
+            "description": "Total number of data rows processed."
+          },
+          "valid": {
+            "type": "integer",
+            "title": "Valid",
+            "description": "Rows without a parse error; duplicates are still valid."
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Rows with a non-null row error."
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates",
+            "description": "Rows matching an active transaction import hash."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "rows",
+          "valid",
+          "errors",
+          "duplicates"
+        ],
+        "title": "ImportParseResponse"
+      },
+      "ImportParsedRow": {
+        "properties": {
+          "row_index": {
+            "type": "integer",
+            "title": "Row Index",
+            "description": "One-based data-row index, excluding the selected header."
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date",
+            "description": "Parsed date, or null when the row has no valid date."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Trimmed description, capped at 280 characters."
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CategoryKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Income or expense inferred from the amount."
+          },
+          "amount_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Minor",
+            "description": "Positive integer amount in pesewas."
+          },
+          "suggested_category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Category Id",
+            "description": "Active matching-kind category suggestion, if one is available."
+          },
+          "is_duplicate": {
+            "type": "boolean",
+            "title": "Is Duplicate",
+            "description": "Whether an active transaction already has this import hash."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Row error code, or null for a valid row.",
+            "examples": [
+              "invalid_date",
+              "invalid_amount",
+              "date_out_of_range",
+              "missing_column",
+              null
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "row_index",
+          "date",
+          "note",
+          "kind",
+          "amount_minor",
+          "suggested_category_id",
+          "is_duplicate",
+          "error"
+        ],
+        "title": "ImportParsedRow"
+      },
+      "ImportPreviewResponse": {
+        "properties": {
+          "preview_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Preview Id",
+            "description": "User-scoped identifier for the temporary preview."
+          },
+          "delimiter": {
+            "type": "string",
+            "title": "Delimiter",
+            "description": "Detected CSV delimiter: comma, semicolon, tab, or pipe."
+          },
+          "encoding": {
+            "type": "string",
+            "enum": [
+              "utf-8",
+              "windows-1252"
+            ],
+            "title": "Encoding",
+            "description": "Detected source text encoding after UTF-8 BOM removal."
+          },
+          "headers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Headers",
+            "description": "Display labels only; column identity always uses zero-based indexes."
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows",
+            "description": "Up to the first 20 data rows."
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count",
+            "description": "Number of data rows, excluding a guessed header."
+          },
+          "suggested_mapping": {
+            "$ref": "#/components/schemas/SuggestedMapping",
+            "description": "Header-name guesses expressed as zero-based column indexes."
+          },
+          "has_header_guess": {
+            "type": "boolean",
+            "title": "Has Header Guess",
+            "description": "True when the first row looks like labels; parse may override this guess."
+          }
+        },
+        "type": "object",
+        "required": [
+          "preview_id",
+          "delimiter",
+          "encoding",
+          "headers",
+          "rows",
+          "row_count",
+          "suggested_mapping",
+          "has_header_guess"
+        ],
+        "title": "ImportPreviewResponse"
+      },
       "NeedCreate": {
         "properties": {
           "id": {
@@ -3701,6 +4212,99 @@
           "spending_by_category"
         ],
         "title": "ReportRead"
+      },
+      "SuggestedMapping": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date",
+            "description": "Zero-based date column index guessed from the header.",
+            "examples": [
+              0,
+              null
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Zero-based description column index guessed from the header.",
+            "examples": [
+              1,
+              null
+            ]
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "Zero-based signed amount column index, if found.",
+            "examples": [
+              2,
+              null
+            ]
+          },
+          "debit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debit",
+            "description": "Zero-based debit column index, if found.",
+            "examples": [
+              2,
+              null
+            ]
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit",
+            "description": "Zero-based credit column index, if found.",
+            "examples": [
+              3,
+              null
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "description",
+          "amount",
+          "debit",
+          "credit"
+        ],
+        "title": "SuggestedMapping"
       },
       "TransactionCreate": {
         "properties": {

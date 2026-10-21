@@ -32,3 +32,12 @@ Short implementation decisions that do not need an ADR.
 - Import batches store only the owning user, account, idempotency key, outcome counts, and undo timestamps; uploaded names and contents are not persisted in PostgreSQL.
 - Batch and transaction ownership is enforced with composite foreign keys, and `import_batches` uses forced tenant RLS.
 - Transaction import hashes are indexed only for live rows with a non-null hash; batch IDs are generated server-side as UUIDv7.
+
+## B9 CSV preview and parsing
+
+- Mapping values are zero-based column indexes, never header names; duplicate and blank headers are display-only. Mapping indexes must be distinct and within the first row's column count. Short rows return `missing_column`.
+- Preview guesses a header only when the first row contains non-empty text cells that are neither supported dates nor amounts. Parse defaults `has_header` to true; choosing false treats row one as data and uses synthetic preview labels.
+- Preview and parse run synchronously; Redis stores normalized CSV text under the user-scoped preview key for 30 minutes. Preview limits are enforced over a rolling 60-minute window.
+- Parse row indexes are one-based data-row indexes after the selected header. Its response uses `items` for per-row results and `rows`, `valid`, `errors`, and `duplicates` for totals.
+- Amount conversion uses `Decimal` and rounds to pesewas with half-up quantization. Import hashes include a one-based occurrence count so identical rows in one file remain distinct.
+- The same `has_header` choice must carry through the future commit request so preview, parse, and commit operate on identical data rows.

@@ -259,6 +259,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Import
+         * @description Inspect a raw CSV upload and retain its normalized text for 30 minutes.
+         */
+        post: operations["preview_import_v1_imports_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/imports/{preview_id}/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Parse Import
+         * @description Validate selected columns and return row results without inserting transactions.
+         */
+        post: operations["parse_import_v1_imports__preview_id__parse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/dashboard": {
         parameters: {
             query?: never;
@@ -713,6 +753,210 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ImportParseRequest */
+        ImportParseRequest: {
+            /**
+             * Account Id
+             * Format: uuid
+             * @description Active account that will own imported transactions.
+             */
+            account_id: string;
+            /**
+             * Mapping
+             * @description Column indexes are zero-based and refer to positions, never header text. Indexes must be distinct and in range; description is optional. Use amount for signed mode, or debit and credit for debit_credit mode.
+             * @example {
+             *       "amount": 2,
+             *       "date": 0,
+             *       "description": 1
+             *     }
+             * @example {
+             *       "credit": 3,
+             *       "date": 0,
+             *       "debit": 2,
+             *       "description": 1
+             *     }
+             */
+            mapping: {
+                /**
+                 * @description Zero-based index of the date column.
+                 * @example 0
+                 */
+                date: number;
+                /**
+                 * @description Optional zero-based index of the description column.
+                 * @example 1
+                 * @example null
+                 */
+                description?: number | null;
+                /**
+                 * @description Zero-based amount column index for signed mode.
+                 * @example 2
+                 * @example null
+                 */
+                amount?: number | null;
+                /**
+                 * @description Zero-based debit column index for debit_credit mode.
+                 * @example 2
+                 * @example null
+                 */
+                debit?: number | null;
+                /**
+                 * @description Zero-based credit column index for debit_credit mode.
+                 * @example 3
+                 * @example null
+                 */
+                credit?: number | null;
+            };
+            /**
+             * Date Format
+             * @description Strict date format; dates are never guessed between day-first and month-first.
+             * @default DD/MM/YYYY
+             * @example DD/MM/YYYY
+             * @example YYYY-MM-DD
+             * @enum {string}
+             */
+            date_format: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD" | "DD-MM-YYYY" | "D MMM YYYY";
+            /**
+             * Amount Mode
+             * @description Signed amounts infer kind from sign; debit_credit uses the selected column.
+             * @example signed
+             * @example debit_credit
+             * @enum {string}
+             */
+            amount_mode: "signed" | "debit_credit";
+            /**
+             * Invert Sign
+             * @description Flip signed-mode amounts when the source records expenses as positive.
+             * @default false
+             */
+            invert_sign: boolean;
+            /**
+             * Default Category Id
+             * @description Fallback category for valid rows when no usage-based suggestion exists.
+             */
+            default_category_id?: string | null;
+            /**
+             * Has Header
+             * @description Whether to skip the first CSV row as headers. Defaults to true; set false to import it as data. When false, preview display headers are synthetic.
+             * @default true
+             */
+            has_header: boolean;
+        };
+        /** ImportParseResponse */
+        ImportParseResponse: {
+            /**
+             * Items
+             * @description Parsed rows in original file order.
+             */
+            items: components["schemas"]["ImportParsedRow"][];
+            /**
+             * Rows
+             * @description Total number of data rows processed.
+             */
+            rows: number;
+            /**
+             * Valid
+             * @description Rows without a parse error; duplicates are still valid.
+             */
+            valid: number;
+            /**
+             * Errors
+             * @description Rows with a non-null row error.
+             */
+            errors: number;
+            /**
+             * Duplicates
+             * @description Rows matching an active transaction import hash.
+             */
+            duplicates: number;
+        };
+        /** ImportParsedRow */
+        ImportParsedRow: {
+            /**
+             * Row Index
+             * @description One-based data-row index, excluding the selected header.
+             */
+            row_index: number;
+            /**
+             * Date
+             * @description Parsed date, or null when the row has no valid date.
+             */
+            date: string | null;
+            /**
+             * Note
+             * @description Trimmed description, capped at 280 characters.
+             */
+            note: string | null;
+            /** @description Income or expense inferred from the amount. */
+            kind: components["schemas"]["CategoryKind"] | null;
+            /**
+             * Amount Minor
+             * @description Positive integer amount in pesewas.
+             */
+            amount_minor: number | null;
+            /**
+             * Suggested Category Id
+             * @description Active matching-kind category suggestion, if one is available.
+             */
+            suggested_category_id: string | null;
+            /**
+             * Is Duplicate
+             * @description Whether an active transaction already has this import hash.
+             */
+            is_duplicate: boolean;
+            /**
+             * Error
+             * @description Row error code, or null for a valid row.
+             * @example invalid_date
+             * @example invalid_amount
+             * @example date_out_of_range
+             * @example missing_column
+             * @example null
+             */
+            error: string | null;
+        };
+        /** ImportPreviewResponse */
+        ImportPreviewResponse: {
+            /**
+             * Preview Id
+             * Format: uuid
+             * @description User-scoped identifier for the temporary preview.
+             */
+            preview_id: string;
+            /**
+             * Delimiter
+             * @description Detected CSV delimiter: comma, semicolon, tab, or pipe.
+             */
+            delimiter: string;
+            /**
+             * Encoding
+             * @description Detected source text encoding after UTF-8 BOM removal.
+             * @enum {string}
+             */
+            encoding: "utf-8" | "windows-1252";
+            /**
+             * Headers
+             * @description Display labels only; column identity always uses zero-based indexes.
+             */
+            headers: string[];
+            /**
+             * Rows
+             * @description Up to the first 20 data rows.
+             */
+            rows: string[][];
+            /**
+             * Row Count
+             * @description Number of data rows, excluding a guessed header.
+             */
+            row_count: number;
+            /** @description Header-name guesses expressed as zero-based column indexes. */
+            suggested_mapping: components["schemas"]["SuggestedMapping"];
+            /**
+             * Has Header Guess
+             * @description True when the first row looks like labels; parse may override this guess.
+             */
+            has_header_guess: boolean;
+        };
         /** NeedCreate */
         NeedCreate: {
             /** Id */
@@ -848,6 +1092,44 @@ export interface components {
             spending_over_time: components["schemas"]["ReportDay"][];
             /** Spending By Category */
             spending_by_category: components["schemas"]["CategorySpend"][];
+        };
+        /** SuggestedMapping */
+        SuggestedMapping: {
+            /**
+             * Date
+             * @description Zero-based date column index guessed from the header.
+             * @example 0
+             * @example null
+             */
+            date: number | null;
+            /**
+             * Description
+             * @description Zero-based description column index guessed from the header.
+             * @example 1
+             * @example null
+             */
+            description: number | null;
+            /**
+             * Amount
+             * @description Zero-based signed amount column index, if found.
+             * @example 2
+             * @example null
+             */
+            amount: number | null;
+            /**
+             * Debit
+             * @description Zero-based debit column index, if found.
+             * @example 2
+             * @example null
+             */
+            debit: number | null;
+            /**
+             * Credit
+             * @description Zero-based credit column index, if found.
+             * @example 3
+             * @example null
+             */
+            credit: number | null;
         };
         /** TransactionCreate */
         TransactionCreate: {
@@ -2060,6 +2342,103 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    preview_import_v1_imports_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Raw CSV request body, not multipart. Maximum 2 MB; at most 1,000 data rows. */
+        requestBody: {
+            content: {
+                /**
+                 * @example date,description,amount
+                 *     21/10/2026,Coffee,-12.50
+                 */
+                "text/csv": string;
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreviewResponse"];
+                };
+            };
+            /** @description file_too_large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description not_csv, too_many_rows, too_many_columns, or cell_too_long */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description rate_limited */
+            429: {
+                headers: {
+                    /** @description Seconds until another preview request is allowed. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    parse_import_v1_imports__preview_id__parse_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                preview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportParseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportParseResponse"];
+                };
+            };
+            /** @description preview_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description invalid_mapping or row-level parse errors */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
