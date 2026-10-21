@@ -7,7 +7,8 @@ type ToastState = {
   message: string;
   severity: ToastSeverity;
   open: boolean;
-  show: (message: string, severity?: ToastSeverity) => void;
+  duration: number;
+  show: (message: string, severity?: ToastSeverity, duration?: number) => void;
   dismiss: () => void;
 };
 
@@ -18,16 +19,22 @@ export const useToastStore = create<ToastState>((set) => ({
   message: "",
   severity: "info",
   open: false,
-  show: (message, severity = "info") =>
+  duration: 5000,
+  show: (message, severity = "info", duration = 5000) =>
     set({
       id: ++nextToastId,
       message,
       severity,
+      duration,
       open: true,
     }),
   dismiss: () => set({ open: false }),
 }));
 
-export function showToast(message: string, severity?: ToastSeverity) {
-  useToastStore.getState().show(message, severity);
+export function showToast(
+  message: string,
+  severity?: ToastSeverity,
+  duration?: number,
+) {
+  useToastStore.getState().show(message, severity, duration);
 }

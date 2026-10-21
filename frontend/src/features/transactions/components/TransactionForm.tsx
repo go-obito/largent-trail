@@ -385,13 +385,11 @@ function TransactionFormEditor({
           id: transactionId,
           changes: data,
         });
-        showToast("Transaction updated", "success");
       } else {
         await createTransaction.mutateAsync({
           ...data,
           currency: "GHS",
         });
-        showToast("Transaction added", "success");
       }
       router.back();
     } catch (error) {

@@ -12,6 +12,9 @@ import { ApiError, createApiClient } from "@/lib/api/client";
 import { requireOnline } from "@/lib/api/offline";
 import type { components, paths } from "@/lib/api/schema";
 import { uuidv7 } from "@/lib/uuid";
+import { budgetKeys, fetchBudgets } from "@/features/budgets/api";
+import { budgetAlertMessage, worstBudgetEscalation } from "@/features/budgets/alerts";
+import { showToast } from "@/lib/toast";
 
 type TransactionCreate = components["schemas"]["TransactionCreate"];
 type TransactionRead = components["schemas"]["TransactionRead"];
@@ -103,12 +106,60 @@ function ensureTransaction(
 
 async function invalidateTransactionQueries(
   queryClient: ReturnType<typeof useQueryClient>,
+  includeBudgets = true,
 ) {
   await Promise.all(
-    relatedInvalidationKeys.map((queryKey) =>
-      queryClient.invalidateQueries({ queryKey }),
-    ),
+    relatedInvalidationKeys
+      .filter((queryKey) => includeBudgets || queryKey[0] !== "budgets")
+      .map((queryKey) => queryClient.invalidateQueries({ queryKey })),
   );
+}
+
+type TransactionMutationContext = {
+  budgetsBefore: BudgetRead[] | null;
+};
+
+type BudgetRead = components["schemas"]["BudgetRead"];
+
+async function completeTransactionSave(
+  client: ReturnType<typeof createApiClient>,
+  queryClient: ReturnType<typeof useQueryClient>,
+  budgetsBefore: BudgetRead[] | null,
+  successMessage: string,
+) {
+  let escalation: BudgetRead | null = null;
+  let budgetRefreshFailed = false;
+
+  if (budgetsBefore) {
+    try {
+      const budgetsAfter = await queryClient.fetchQuery({
+        queryKey: budgetKeys.list(),
+        queryFn: () => fetchBudgets(client),
+        staleTime: 0,
+      });
+      escalation = worstBudgetEscalation(budgetsBefore, budgetsAfter);
+    } catch {
+      budgetRefreshFailed = true;
+    }
+  }
+
+  await invalidateTransactionQueries(queryClient, !budgetsBefore || budgetRefreshFailed);
+
+  if (budgetRefreshFailed) {
+    showToast(
+      "Transaction saved, but budget alerts couldn't be refreshed.",
+      "warning",
+      8000,
+    );
+  } else if (escalation) {
+    showToast(
+      budgetAlertMessage(escalation, true),
+      escalation.status === "over_limit" ? "error" : "warning",
+      8000,
+    );
+  } else {
+    showToast(successMessage, "success");
+  }
 }
 
 export function useTransactions(filters: TransactionFilters = {}) {
@@ -173,6 +224,17 @@ export function useCreateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    onMutate: async (input): Promise<TransactionMutationContext> => {
+      requireOnline();
+      const budgetsBefore =
+        input.kind === "expense"
+          ? await queryClient.ensureQueryData({
+              queryKey: budgetKeys.list(),
+              queryFn: () => fetchBudgets(client),
+            })
+          : null;
+      return { budgetsBefore };
+    },
     mutationFn: async (input: CreateTransactionInput) => {
       requireOnline();
       const { data, error, response } = await client.POST("/v1/transactions", {
@@ -189,7 +251,13 @@ export function useCreateTransaction() {
 
       return ensureTransaction(data, response.status);
     },
-    onSuccess: () => invalidateTransactionQueries(queryClient),
+    onSuccess: async (_transaction, _input, context) =>
+      completeTransactionSave(
+        client,
+        queryClient,
+        context?.budgetsBefore ?? null,
+        "Transaction added",
+      ),
   });
 }
 
@@ -198,6 +266,43 @@ export function useUpdateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    onMutate: async ({
+      id,
+      changes,
+    }): Promise<TransactionMutationContext> => {
+      requireOnline();
+      const currentTransaction =
+        changes.kind == null
+          ? await queryClient.ensureQueryData({
+              queryKey: transactionKeys.detail(id),
+              queryFn: async () => {
+                const { data, error, response } = await client.GET(
+                  "/v1/transactions/{transaction_id}",
+                  { params: { path: { transaction_id: id } } },
+                );
+                if (error) {
+                  throw new ApiError(
+                    response.status,
+                    null,
+                    response.statusText || "The API request failed.",
+                    error,
+                  );
+                }
+                return ensureTransaction(data, response.status);
+              },
+            })
+          : null;
+      const isExpense =
+        changes.kind === "expense" ||
+        (changes.kind == null && currentTransaction?.kind === "expense");
+      const budgetsBefore = isExpense
+        ? await queryClient.ensureQueryData({
+            queryKey: budgetKeys.list(),
+            queryFn: () => fetchBudgets(client),
+          })
+        : null;
+      return { budgetsBefore };
+    },
     mutationFn: async ({ id, changes }: UpdateTransactionInput) => {
       requireOnline();
       const { data, error, response } = await client.PATCH(
@@ -218,7 +323,13 @@ export function useUpdateTransaction() {
 
       return ensureTransaction(data, response.status);
     },
-    onSuccess: () => invalidateTransactionQueries(queryClient),
+    onSuccess: async (_transaction, _input, context) =>
+      completeTransactionSave(
+        client,
+        queryClient,
+        context?.budgetsBefore ?? null,
+        "Transaction updated",
+      ),
   });
 }
 

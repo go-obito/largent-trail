@@ -60,7 +60,7 @@ function ensureBudget(
   return data;
 }
 
-async function fetchAllBudgets(
+export async function fetchBudgets(
   client: ReturnType<typeof createApiClient>,
 ): Promise<BudgetRead[]> {
   const budgets: BudgetRead[] = [];
@@ -109,7 +109,7 @@ export function useBudgets() {
   return useQuery({
     queryKey: budgetKeys.list(),
     enabled: isAuthReady,
-    queryFn: () => fetchAllBudgets(client),
+    queryFn: () => fetchBudgets(client),
   });
 }
 

@@ -131,7 +131,7 @@ pnpm gen:tokens   # regenerate src/styles/tokens.css from src/styles/palette.ts
 - [x] F0 scaffold, tooling, theme, API client, auth shell, PWA basics (auth shell and PWA basics complete)
 - [x] F1 dashboard
 - [x] F2 transactions (checkpoints 1-3: data layer, add/edit flows, list and filters complete)
-- [ ] F3 budgets and alerts (checkpoint 2: budgets screen and forms complete)
+- [ ] F3 budgets and alerts (checkpoints 2-3: budgets screen, forms and alerts complete)
 - [ ] F4 reports
 - [ ] F5 priority needs (allocation, link import)
 - [ ] F6 CSV import wizard (needs backend B9)

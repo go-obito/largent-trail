@@ -9,12 +9,13 @@ export function ToastViewport() {
   const message = useToastStore((state) => state.message);
   const severity = useToastStore((state) => state.severity);
   const open = useToastStore((state) => state.open);
+  const duration = useToastStore((state) => state.duration);
   const dismiss = useToastStore((state) => state.dismiss);
 
   return (
     <Snackbar
       anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      autoHideDuration={5000}
+      autoHideDuration={duration}
       key={id}
       onClose={dismiss}
       open={open}

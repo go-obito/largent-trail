@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { BudgetsCard } from "@/features/dashboard/components/BudgetsCard";
+import { BudgetAlertBanner } from "@/features/dashboard/components/BudgetAlertBanner";
 import { DailySpendingCard } from "@/features/dashboard/components/DailySpendingCard";
 import { DashboardHeader } from "@/features/dashboard/components/DashboardHeader";
 import { HeroBalanceCard } from "@/features/dashboard/components/HeroBalanceCard";
@@ -34,6 +35,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6 pb-4">
+      <BudgetAlertBanner budgets={data?.budgets} />
       <DashboardHeader
         isRefreshing={dashboard.isFetching}
         name={name}
