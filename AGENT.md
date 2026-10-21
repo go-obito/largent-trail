@@ -158,11 +158,13 @@ Rules:
 
 ## 11. CSV import
 
-Two-step flow (preview, then commit), processed synchronously inside the request because files are capped at 1,000 rows (the worker is reserved for later heavy jobs):
+Three-step flow (preview, parse, then commit), processed synchronously inside the request because files are capped at 1,000 rows (the worker is reserved for later heavy jobs):
 1. **Preview**: upload CSV, detect delimiter and encoding, return headers and sample rows.
-2. **Commit**: client sends column mapping (date, description, amount, optional debit/credit columns) plus per-row category choices; server validates and inserts.
+2. **Parse**: client sends account, mapping (date, description, amount, optional debit/credit columns), date and amount settings; server returns parsed rows, suggestions, and duplicate flags without inserting.
+3. **Commit**: client resends the parsing settings plus per-row category, kind override, and skip choices; server reparses the stored file and atomically inserts eligible rows.
 
-Constraints carried over from the prototype: **max 2 MB, max 1,000 rows**. Reject larger files with a clear error. Dedupe on `sha256(user_id | date | amount_minor | normalized_description | account_id)`; skip duplicates and report counts. Every import creates an `import_batch` so it can be undone as a unit. Treat uploads as hostile: no formula execution, strict parsing, strip control characters, bound memory use. Parse amounts with `Decimal`, then convert to minor units.
+Constraints carried over from the prototype: **max 2 MB, max 1,000 rows**. Reject larger files with a clear error. Dedupe on `sha256(user_id | account_id | occurred_on | kind | amount_minor | normalized_description | occurrence_number)`; the occurrence number keeps identical rows in one file distinct. Skip duplicates and report counts. Every import creates an `import_batch` so it can be undone as a unit. Treat uploads as hostile: no formula execution, strict parsing, strip control characters, bound memory use. Parse amounts with `Decimal`, then convert to minor units.
+Uploads use raw `text/csv` or `application/octet-stream` request bodies, never multipart. Redis retains the normalized upload, scoped to the user, for 30 minutes. Commit requires an `Idempotency-Key`; replay returns its original result. Undo soft-deletes the batch's transactions, and import history uses signed cursor pagination.
 
 ## 12. Security checklist (applies to every change)
 
@@ -232,6 +234,6 @@ Update this checklist at the end of every step.
 - [x] B6 priority needs (B6a core and allocations complete; B6b link import pending)
 - [x] B7 reports and dashboard aggregates (transaction/account/category names and weekly budget totals in responses)
 - [ ] B8 sync push/pull
-- [ ] B9 CSV import (preview and parse checkpoints complete; commit checkpoint remains)
+- [x] B9 CSV import (preview, parse, commit, undo, and history)
 - [ ] B10 export, deletion, rate limits, hardening
 - [ ] B11 deploy pipeline and runbooks

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from datetime import date as Date
+from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 from largent.modules.categories.models import CategoryKind
 
@@ -96,6 +97,74 @@ class ImportParseRequest(BaseModel):
             "import it as data. When false, preview display headers are synthetic."
         ),
     )
+
+
+class ImportRowChoice(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    row_index: int = Field(ge=1, le=1_000)
+    category_id: UUID | None = None
+    kind: CategoryKind | None = None
+    skip: StrictBool = False
+
+
+class ImportCommitRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: UUID
+    date_format: DateFormat = "DD/MM/YYYY"
+    amount_mode: AmountMode
+    invert_sign: StrictBool = False
+    mapping: object = Field(
+        description=(
+            "Column indexes are zero-based and refer to positions, never header text. "
+            "Indexes must be distinct and in range."
+        ),
+        json_schema_extra=_MAPPING_SCHEMA,
+    )
+    has_header: StrictBool = Field(
+        default=True,
+        description="Whether to skip the first CSV row as headers; use the same choice as parse.",
+    )
+    rows: list[ImportRowChoice] = Field(default_factory=list, max_length=1_000)
+
+    @model_validator(mode="after")
+    def require_unique_row_choices(self) -> ImportCommitRequest:
+        row_indexes = [row.row_index for row in self.rows]
+        if len(row_indexes) != len(set(row_indexes)):
+            raise ValueError("row choices must have unique row indexes")
+        return self
+
+
+class ImportRowError(BaseModel):
+    row_index: int = Field(ge=1, le=1_000)
+    code: str = Field(min_length=1, max_length=64)
+
+
+class ImportCommitResponse(BaseModel):
+    batch_id: UUID
+    imported_count: int
+    skipped_duplicate_count: int
+    skipped_by_user_count: int
+    error_count: int
+    errors: list[ImportRowError]
+
+
+class ImportBatchRead(BaseModel):
+    batch_id: UUID
+    account_id: UUID
+    imported_count: int
+    skipped_duplicate_count: int
+    skipped_by_user_count: int
+    error_count: int
+    created_at: datetime
+    undone_at: datetime | None
+
+
+class ImportBatchPage(BaseModel):
+    items: list[ImportBatchRead]
+    limit: int
+    next_cursor: str | None
 
 
 class SuggestedMapping(BaseModel):

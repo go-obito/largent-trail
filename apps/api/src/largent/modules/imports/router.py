@@ -8,16 +8,26 @@ from datetime import datetime
 from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+import structlog
+from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.clock import utc_now
 from largent.core.errors import ProblemHTTPException
 from largent.core.ids import new_uuid7
-from largent.core.tenancy import get_current_user_id, get_tenant_session
+from largent.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, get_cursor_signing_keys
+from largent.core.tenancy import (
+    SessionFactory,
+    get_current_user_id,
+    get_tenant_session,
+    tenant_session,
+)
 from largent.modules.imports import service
 from largent.modules.imports.schemas import (
+    ImportBatchPage,
+    ImportCommitRequest,
+    ImportCommitResponse,
     ImportParseRequest,
     ImportParseResponse,
     ImportPreviewResponse,
@@ -27,6 +37,8 @@ router = APIRouter()
 CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
 Now = Annotated[datetime, Depends(utc_now)]
+CursorKeys = Annotated[list[bytes], Depends(get_cursor_signing_keys)]
+IdempotencyKey = Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=255)]
 PREVIEW_TTL_SECONDS = 30 * 60
 PREVIEWS_PER_HOUR = 10
 _INCREMENT_RATE_LIMIT = (
@@ -214,3 +226,105 @@ async def parse_import(
             "preview_not_found",
         )
     return await service.parse_import(session, user_id, normalized_text, payload, now)
+
+
+@router.post(
+    "/{preview_id}/commit",
+    response_model=ImportCommitResponse,
+    status_code=201,
+    responses={
+        404: {"description": "preview_not_found"},
+        422: {"description": "invalid_mapping, invalid_reference, or row-level errors"},
+    },
+)
+async def commit_import(
+    preview_id: UUID,
+    payload: ImportCommitRequest,
+    request: Request,
+    response: Response,
+    user_id: CurrentUserId,
+    idempotency_key: IdempotencyKey,
+    now: Now,
+) -> ImportCommitResponse:
+    """Commit a user-reviewed import atomically and replay by Idempotency-Key."""
+    if not idempotency_key.strip():
+        raise _error(
+            422,
+            "Invalid idempotency key",
+            "The Idempotency-Key header must not be blank.",
+            "invalid_idempotency_key",
+        )
+    redis = cast(Redis, request.app.state.redis)
+    created = False
+    async with tenant_session(
+        user_id, cast(SessionFactory, request.app.state.session_factory)
+    ) as session:
+        result = await service.read_idempotent_result(session, user_id, idempotency_key)
+        if result is None:
+            normalized_text = await redis.get(f"import:{user_id}:{preview_id}")
+            if normalized_text is None:
+                raise _error(
+                    404,
+                    "Preview not found",
+                    "The CSV preview was not found or has expired.",
+                    "preview_not_found",
+                )
+            result, created = await service.commit_import(
+                session, user_id, idempotency_key, normalized_text, payload, now
+            )
+    if created:
+        await redis.delete(f"import:{user_id}:{preview_id}")
+    else:
+        response.status_code = 200
+    structlog.get_logger(__name__).info(
+        "import_commit_completed",
+        preview_id=str(preview_id),
+        batch_id=str(result.batch_id),
+        imported_count=result.imported_count,
+        skipped_duplicate_count=result.skipped_duplicate_count,
+        skipped_by_user_count=result.skipped_by_user_count,
+        error_count=result.error_count,
+        status="created" if created else "replayed",
+    )
+    return result
+
+
+@router.delete("/{batch_id}", status_code=204)
+async def undo_import(
+    batch_id: UUID,
+    request: Request,
+    user_id: CurrentUserId,
+    now: Now,
+) -> Response:
+    """Soft-delete all live transactions in a batch; repeating the request is harmless."""
+    async with tenant_session(
+        user_id, cast(SessionFactory, request.app.state.session_factory)
+    ) as session:
+        found = await service.undo_import_batch(session, user_id, batch_id, now)
+    if not found:
+        raise _error(
+            404,
+            "Import batch not found",
+            "The import batch was not found.",
+            "batch_not_found",
+        )
+    structlog.get_logger(__name__).info(
+        "import_batch_undo_completed",
+        batch_id=str(batch_id),
+        status="undone",
+    )
+    return Response(status_code=204)
+
+
+@router.get("", response_model=ImportBatchPage)
+async def list_imports(
+    user_id: CurrentUserId,
+    session: TenantSession,
+    signing_keys: CursorKeys,
+    limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
+    cursor: str | None = None,
+) -> ImportBatchPage:
+    batches, next_cursor = await service.list_import_batches(
+        session, user_id, limit=limit, cursor=cursor, signing_keys=signing_keys
+    )
+    return ImportBatchPage(items=batches, limit=limit, next_cursor=next_cursor)

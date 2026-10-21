@@ -50,6 +50,12 @@ class Transaction(TenantMixin, SyncedMixin, Base):
             name="fk_transactions_user_id_category_id_kind_categories",
             match="SIMPLE",
         ),
+        ForeignKeyConstraint(
+            ["user_id", "import_batch_id"],
+            ["import_batches.user_id", "import_batches.id"],
+            name="fk_transactions_user_id_import_batch_id_import_batches",
+            match="SIMPLE",
+        ),
         Index(
             "ix_transactions_user_id_list_order",
             "user_id",
@@ -89,4 +95,5 @@ class Transaction(TenantMixin, SyncedMixin, Base):
     currency: Mapped[str] = mapped_column(CHAR(3), server_default="GHS")
     occurred_on: Mapped[date] = mapped_column(Date)
     note: Mapped[str | None] = mapped_column(Text)
+    import_batch_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
     import_hash: Mapped[str | None] = mapped_column(Text)

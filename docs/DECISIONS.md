@@ -41,3 +41,11 @@ Short implementation decisions that do not need an ADR.
 - Parse row indexes are one-based data-row indexes after the selected header. Its response uses `items` for per-row results and `rows`, `valid`, `errors`, and `duplicates` for totals.
 - Amount conversion uses `Decimal` and rounds to pesewas with half-up quantization. Import hashes include a one-based occurrence count so identical rows in one file remain distinct.
 - The same `has_header` choice must carry through the future commit request so preview, parse, and commit operate on identical data rows.
+
+## B9 CSV commit and undo
+
+- The flow is raw-body preview, mapping-based parse, then commit; normalized uploads remain user-scoped in Redis for 30 minutes.
+- Import hashes use normalized parsed values plus an occurrence number so identical rows within one file remain distinct; dates must match the explicitly selected strict format.
+- Commit reparses server-held CSV and trusts only row-choice fields from the client. It inserts valid, non-duplicate transactions and the batch in one transaction; `Idempotency-Key` replay returns the stored result.
+- Batch undo soft-deletes its transactions atomically and is repeatable; batch history is newest-first with signed cursor pagination.
+- B10 CSV export must neutralize formula injection by prefixing cells beginning with `=`, `+`, `-`, or `@`.

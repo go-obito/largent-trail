@@ -8,6 +8,7 @@ import io
 import re
 import unicodedata
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
@@ -17,17 +18,25 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.errors import ProblemHTTPException
+from largent.core.ids import new_uuid7
+from largent.core.pagination import PageCursor, decode_cursor, encode_cursor
 from largent.domain.money import MAX_AMOUNT_MINOR
 from largent.domain.transaction_rules import MIN_OCCURRED_ON, local_today
 from largent.modules.accounts import service as accounts_service
 from largent.modules.categories import service as categories_service
 from largent.modules.categories.models import Category, CategoryKind
 from largent.modules.imports import repository
+from largent.modules.imports.models import ImportBatch
 from largent.modules.imports.schemas import (
+    ImportBatchRead,
+    ImportCommitRequest,
+    ImportCommitResponse,
     ImportParsedRow,
     ImportParseRequest,
     ImportParseResponse,
     ImportPreviewResponse,
+    ImportRowChoice,
+    ImportRowError,
     SuggestedMapping,
 )
 from largent.modules.users import service as users_service
@@ -412,6 +421,26 @@ def _row_transaction(
     return _ParsedRow(row_index, occurred_on, note, kind, amount_minor, None)
 
 
+def _parsed_file_rows(
+    preview_text: str, payload: ImportParseRequest, today: date
+) -> list[_ParsedRow]:
+    _, records, _, _ = _read_csv(preview_text)
+    mapping = _validate_mapping(payload, len(records[0]))
+    data_records = records[int(payload.has_header) :]
+    if len(data_records) > MAX_DATA_ROWS:
+        raise _problem(
+            422,
+            "Too many rows",
+            f"The CSV contains {len(data_records)} data rows; the maximum is {MAX_DATA_ROWS}.",
+            "too_many_rows",
+            extensions={"row_count": len(data_records)},
+        )
+    return [
+        _row_transaction(row, index, mapping, payload, today)
+        for index, row in enumerate(data_records, start=1)
+    ]
+
+
 def _hash_rows(user_id: UUID, account_id: UUID, rows: list[_ParsedRow]) -> list[_ParsedRow]:
     occurrences: defaultdict[tuple[date, CategoryKind, int, str], int] = defaultdict(int)
     hashed_rows: list[_ParsedRow] = []
@@ -499,16 +528,7 @@ async def parse_import(
 ) -> ImportParseResponse:
     """Validate a mapping and produce per-row data, suggestions, and duplicate flags."""
     _, records, _, _ = _read_csv(preview_text)
-    mapping = _validate_mapping(payload, len(records[0]))
-    data_records = records[int(payload.has_header) :]
-    if len(data_records) > MAX_DATA_ROWS:
-        raise _problem(
-            422,
-            "Too many rows",
-            f"The CSV contains {len(data_records)} data rows; the maximum is {MAX_DATA_ROWS}.",
-            "too_many_rows",
-            extensions={"row_count": len(data_records)},
-        )
+    _validate_mapping(payload, len(records[0]))
 
     account = await accounts_service.read_account(session, user_id, payload.account_id)
     if account is None:
@@ -538,10 +558,7 @@ async def parse_import(
 
     timezone = await users_service.read_timezone(session, user_id)
     today = local_today(now, timezone)
-    parsed_rows = [
-        _row_transaction(row, index, mapping, payload, today)
-        for index, row in enumerate(data_records, start=1)
-    ]
+    parsed_rows = _parsed_file_rows(preview_text, payload, today)
     parsed_rows = _hash_rows(user_id, payload.account_id, parsed_rows)
 
     hashes = {row.import_hash for row in parsed_rows if row.import_hash is not None}
@@ -575,4 +592,215 @@ async def parse_import(
         valid=len(parsed_rows) - error_count,
         errors=error_count,
         duplicates=duplicate_count,
+    )
+
+
+def commit_response(batch: ImportBatch) -> ImportCommitResponse:
+    """Build the stable commit result stored with an import batch."""
+    return ImportCommitResponse(
+        batch_id=batch.id,
+        imported_count=batch.imported_count,
+        skipped_duplicate_count=batch.skipped_duplicate_count,
+        skipped_by_user_count=batch.skipped_by_user_count,
+        error_count=batch.error_count,
+        errors=[ImportRowError.model_validate(error) for error in batch.errors],
+    )
+
+
+async def read_idempotent_result(
+    session: AsyncSession, user_id: UUID, idempotency_key: str
+) -> ImportCommitResponse | None:
+    batch = await repository.get_import_batch_by_key(session, user_id, idempotency_key)
+    return None if batch is None else commit_response(batch)
+
+
+async def commit_import(
+    session: AsyncSession,
+    user_id: UUID,
+    idempotency_key: str,
+    preview_text: str,
+    payload: ImportCommitRequest,
+    now: datetime,
+) -> tuple[ImportCommitResponse, bool]:
+    """Reparse and atomically insert one import batch; return False on an idempotent replay."""
+    await repository.lock_idempotency_key(session, user_id, idempotency_key)
+    existing = await repository.get_import_batch_by_key(session, user_id, idempotency_key)
+    if existing is not None:
+        return commit_response(existing), False
+
+    account = await accounts_service.read_account(session, user_id, payload.account_id)
+    if account is None:
+        raise _problem(422, "Invalid reference", "The account cannot be used.", "invalid_reference")
+    if account.is_archived:
+        raise _problem(422, "Archived reference", "The account is archived.", "archived_reference")
+
+    parse_payload = ImportParseRequest(
+        account_id=payload.account_id,
+        mapping=payload.mapping,
+        date_format=payload.date_format,
+        amount_mode=payload.amount_mode,
+        invert_sign=payload.invert_sign,
+        has_header=payload.has_header,
+    )
+    _, records, _, _ = _read_csv(preview_text)
+    _validate_mapping(parse_payload, len(records[0]))
+    timezone = await users_service.read_timezone(session, user_id)
+    parsed_rows = _parsed_file_rows(preview_text, parse_payload, local_today(now, timezone))
+
+    choices = {choice.row_index: choice for choice in payload.rows}
+    if any(row_index > len(parsed_rows) for row_index in choices):
+        raise _problem(
+            422,
+            "Invalid row choice",
+            "A row choice refers to a row that does not exist in the CSV.",
+            "invalid_row_choice",
+        )
+
+    skipped_by_user_count = 0
+    chosen_rows: list[_ParsedRow] = []
+    for row in parsed_rows:
+        row_choice = choices.get(row.row_index)
+        if row_choice is not None and row_choice.skip:
+            skipped_by_user_count += 1
+        if row.error is None and row.kind is not None and row_choice is not None:
+            row = _ParsedRow(
+                row.row_index,
+                row.occurred_on,
+                row.note,
+                row_choice.kind or row.kind,
+                row.amount_minor,
+                row.error,
+            )
+        chosen_rows.append(row)
+
+    hashed_rows = _hash_rows(user_id, payload.account_id, chosen_rows)
+    category_ids = {
+        choice.category_id
+        for row_index, choice in choices.items()
+        if choice.category_id is not None
+        and row_index <= len(parsed_rows)
+        and not choice.skip
+        and parsed_rows[row_index - 1].error is None
+    }
+    categories = await repository.categories_by_id(session, user_id, category_ids)
+    hashes = {
+        row.import_hash
+        for row in hashed_rows
+        if row.import_hash is not None
+        and not (choices.get(row.row_index) and choices[row.row_index].skip)
+    }
+    existing_hashes = await repository.existing_import_hashes(session, user_id, hashes)
+
+    errors: list[ImportRowError] = []
+    transactions: list[dict[str, object]] = []
+    skipped_duplicate_count = 0
+    error_count = 0
+    for row in hashed_rows:
+        choice: ImportRowChoice | None = choices.get(row.row_index)
+        if choice is not None and choice.skip:
+            continue
+        if row.error is not None or row.occurred_on is None or row.kind is None:
+            errors.append(ImportRowError(row_index=row.row_index, code=row.error or "invalid_row"))
+            error_count += 1
+            continue
+
+        category_id = choice.category_id if choice is not None else None
+        if category_id is not None:
+            category = categories.get(category_id)
+            code: str | None = None
+            if category is None or category.deleted_at is not None:
+                code = "invalid_reference"
+            elif category.is_archived:
+                code = "archived_reference"
+            elif category.kind != row.kind:
+                code = "kind_mismatch"
+            if code is not None:
+                errors.append(ImportRowError(row_index=row.row_index, code=code))
+                error_count += 1
+                continue
+
+        if row.import_hash in existing_hashes:
+            errors.append(ImportRowError(row_index=row.row_index, code="duplicate"))
+            skipped_duplicate_count += 1
+            continue
+        if row.import_hash is None:
+            raise RuntimeError("Parsed import row has no import hash")
+        transactions.append(
+            {
+                "id": new_uuid7(),
+                "user_id": user_id,
+                "account_id": payload.account_id,
+                "category_id": category_id,
+                "kind": row.kind,
+                "amount_minor": row.amount_minor,
+                "currency": "GHS",
+                "occurred_on": row.occurred_on,
+                "note": row.note,
+                "import_hash": row.import_hash,
+                "import_batch_id": None,
+            }
+        )
+
+    batch_id = new_uuid7()
+    for transaction in transactions:
+        transaction["import_batch_id"] = batch_id
+    batch = ImportBatch(
+        id=batch_id,
+        user_id=user_id,
+        account_id=payload.account_id,
+        idempotency_key=idempotency_key,
+        imported_count=len(transactions),
+        skipped_duplicate_count=skipped_duplicate_count,
+        skipped_by_user_count=skipped_by_user_count,
+        error_count=error_count,
+        errors=[error.model_dump() for error in errors],
+    )
+    await repository.add_import_batch(session, batch)
+    await repository.add_transactions(session, transactions)
+    return commit_response(batch), True
+
+
+async def undo_import_batch(
+    session: AsyncSession, user_id: UUID, batch_id: UUID, now: datetime
+) -> bool:
+    """Soft-delete every transaction in an owned batch, once."""
+    return await repository.undo_import_batch(session, user_id, batch_id, now)
+
+
+async def list_import_batches(
+    session: AsyncSession,
+    user_id: UUID,
+    *,
+    limit: int,
+    cursor: str | None,
+    signing_keys: Sequence[bytes],
+) -> tuple[list[ImportBatchRead], str | None]:
+    decoded = decode_cursor(cursor, signing_keys) if cursor is not None else None
+    rows = await repository.list_import_batches(
+        session,
+        user_id,
+        limit=limit + 1,
+        cursor_created_at=None if decoded is None else decoded.created_at,
+        cursor_id=None if decoded is None else decoded.row_id,
+    )
+    page = rows[:limit]
+    next_cursor = None
+    if len(rows) > limit:
+        last = page[-1]
+        next_cursor = encode_cursor(PageCursor(0, last.created_at, last.id), signing_keys)
+    return (
+        [
+            ImportBatchRead(
+                batch_id=batch.id,
+                account_id=batch.account_id,
+                imported_count=batch.imported_count,
+                skipped_duplicate_count=batch.skipped_duplicate_count,
+                skipped_by_user_count=batch.skipped_by_user_count,
+                error_count=batch.error_count,
+                created_at=batch.created_at,
+                undone_at=batch.undone_at,
+            )
+            for batch in page
+        ],
+        next_cursor,
     )

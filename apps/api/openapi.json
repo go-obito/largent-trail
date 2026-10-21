@@ -2232,6 +2232,213 @@
         }
       }
     },
+    "/v1/imports/{preview_id}/commit": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Commit Import",
+        "description": "Commit a user-reviewed import atomically and replay by Idempotency-Key.",
+        "operationId": "commit_import_v1_imports__preview_id__commit_post",
+        "parameters": [
+          {
+            "name": "preview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Preview Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCommitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCommitResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "preview_not_found"
+          },
+          "422": {
+            "description": "invalid_mapping, invalid_reference, or row-level errors"
+          }
+        }
+      }
+    },
+    "/v1/imports/{batch_id}": {
+      "delete": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Undo Import",
+        "description": "Soft-delete all live transactions in a batch; repeating the request is harmless.",
+        "operationId": "undo_import_v1_imports__batch_id__delete",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Batch Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/imports": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "List Imports",
+        "operationId": "list_imports_v1_imports_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBatchPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/dashboard": {
       "get": {
         "tags": [
@@ -3471,6 +3678,276 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "ImportBatchPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImportBatchRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "next_cursor"
+        ],
+        "title": "ImportBatchPage"
+      },
+      "ImportBatchRead": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "imported_count": {
+            "type": "integer",
+            "title": "Imported Count"
+          },
+          "skipped_duplicate_count": {
+            "type": "integer",
+            "title": "Skipped Duplicate Count"
+          },
+          "skipped_by_user_count": {
+            "type": "integer",
+            "title": "Skipped By User Count"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "undone_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Undone At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "batch_id",
+          "account_id",
+          "imported_count",
+          "skipped_duplicate_count",
+          "skipped_by_user_count",
+          "error_count",
+          "created_at",
+          "undone_at"
+        ],
+        "title": "ImportBatchRead"
+      },
+      "ImportCommitRequest": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "date_format": {
+            "type": "string",
+            "enum": [
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+              "YYYY-MM-DD",
+              "DD-MM-YYYY",
+              "D MMM YYYY"
+            ],
+            "title": "Date Format",
+            "default": "DD/MM/YYYY"
+          },
+          "amount_mode": {
+            "type": "string",
+            "enum": [
+              "signed",
+              "debit_credit"
+            ],
+            "title": "Amount Mode"
+          },
+          "invert_sign": {
+            "type": "boolean",
+            "title": "Invert Sign",
+            "default": false
+          },
+          "mapping": {
+            "properties": {
+              "date": {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Zero-based index of the date column.",
+                "examples": [
+                  0
+                ]
+              },
+              "description": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Optional zero-based index of the description column.",
+                "examples": [
+                  1,
+                  null
+                ]
+              },
+              "amount": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based amount column index for signed mode.",
+                "examples": [
+                  2,
+                  null
+                ]
+              },
+              "debit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based debit column index for debit_credit mode.",
+                "examples": [
+                  2,
+                  null
+                ]
+              },
+              "credit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0.0,
+                "description": "Zero-based credit column index for debit_credit mode.",
+                "examples": [
+                  3,
+                  null
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "date"
+            ],
+            "title": "Mapping",
+            "description": "Column indexes are zero-based and refer to positions, never header text. Indexes must be distinct and in range.",
+            "examples": [
+              {
+                "amount": 2,
+                "date": 0,
+                "description": 1
+              },
+              {
+                "credit": 3,
+                "date": 0,
+                "debit": 2,
+                "description": 1
+              }
+            ]
+          },
+          "has_header": {
+            "type": "boolean",
+            "title": "Has Header",
+            "description": "Whether to skip the first CSV row as headers; use the same choice as parse.",
+            "default": true
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowChoice"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "account_id",
+          "amount_mode",
+          "mapping"
+        ],
+        "title": "ImportCommitRequest"
+      },
+      "ImportCommitResponse": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "imported_count": {
+            "type": "integer",
+            "title": "Imported Count"
+          },
+          "skipped_duplicate_count": {
+            "type": "integer",
+            "title": "Skipped Duplicate Count"
+          },
+          "skipped_by_user_count": {
+            "type": "integer",
+            "title": "Skipped By User Count"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowError"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "batch_id",
+          "imported_count",
+          "skipped_duplicate_count",
+          "skipped_by_user_count",
+          "error_count",
+          "errors"
+        ],
+        "title": "ImportCommitResponse"
+      },
       "ImportParseRequest": {
         "properties": {
           "account_id": {
@@ -3839,6 +4316,71 @@
           "has_header_guess"
         ],
         "title": "ImportPreviewResponse"
+      },
+      "ImportRowChoice": {
+        "properties": {
+          "row_index": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Row Index"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CategoryKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skip": {
+            "type": "boolean",
+            "title": "Skip",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "row_index"
+        ],
+        "title": "ImportRowChoice"
+      },
+      "ImportRowError": {
+        "properties": {
+          "row_index": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Row Index"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row_index",
+          "code"
+        ],
+        "title": "ImportRowError"
       },
       "NeedCreate": {
         "properties": {
