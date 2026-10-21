@@ -107,7 +107,17 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultMode="system"
         disableTransitionOnChange
       >
-        <Suspense fallback={<main aria-busy="true" className="min-h-dvh bg-page" />}>
+        <Suspense
+          fallback={
+            <main
+              aria-busy="true"
+              aria-live="polite"
+              className="flex min-h-dvh items-center justify-center bg-page px-5 text-center text-foreground"
+            >
+              <p>Loading Largent...</p>
+            </main>
+          }
+        >
           <QueryPersistence>{children}</QueryPersistence>
         </Suspense>
       </ThemeProvider>

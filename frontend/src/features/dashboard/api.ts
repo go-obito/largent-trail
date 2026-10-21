@@ -19,13 +19,15 @@ export const dashboardKeys = {
 };
 
 function useApiClient() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
 
-  return useMemo(
+  const client = useMemo(
     () => createApiClient(getToken, () => clerk.redirectToSignIn()),
     [clerk, getToken],
   );
+
+  return { client, isAuthReady: isLoaded && isSignedIn };
 }
 
 function ensureDashboardData(
@@ -40,10 +42,11 @@ function ensureDashboardData(
 }
 
 export function useDashboard(balanceRange: BalanceRange) {
-  const client = useApiClient();
+  const { client, isAuthReady } = useApiClient();
 
   return useQuery({
     queryKey: dashboardKeys.byBalanceRange(balanceRange),
+    enabled: isAuthReady,
     queryFn: async () => {
       const { data, error, response } = await client.GET("/v1/dashboard", {
         params: { query: { balance_range: balanceRange } },

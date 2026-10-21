@@ -12,13 +12,15 @@ type UserRead = components["schemas"]["UserRead"];
 type UserUpdate = components["schemas"]["UserUpdate"];
 
 function useApiClient() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
 
-  return useMemo(
+  const client = useMemo(
     () => createApiClient(getToken, () => clerk.redirectToSignIn()),
     [clerk, getToken],
   );
+
+  return { client, isAuthReady: isLoaded && isSignedIn };
 }
 
 function ensureMeData(data: UserRead | undefined, status: number): UserRead {
@@ -30,10 +32,11 @@ function ensureMeData(data: UserRead | undefined, status: number): UserRead {
 }
 
 export function useMe() {
-  const client = useApiClient();
+  const { client, isAuthReady } = useApiClient();
 
   return useQuery({
     queryKey: meQueryKey,
+    enabled: isAuthReady,
     queryFn: async () => {
       const { data, error, response } = await client.GET("/v1/me");
       if (error) {
@@ -50,7 +53,7 @@ export function useMe() {
 }
 
 export function useUpdateMe() {
-  const client = useApiClient();
+  const { client } = useApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({

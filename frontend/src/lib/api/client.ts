@@ -84,17 +84,21 @@ function authenticatedFetch(
       return fetch(new Request(request, { headers }));
     };
 
-    let response = await send(await getToken());
+    let token = await getToken();
+    let response = await send(token);
     let apiError = response.status === 401
       ? await apiErrorFromResponse(response)
       : null;
 
     if (response.status === 401 && apiError?.code === "token_expired") {
-      response = await send(await getToken({ skipCache: true }));
-      apiError = null;
+      token = await getToken({ skipCache: true });
+      response = await send(token);
+      apiError = response.status === 401
+        ? await apiErrorFromResponse(response)
+        : null;
     }
 
-    if (response.status === 401) {
+    if (response.status === 401 && !token) {
       await redirectToSignIn();
     }
 
