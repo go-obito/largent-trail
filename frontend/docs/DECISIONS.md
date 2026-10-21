@@ -36,3 +36,9 @@ Reviewed 2026-10-20 against the official package documentation.
 
 - Keep cached dashboard data visible when an offline refetch fails, provide a reduced-motion-aware manual refresh action, and use a placeholder `/transactions/new` route until F2.
 - The profile's development-only token helper requests a fresh Clerk session token only on demand, copies it directly to the clipboard, and does not render in production.
+
+## F3 budgets checkpoint 2
+
+- Keep budget category and period immutable in edit mode; the edit form only submits a changed limit and archive state. Deletion remains a separate confirmed action.
+- Create forms retain a client-generated UUIDv7 across retries, and prevent category/period duplicates against both active and archived budget records.
+- Budget progress percentage and remaining/over amounts are display-only calculations from API amounts; status and status-driven colors remain based on the backend status.

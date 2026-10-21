@@ -6,7 +6,6 @@ import { useMemo } from "react";
 import { ApiError, createApiClient } from "@/lib/api/client";
 import { requireOnline } from "@/lib/api/offline";
 import type { components } from "@/lib/api/schema";
-import { uuidv7 } from "@/lib/uuid";
 
 type BudgetCreate = components["schemas"]["BudgetCreate"];
 type BudgetPage = components["schemas"]["BudgetPage"];
@@ -15,8 +14,8 @@ type BudgetUpdate = components["schemas"]["BudgetUpdate"];
 
 export type CreateBudgetInput = Omit<
   BudgetCreate,
-  "id" | "currency" | "is_archived"
->;
+  "currency" | "is_archived"
+> & { id: string };
 export type UpdateBudgetInput = {
   id: string;
   changes: Pick<BudgetUpdate, "limit_minor" | "is_archived">;
@@ -155,7 +154,6 @@ export function useCreateBudget() {
       requireOnline();
       const body: BudgetCreate = {
         ...input,
-        id: uuidv7(),
         currency: "GHS",
         is_archived: false,
       };

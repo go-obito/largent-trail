@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/PlaceholderPage";
+import { BudgetsPage } from "@/features/budgets/components/BudgetsPage";
 
-export default function BudgetsPage() {
-  return (
-    <PlaceholderPage
-      caption="Plan"
-      description="Your budgets will appear here."
-      title="Budgets"
-    />
-  );
+export default function BudgetsRoutePage() {
+  return <BudgetsPage />;
 }
