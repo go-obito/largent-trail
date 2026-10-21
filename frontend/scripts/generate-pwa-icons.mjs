@@ -40,10 +40,14 @@ function insideRoundedSquare(x, y, size) {
   return (x - nearestX) ** 2 + (y - nearestY) ** 2 <= radius ** 2;
 }
 
-function insideLetter(x, y, size) {
-  const vertical = x >= size * 0.32 && x <= size * 0.43 && y >= size * 0.27 && y <= size * 0.73;
-  const horizontal = x >= size * 0.32 && x <= size * 0.70 && y >= size * 0.61 && y <= size * 0.73;
-  return vertical || horizontal;
+function insideMark(x, y, size) {
+  const relativeX = x / size;
+  const relativeY = y / size;
+  const distance = Math.hypot(relativeX - 0.48, relativeY - 0.5);
+  const crescent =
+    distance >= 0.17 && distance <= 0.3 && relativeX <= 0.58;
+  const dot = Math.hypot(relativeX - 0.7, relativeY - 0.49) <= 0.09;
+  return crescent || dot;
 }
 
 function renderPng(size, maskable = false) {
@@ -55,7 +59,7 @@ function renderPng(size, maskable = false) {
     pixels[rowOffset] = 0;
     for (let x = 0; x < size; x += 1) {
       let backgroundSamples = 0;
-      let letterSamples = 0;
+      let markSamples = 0;
       for (let sy = 0; sy < supersampling; sy += 1) {
         for (let sx = 0; sx < supersampling; sx += 1) {
           const sampleX = x + (sx + 0.5) / supersampling;
@@ -63,17 +67,17 @@ function renderPng(size, maskable = false) {
           const inBackground = maskable || insideRoundedSquare(sampleX, sampleY, size);
           if (inBackground) {
             backgroundSamples += 1;
-            if (insideLetter(sampleX, sampleY, size)) letterSamples += 1;
+            if (insideMark(sampleX, sampleY, size)) markSamples += 1;
           }
         }
       }
 
       if (backgroundSamples === 0) continue;
       const pixelOffset = rowOffset + 1 + x * 4;
-      const backgroundWeight = backgroundSamples - letterSamples;
+      const backgroundWeight = backgroundSamples - markSamples;
       for (let channel = 0; channel < 3; channel += 1) {
         pixels[pixelOffset + channel] = Math.round(
-          (primary[channel] * backgroundWeight + white[channel] * letterSamples) /
+          (primary[channel] * backgroundWeight + white[channel] * markSamples) /
             backgroundSamples,
         );
       }
@@ -101,10 +105,11 @@ const icons = [
   ["icon-512.png", 512, false],
   ["icon-maskable-512.png", 512, true],
   ["apple-touch-icon.png", 180, false],
+  ["favicon.png", 32, false],
 ];
 
 for (const [filename, size, maskable] of icons) {
   await writeFile(path.join(outputDirectory, filename), renderPng(size, maskable));
 }
 
-console.log(`Generated ${icons.length} placeholder icons in ${outputDirectory}`);
+console.log(`Generated ${icons.length} Largent mark icons in ${outputDirectory}`);

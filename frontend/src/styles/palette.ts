@@ -62,6 +62,18 @@ export const palette = {
   },
 } as const;
 
+// Category visualization colors are intentionally independent of semantic status colors.
+export const chartColors = [
+  "#315DE8",
+  "#F59E0B",
+  "#7C5CFC",
+  "#EF5B5B",
+  "#28B779",
+  "#3BA7E8",
+  "#D95DB0",
+  "#8B9AAF",
+] as const;
+
 // Shape tokens (not theme dependent)
 export const shape = {
   radiusCard: "20px",

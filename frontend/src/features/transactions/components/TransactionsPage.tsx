@@ -17,10 +17,10 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState } from "@/components/states/EmptyState";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useAccounts } from "@/features/accounts/api";
-import { categoryIcon } from "@/features/categories/categoryIcon";
 import { useCategories } from "@/features/categories/api";
 import { useMe } from "@/features/me/api";
 import {
@@ -385,11 +385,8 @@ export function TransactionsPage() {
               <ul className="card-surface divide-y divide-outline px-4">
                   {dayTransactions.map((transaction) => {
                     const isIncome = transaction.kind === "income";
-                    const Icon = categoryIcon(
-                      transaction.category_name || "",
-                      categories.data?.find(
-                        (category) => category.id === transaction.category_id,
-                      )?.icon ?? null,
+                    const category = categories.data?.find(
+                      (item) => item.id === transaction.category_id,
                     );
 
                     return (
@@ -399,9 +396,11 @@ export function TransactionsPage() {
                           className="flex min-h-[76px] items-center gap-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                           href={`/transactions/${transaction.id}/edit`}
                         >
-                          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-selected text-foreground">
-                            <Icon aria-hidden="true" size={20} strokeWidth={1.8} />
-                          </span>
+                          <CategoryBadge
+                            icon={category?.icon}
+                            name={transaction.category_name || "Uncategorized"}
+                            size={44}
+                          />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold text-foreground">
                               {transaction.category_name || "Uncategorized"}
@@ -599,7 +598,10 @@ export function TransactionsPage() {
                 <MenuItem value="">All categories</MenuItem>
                 {categories.data?.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
-                    {category.name}
+                    <span className="flex items-center gap-2">
+                      <CategoryBadge icon={category.icon} name={category.name} size={36} />
+                      {category.name}
+                    </span>
                   </MenuItem>
                 ))}
               </Select>

@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "next/link";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import { budgetStatusToProgressColor } from "@/features/dashboard/status";
@@ -65,13 +66,16 @@ export function BudgetsCard({
                 return (
                   <article key={budget.id}>
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <CategoryBadge name={budget.category_name} size={36} />
+                        <div className="min-w-0">
                         <h3 className="font-semibold text-foreground">
                           {budget.category_name}
                         </h3>
                         <p className="mt-1 text-sm text-muted">
                           {budget.period === "weekly" ? "Weekly" : "Monthly"}
                         </p>
+                        </div>
                       </div>
                       {statusLabel && (
                         <Chip

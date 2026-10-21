@@ -25,6 +25,7 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { EmptyState } from "@/components/states/EmptyState";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useAccounts, useCreateAccount } from "@/features/accounts/api";
@@ -795,7 +796,7 @@ function CategoryChoice({
       onClick={onSelect}
       type="button"
     >
-      {icon && <span aria-hidden="true">{icon}</span>}
+      <CategoryBadge icon={icon} name={label} size={36} />
       {label}
     </button>
   );

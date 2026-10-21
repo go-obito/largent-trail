@@ -42,3 +42,8 @@ Reviewed 2026-10-20 against the official package documentation.
 - Keep budget category and period immutable in edit mode; the edit form only submits a changed limit and archive state. Deletion remains a separate confirmed action.
 - Create forms retain a client-generated UUIDv7 across retries, and prevent category/period duplicates against both active and archived budget records.
 - Budget progress percentage and remaining/over amounts are display-only calculations from API amounts; status and status-driven colors remain based on the backend status.
+
+## Visual system checkpoint 2
+
+- The regenerated PWA assets use the recreated rounded Largent mark rather than a placeholder letter.
+- All requested Lucide category icons are available in the installed `lucide-react` version; no substitutions were needed.

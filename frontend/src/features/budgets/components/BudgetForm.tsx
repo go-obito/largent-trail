@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { EmptyState } from "@/components/states/EmptyState";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useCategories } from "@/features/categories/api";
@@ -371,7 +372,10 @@ function BudgetFormEditor({
                           disabled={disabled}
                           value={category.id}
                         >
-                          {category.name}
+                          <span className="flex items-center gap-2">
+                            <CategoryBadge icon={category.icon} name={category.name} size={36} />
+                            {category.name}
+                          </span>
                           {disabled
                             ? ` (already has a ${period} budget)`
                             : ""}

@@ -3,15 +3,14 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { createElement } from "react";
 import Button from "@mui/material/Button";
 import Fab from "@mui/material/Fab";
 import { Plus } from "lucide-react";
 import { EmptyState } from "@/components/states/EmptyState";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useCategories } from "@/features/categories/api";
-import { categoryIcon } from "@/features/categories/categoryIcon";
 import { useMe } from "@/features/me/api";
 import {
   budgetPercent,
@@ -82,7 +81,6 @@ function BudgetCard({
   const iconKey =
     categories?.find((category) => category.id === budget.category_id)?.icon ??
     null;
-  const Icon = categoryIcon(budget.category_name, iconKey);
   const percent = budgetPercent(budget.spent_minor, budget.limit_minor);
   const barPercent = Math.min(100, Math.max(0, percent));
   const isOver = budget.status === "over_limit";
@@ -107,13 +105,7 @@ function BudgetCard({
         href={`/budgets/${budget.id}/edit`}
       >
         <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-selected text-foreground">
-            {createElement(Icon, {
-              "aria-hidden": true,
-              size: 20,
-              strokeWidth: 1.8,
-            })}
-          </span>
+          <CategoryBadge icon={iconKey} name={budget.category_name} size={44} />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold text-foreground">
               {budget.category_name}

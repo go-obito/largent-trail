@@ -1,5 +1,6 @@
 import Button from "@mui/material/Button";
 import Link from "next/link";
+import { CategoryBadge } from "@/components/CategoryBadge";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import { formatDateInTimezone } from "@/lib/date";
@@ -54,7 +55,8 @@ export function RecentActivityCard({
                     key={transaction.id}
                     className="flex items-start justify-between gap-3 py-4 first:pt-2 last:pb-1"
                   >
-                    <div className="min-w-0">
+                    <CategoryBadge name={transaction.category_name || "Uncategorized"} size={44} />
+                    <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-foreground">
                         {transaction.category_name || "Uncategorized"}
                       </p>
