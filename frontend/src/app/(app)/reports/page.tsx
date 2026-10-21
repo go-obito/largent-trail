@@ -61,29 +61,64 @@ function StatCard({
 }: {
   title: string;
   value: number;
-  kind: "income" | "expense" | "net";
+  kind: "income" | "expense";
 }) {
-  const Icon = kind === "income" ? TrendingUp : kind === "expense" ? TrendingDown : Banknote;
-  const color =
-    kind === "income"
-      ? "text-status-success"
-      : kind === "expense"
-        ? "text-status-error"
-        : "text-primary";
+  const Icon = kind === "income" ? TrendingUp : TrendingDown;
+  const color = kind === "income" ? "text-status-success" : "text-status-error";
   const tint =
     kind === "income"
       ? "bg-[color-mix(in_srgb,var(--color-success)_14%,var(--color-surface))]"
-      : kind === "expense"
-        ? "bg-[color-mix(in_srgb,var(--color-error)_14%,var(--color-surface))]"
-        : "bg-selected";
+      : "bg-[color-mix(in_srgb,var(--color-error)_14%,var(--color-surface))]";
   return (
-    <article className="card-surface min-w-0 p-4 md:p-5">
-      <span className={`inline-flex size-10 items-center justify-center rounded-full ${tint} ${color}`}>
-        <Icon aria-hidden="true" size={19} />
+    <article className="card-surface flex h-full min-w-0 flex-col justify-center p-3 sm:p-5">
+      <span className={`inline-flex size-8 items-center justify-center rounded-full ${tint} ${color} sm:size-10`}>
+        <Icon aria-hidden="true" size={17} />
       </span>
-      <p className="mt-3 text-sm text-muted">{title}</p>
-      <p className={`money mt-1 break-words text-xl font-bold ${color}`}>{formatGhs(value)}</p>
+      <p className="mt-2 text-xs text-muted sm:mt-3 sm:text-sm">{title}</p>
+      <p className={`money mt-1 break-words text-base font-bold sm:text-xl ${color}`}>{formatGhs(value)}</p>
     </article>
+  );
+}
+
+function ReportTotals({
+  income,
+  expenses,
+  net,
+}: {
+  income: number;
+  expenses: number;
+  net: number;
+}) {
+  return (
+    <section
+      aria-label="Report totals"
+      className="grid min-h-[220px] grid-cols-[1.1fr_0.9fr] grid-rows-2 gap-3 sm:min-h-[270px] sm:gap-4"
+    >
+      <article
+        aria-labelledby="report-net-title"
+        className="row-span-2 flex min-w-0 flex-col justify-between overflow-hidden rounded-3xl bg-[linear-gradient(115deg,color-mix(in_srgb,var(--color-hero)_78%,var(--color-primary)),var(--color-hero))] p-4 text-[var(--color-on-hero)] shadow-sm sm:p-6"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2
+              className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75"
+              id="report-net-title"
+            >
+              Net
+            </h2>
+            <p className="mt-1 text-sm opacity-80">Income minus expenses</p>
+          </div>
+          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10">
+            <Banknote aria-hidden="true" size={20} />
+          </span>
+        </div>
+        <p className="money mt-5 break-words text-[clamp(1.35rem,5vw,3rem)] font-bold tracking-tight">
+          {formatGhs(net)}
+        </p>
+      </article>
+      <StatCard kind="income" title="Total Income" value={income} />
+      <StatCard kind="expense" title="Total Spent" value={expenses} />
+    </section>
   );
 }
 
@@ -356,11 +391,11 @@ export default function ReportsPage() {
           Showing the saved report. It couldn&apos;t be refreshed just now.
         </p>
       )}
-      <section aria-label="Report totals" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard kind="income" title="Total Income" value={report.data.income_minor} />
-        <StatCard kind="expense" title="Total Expenses" value={report.data.expense_minor} />
-        <StatCard kind="net" title="Net" value={report.data.net_minor} />
-      </section>
+      <ReportTotals
+        expenses={report.data.expense_minor}
+        income={report.data.income_minor}
+        net={report.data.net_minor}
+      />
       <SpendingTrend days={report.data.spending_over_time} period={period} timezone={timezone} />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <CategoryDonut data={report.data} />

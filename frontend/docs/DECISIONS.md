@@ -47,3 +47,7 @@ Reviewed 2026-10-20 against the official package documentation.
 
 - The regenerated PWA assets use the recreated rounded Largent mark rather than a placeholder letter.
 - All requested Lucide category icons are available in the installed `lucide-react` version; no substitutions were needed.
+
+## F4 reports
+
+- Give the report's net amount the dashboard hero treatment in a two-column totals layout; income and total spent stack beside it as supporting figures, matching the report hierarchy sketch.
