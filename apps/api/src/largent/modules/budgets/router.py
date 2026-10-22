@@ -40,7 +40,6 @@ def _read(view: BudgetView) -> BudgetRead:
         {
             "id": budget.id,
             "category_id": budget.category_id,
-            "category_name": view.category_name,
             "period": budget.period,
             "limit_minor": budget.limit_minor,
             "currency": budget.currency,
