@@ -139,7 +139,7 @@ pnpm gen:tokens   # regenerate src/styles/tokens.css from src/styles/palette.ts
 - [x] F2 transactions
 - [x] F3 budgets and alerts
 - [x] F4 reports
-- [ ] F5 priority needs (allocation, link import)
+- [ ] F5 priority needs (screen and allocations complete; link preview blocked on backend contract)
 - [ ] F6 CSV import wizard (needs backend B9)
 - [ ] F7 welcome page (public, intro video) and onboarding setup
 - [ ] F7b accounts and categories management (category reassignment blocked: generated API schema omits DELETE `reassign_to`)

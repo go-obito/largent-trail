@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/PlaceholderPage";
+import { NeedsPage } from "@/features/needs/components/NeedsPage";
 
-export default function NeedsPage() {
-  return (
-    <PlaceholderPage
-      caption="Priorities"
-      description="Your needs will appear here."
-      title="Needs"
-    />
-  );
+export default function NeedsRoute() {
+  return <NeedsPage />;
 }
