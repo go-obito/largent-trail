@@ -16,7 +16,10 @@ function isOnboardingStep(value: number): value is OnboardingStep {
   return Number.isInteger(value) && value >= 1 && value <= ONBOARDING_STEP_COUNT;
 }
 
-export function useOnboardingStep(userId: string | null | undefined) {
+export function useOnboardingStep(
+  userId: string | null | undefined,
+  persist = true,
+) {
   const [snapshot, setSnapshot] = useState<StepSnapshot>({
     userId: null,
     isLoaded: false,
@@ -36,6 +39,10 @@ export function useOnboardingStep(userId: string | null | undefined) {
     }
 
     try {
+      if (!persist) {
+        setSnapshot({ userId, isLoaded: true, step: 1, hasError: false });
+        return;
+      }
       const storedStep = sessionStorage.getItem(
         `largent-onboarding-step:${userId}`,
       );
@@ -50,7 +57,7 @@ export function useOnboardingStep(userId: string | null | undefined) {
       console.error("Unable to restore the onboarding step from this session.");
       setSnapshot({ userId, isLoaded: true, step: 1, hasError: true });
     }
-  }, [userId]);
+  }, [persist, userId]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(refresh, 0);
@@ -70,6 +77,11 @@ export function useOnboardingStep(userId: string | null | undefined) {
         return;
       }
 
+      if (!persist) {
+        setSnapshot({ userId, isLoaded: true, step, hasError: false });
+        return;
+      }
+
       try {
         sessionStorage.setItem(
           `largent-onboarding-step:${userId}`,
@@ -81,8 +93,36 @@ export function useOnboardingStep(userId: string | null | undefined) {
         setSnapshot({ userId, isLoaded: true, step, hasError: true });
       }
     },
-    [userId],
+    [persist, userId],
   );
+
+  const clear = useCallback((): boolean => {
+    if (!userId) {
+      console.error("Unable to clear the onboarding step without a user.");
+      return false;
+    }
+    if (!persist) return true;
+
+    try {
+      sessionStorage.removeItem(`largent-onboarding-step:${userId}`);
+      setSnapshot((current) => ({
+        userId,
+        isLoaded: true,
+        step: current.userId === userId ? current.step : 1,
+        hasError: false,
+      }));
+      return true;
+    } catch {
+      console.error("Unable to clear the onboarding step from this session.");
+      setSnapshot((current) => ({
+        userId,
+        isLoaded: true,
+        step: current.userId === userId ? current.step : 1,
+        hasError: true,
+      }));
+      return false;
+    }
+  }, [persist, userId]);
 
   const isCurrentUser = snapshot.userId === userId;
   return {
@@ -91,5 +131,6 @@ export function useOnboardingStep(userId: string | null | undefined) {
     step: isCurrentUser ? snapshot.step : 1,
     setStep,
     refresh,
+    clear,
   };
 }

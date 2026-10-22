@@ -8,14 +8,16 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { Banknote, ChevronRight, Globe2, LockKeyhole, SunMoon, UserRound } from "lucide-react";
+import { Banknote, ChevronRight, Globe2, LockKeyhole, RotateCcw, SunMoon, UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { clearPersistedQueryCache } from "@/app/providers";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { ErrorState } from "@/components/states/ErrorState";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useMe, useUpdateMe } from "@/features/me/api";
+import { onboardingCopy } from "@/features/onboarding/copy";
 
 type EditField = "name" | "timezone" | null;
 
@@ -112,6 +114,7 @@ export default function ProfilePage() {
   const { userId } = useAuth();
   const { user } = useUser();
   const clerk = useClerk();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const me = useMe();
   const updateMe = useUpdateMe();
@@ -213,6 +216,12 @@ export default function ProfilePage() {
           <div className="w-36 shrink-0"><ThemeSwitcher /></div>
         </div>
         <ProfileRow icon={<Globe2 aria-hidden="true" size={17} />} label="Timezone" onClick={() => openEditor("timezone")} value={me.data.timezone} />
+        <ProfileRow
+          icon={<RotateCcw aria-hidden="true" size={17} />}
+          label={onboardingCopy.header.replayIntroduction}
+          onClick={() => router.push("/onboarding?replay=1")}
+          value={onboardingCopy.header.replayIntroductionAction}
+        />
       </section>
 
       {signOutError && <p aria-live="polite" className="text-sm text-alert" role="alert">{signOutError}</p>}

@@ -1,11 +1,12 @@
 import { ApiError } from "@/lib/api/client";
+import { onboardingCopy } from "./copy";
 
 const validationMessages: Record<string, string> = {
-  display_name: "Enter a display name between 1 and 100 characters.",
-  timezone: "Choose a valid time zone.",
-  name: "Enter an account name between 1 and 100 characters.",
-  type: "Choose an account type.",
-  opening_balance_minor: "Enter a valid, non-negative opening balance.",
+  display_name: onboardingCopy.validation.displayName,
+  timezone: onboardingCopy.validation.timezone,
+  name: onboardingCopy.validation.name,
+  type: onboardingCopy.validation.type,
+  opening_balance_minor: onboardingCopy.validation.openingBalance,
 };
 
 export function onboardingFieldErrors(error: unknown): Record<string, string> {

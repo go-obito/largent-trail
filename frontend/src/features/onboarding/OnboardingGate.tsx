@@ -7,6 +7,7 @@ import { useAccounts } from "@/features/accounts/api";
 import { useMe } from "@/features/me/api";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
+import { onboardingCopy } from "./copy";
 import { useOnboardingState } from "./useOnboardingState";
 
 const excludedPaths = ["/onboarding", "/sign-in", "/sign-up"];
@@ -79,12 +80,12 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       return (
         <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
           <ErrorState
-            description="We couldn't check your account setup. Check your connection and try again."
+            description={onboardingCopy.errors.accountCheckDescription}
             onRetry={() => {
               void Promise.all([me.refetch(), accounts.refetch()]);
               onboarding.refresh();
             }}
-            title="Unable to prepare your account"
+            title={onboardingCopy.errors.accountCheckTitle}
           />
         </main>
       );
@@ -92,7 +93,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
-        <LoadingSkeleton label="Preparing your account" rows={3} />
+        <LoadingSkeleton label={onboardingCopy.loading.preparing} rows={3} />
       </main>
     );
   }
@@ -101,9 +102,9 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
         <ErrorState
-          description="We couldn't read your onboarding progress. Try again to continue."
+          description={onboardingCopy.errors.progressReadDescription}
           onRetry={onboarding.refresh}
-          title="Unable to read your setup status"
+          title={onboardingCopy.errors.progressReadTitle}
         />
       </main>
     );
@@ -115,7 +116,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-5">
-      <LoadingSkeleton label="Opening onboarding" rows={3} />
+      <LoadingSkeleton label={onboardingCopy.loading.opening} rows={3} />
     </main>
   );
 }

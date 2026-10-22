@@ -21,22 +21,21 @@ import type { components } from "@/lib/api/schema";
 import { formatGhs, parseGhsInput } from "@/lib/money";
 import { uuidv7 } from "@/lib/uuid";
 import { onboardingFieldErrors } from "./errors";
+import { onboardingCopy } from "./copy";
 
 type AccountRead = components["schemas"]["AccountRead"];
-type AccountType = components["schemas"]["AccountType"];
-
 const accountSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Enter an account name.")
-    .max(100, "Use 100 characters or fewer."),
+    .min(1, onboardingCopy.accounts.nameRequired)
+    .max(100, onboardingCopy.accounts.nameTooLong),
   type: z.enum(["cash", "bank", "mobile_money", "other"]),
   openingBalance: z
     .string()
     .trim()
     .refine((value) => parseGhsInput(value) !== null, {
-      message: "Enter zero or a positive amount, with up to two decimal places.",
+      message: onboardingCopy.accounts.balanceInvalid,
     }),
 });
 
@@ -48,21 +47,6 @@ type OnboardingAccountFormProps = {
   onBack: () => void;
   onContinue: () => void;
 };
-
-const quickPicks: Array<{ name: string; type: AccountType }> = [
-  { name: "Cash", type: "cash" },
-  { name: "MTN MoMo", type: "mobile_money" },
-  { name: "Telecel Cash", type: "mobile_money" },
-  { name: "AT Money", type: "mobile_money" },
-  { name: "Bank account", type: "bank" },
-];
-
-const accountTypes: Array<{ label: string; value: AccountType }> = [
-  { label: "Cash", value: "cash" },
-  { label: "Bank", value: "bank" },
-  { label: "Mobile money", value: "mobile_money" },
-  { label: "Other", value: "other" },
-];
 
 export function OnboardingAccountForm({
   accounts,
@@ -92,14 +76,14 @@ export function OnboardingAccountForm({
   async function submit(values: AccountFormValues) {
     setSubmitError("");
     if (!navigator.onLine) {
-      setSubmitError("You're offline. Connect to add an account.");
+      setSubmitError(onboardingCopy.accounts.offlineAdd);
       return;
     }
     const openingBalance = parseGhsInput(values.openingBalance);
     if (openingBalance === null) {
       setError("openingBalance", {
         type: "validate",
-        message: "Enter zero or a positive amount, with up to two decimal places.",
+        message: onboardingCopy.accounts.balanceInvalid,
       });
       return;
     }
@@ -130,13 +114,11 @@ export function OnboardingAccountForm({
       if (error instanceof ApiError && error.code === "duplicate_name") {
         setError("name", {
           type: "server",
-          message: "An account with that name already exists. Try another name.",
+          message: onboardingCopy.accounts.nameExists,
         });
-        setSubmitError("That account name is already in use. Choose a different name.");
+        setSubmitError(onboardingCopy.accounts.duplicateName);
       } else {
-        setSubmitError(
-          "We couldn't add this account. Check the details and try again.",
-        );
+        setSubmitError(onboardingCopy.accounts.addError);
       }
     }
   }
@@ -150,9 +132,14 @@ export function OnboardingAccountForm({
           </Alert>
         )}
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Quick add</p>
-          <div aria-label="Account quick picks" className="flex flex-wrap gap-2">
-            {quickPicks.map((pick) => (
+          <p className="text-sm font-medium text-foreground">
+            {onboardingCopy.accounts.quickAdd}
+          </p>
+          <div
+            aria-label={onboardingCopy.accounts.quickPicksLabel}
+            className="flex flex-wrap gap-2"
+          >
+            {onboardingCopy.accounts.quickPicks.map((pick) => (
               <Chip
                 clickable
                 key={pick.name}
@@ -183,7 +170,7 @@ export function OnboardingAccountForm({
               error={Boolean(errors.name)}
               fullWidth
               helperText={errors.name?.message}
-              label="Account name"
+              label={onboardingCopy.accounts.nameLabel}
               slotProps={{ htmlInput: { maxLength: 100 } }}
             />
           )}
@@ -193,14 +180,16 @@ export function OnboardingAccountForm({
           name="type"
           render={({ field }) => (
             <FormControl error={Boolean(errors.type)} fullWidth>
-              <InputLabel id="onboarding-account-type-label">Type</InputLabel>
+              <InputLabel id="onboarding-account-type-label">
+                {onboardingCopy.accounts.typeLabel}
+              </InputLabel>
               <Select
                 {...field}
                 id="onboarding-account-type"
-                label="Type"
+                label={onboardingCopy.accounts.typeLabel}
                 labelId="onboarding-account-type-label"
               >
-                {accountTypes.map(({ label, value }) => (
+                {onboardingCopy.accounts.types.map(({ label, value }) => (
                   <MenuItem key={value} value={value}>
                     {label}
                   </MenuItem>
@@ -222,23 +211,25 @@ export function OnboardingAccountForm({
               fullWidth
               helperText={
                 errors.openingBalance?.message ??
-                "Enter zero or a positive amount, with up to two decimal places."
+                onboardingCopy.accounts.balanceHelp
               }
               slotProps={{
                 htmlInput: { inputMode: "decimal" },
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">₵</InputAdornment>
+                    <InputAdornment position="start">
+                      {onboardingCopy.accounts.amountPrefix}
+                    </InputAdornment>
                   ),
                 },
               }}
-              label="Opening balance"
+              label={onboardingCopy.accounts.balanceLabel}
             />
           )}
         />
         {!isOnline && (
           <p className="text-sm font-medium text-muted" role="status">
-            You&apos;re offline. Connect to add an account, or skip for now.
+            {onboardingCopy.accounts.offlineContinue}
           </p>
         )}
         <Button
@@ -247,7 +238,9 @@ export function OnboardingAccountForm({
           type="submit"
           variant="outlined"
         >
-          {isSubmitting || createAccount.isPending ? "Adding…" : "Add account"}
+          {isSubmitting || createAccount.isPending
+            ? onboardingCopy.accounts.adding
+            : onboardingCopy.accounts.add}
         </Button>
       </form>
 
@@ -256,7 +249,7 @@ export function OnboardingAccountForm({
           className="text-base font-semibold text-foreground"
           id="onboarding-added-accounts"
         >
-          Added
+          {onboardingCopy.accounts.added}
         </h2>
         {accounts.length > 0 ? (
           <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border">
@@ -282,8 +275,8 @@ export function OnboardingAccountForm({
         ) : (
           <div className="mt-3">
             <EmptyState
-              description="Add the places you keep money to continue. You can add more later."
-              title="No accounts yet"
+              description={onboardingCopy.accounts.emptyDescription}
+              title={onboardingCopy.accounts.emptyTitle}
             />
           </div>
         )}
@@ -291,12 +284,12 @@ export function OnboardingAccountForm({
 
       {accounts.length === 0 && (
         <p className="text-sm text-muted" role="status">
-          Add at least one account to continue, or skip for now.
+          {onboardingCopy.accounts.continueWithoutAccounts}
         </p>
       )}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <Button className="min-h-11" onClick={onBack} variant="outlined">
-          Back
+          {onboardingCopy.navigation.back}
         </Button>
         <Button
           className="min-h-11"
@@ -304,7 +297,7 @@ export function OnboardingAccountForm({
           onClick={onContinue}
           variant="contained"
         >
-          Next
+          {onboardingCopy.navigation.next}
         </Button>
       </div>
     </div>

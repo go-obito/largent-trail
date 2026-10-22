@@ -57,3 +57,11 @@ Reviewed 2026-10-20 against the official package documentation.
 - Save changed display name and timezone through `PATCH /v1/me`; use the device IANA timezone only as an explicit shortcut, and keep account creation online-first.
 - Create first accounts with a stable client UUIDv7 across retries and show existing accounts and API balances before allowing the user to continue.
 - Keep onboarding completion in the per-user browser flag until the API has an onboarded field. Recommend adding `users.onboarded_at` before relying on this state across devices.
+
+## F7 onboarding checkpoints 3-4
+
+- Starter budgets use the active expense categories returned by `useCategories("expense")`, suggest Food, Transport, and Airtime/Data when present, and create weekly budgets with client UUIDv7 IDs. A `409 duplicate_budget` is treated as an already-created budget.
+- The introduction artwork is `public/manage-money-animate.svg`, a 500 by 500 SVG with a 271,516-byte source and embedded CSS animation. It has no opaque page-sized background; white and pale-gray fills belong to the illustration. The video container, step cards, and progress indicator use palette tokens so their surfaces follow both themes.
+- The onboarding gate waits for `/v1/me`, active accounts, and the per-user local completion flag. The `/onboarding` route is exempt from the gate; a user with an active account is marked done, while a user without accounts is sent to onboarding unless the flag is `done` or `skipped`.
+- The completion flag is stored as JSON (`status` and `timestamp`) in `localStorage` under `largent-onboarding:<Clerk user id>`. The current step is session-only in `sessionStorage` under `largent-onboarding-step:<Clerk user id>`. Replay uses `/onboarding?replay=1`, displays existing setup without writes, bypasses the gate, and leaves the completion flag unchanged.
+- Recommend a backend `users.onboarded_at` field so onboarding status can eventually follow the user across devices instead of depending on browser-local storage.

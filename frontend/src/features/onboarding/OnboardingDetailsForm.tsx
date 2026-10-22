@@ -11,6 +11,7 @@ import { z } from "zod";
 import { useUpdateMe } from "@/features/me/api";
 import type { components } from "@/lib/api/schema";
 import { onboardingFieldErrors } from "./errors";
+import { onboardingCopy } from "./copy";
 
 type UserRead = components["schemas"]["UserRead"];
 
@@ -18,9 +19,9 @@ const detailsSchema = z.object({
   displayName: z
     .string()
     .trim()
-    .min(1, "Enter your name.")
-    .max(100, "Use 100 characters or fewer."),
-  timezone: z.string().min(1, "Choose a time zone."),
+    .min(1, onboardingCopy.details.nameRequired)
+    .max(100, onboardingCopy.details.nameTooLong),
+  timezone: z.string().min(1, onboardingCopy.details.timezoneRequired),
 });
 
 type DetailsFormValues = z.infer<typeof detailsSchema>;
@@ -91,7 +92,7 @@ export function OnboardingDetailsForm({
   async function submit(values: DetailsFormValues) {
     setSubmitError("");
     if (!navigator.onLine) {
-      setSubmitError("You're offline. Connect to save your details.");
+      setSubmitError(onboardingCopy.details.offlineSave);
       return;
     }
 
@@ -127,7 +128,7 @@ export function OnboardingDetailsForm({
         });
       }
       setSubmitError(
-        "We couldn't save your details. Check the highlighted fields and try again.",
+        onboardingCopy.details.saveError,
       );
     }
   }
@@ -149,7 +150,7 @@ export function OnboardingDetailsForm({
             error={Boolean(errors.displayName)}
             fullWidth
             helperText={errors.displayName?.message}
-            label="Display name"
+            label={onboardingCopy.details.nameLabel}
             slotProps={{ htmlInput: { maxLength: 100 } }}
           />
         )}
@@ -165,9 +166,9 @@ export function OnboardingDetailsForm({
               fullWidth
               helperText={
                 errors.timezone?.message ??
-                "We use this to decide when your day and week start."
+                onboardingCopy.details.timezoneHelp
               }
-              label="Time zone"
+              label={onboardingCopy.details.timezoneLabel}
               select
             >
               {timeZones.map((timeZone) => (
@@ -191,23 +192,23 @@ export function OnboardingDetailsForm({
             type="button"
             variant="text"
           >
-            Use my device time zone
+            {onboardingCopy.details.useDeviceTimezone}
           </Button>
           <span className="text-sm text-muted" role="status">
             {deviceTimeZone
-              ? `Detected: ${deviceTimeZone}`
-              : "Detecting your device time zone…"}
+              ? onboardingCopy.details.detectedTimezone(deviceTimeZone)
+              : onboardingCopy.details.detectingTimezone}
           </span>
         </div>
       </div>
       {isOnline ? null : (
         <p className="text-sm font-medium text-muted" role="status">
-          You&apos;re offline. Connect to save your details, or skip for now.
+          {onboardingCopy.details.offlineContinue}
         </p>
       )}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <Button className="min-h-11" onClick={onBack} type="button" variant="outlined">
-          Back
+          {onboardingCopy.navigation.back}
         </Button>
         <Button
           className="min-h-11"
@@ -215,7 +216,9 @@ export function OnboardingDetailsForm({
           type="submit"
           variant="contained"
         >
-          {isSubmitting || updateMe.isPending ? "Saving…" : "Next"}
+          {isSubmitting || updateMe.isPending
+            ? onboardingCopy.details.saving
+            : onboardingCopy.navigation.next}
         </Button>
       </div>
     </form>
