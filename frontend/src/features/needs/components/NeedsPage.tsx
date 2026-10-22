@@ -6,6 +6,8 @@ import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Ellipsis,
   Plus,
@@ -21,7 +23,6 @@ import { AllocationDialog } from "@/features/needs/components/AllocationDialog";
 import { NeedActivityDrawer } from "@/features/needs/components/NeedActivityDrawer";
 import { NeedCard } from "@/features/needs/components/NeedCard";
 import { NeedDeleteDialog } from "@/features/needs/components/NeedDeleteDialog";
-import { NeedFormDialog } from "@/features/needs/components/NeedFormDialog";
 import { needErrorMessage } from "@/features/needs/errors";
 import { sortByPriority } from "@/features/needs/helpers";
 import type { components } from "@/lib/api/schema";
@@ -31,6 +32,7 @@ import { showToast } from "@/lib/toast";
 type NeedRead = components["schemas"]["NeedRead"];
 
 export function NeedsPage() {
+  const router = useRouter();
   const needsQuery = useNeeds();
   const summaryQuery = useNeedsSummary();
   const meQuery = useMe();
@@ -39,10 +41,6 @@ export function NeedsPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [headerMenuAnchor, setHeaderMenuAnchor] =
     useState<HTMLElement | null>(null);
-  const [formState, setFormState] = useState<{
-    key: number;
-    need: NeedRead | null;
-  } | null>(null);
   const [allocationNeed, setAllocationNeed] = useState<NeedRead | null>(null);
   const [activityNeed, setActivityNeed] = useState<NeedRead | null>(null);
   const [deleteNeed, setDeleteNeed] = useState<NeedRead | null>(null);
@@ -57,13 +55,6 @@ export function NeedsPage() {
       window.removeEventListener("offline", update);
     };
   }, []);
-
-  function openForm(need: NeedRead | null) {
-    setFormState((current) => ({
-      key: (current?.key ?? 0) + 1,
-      need,
-    }));
-  }
 
   async function reorderIds(ids: string[], successMessage: string) {
     try {
@@ -120,8 +111,9 @@ export function NeedsPage() {
         <div className="flex shrink-0 items-center gap-1">
           <Button
             className="hidden md:inline-flex"
+            component={Link}
             disabled={!isOnline}
-            onClick={() => openForm(null)}
+            href="/needs/new"
             startIcon={<Plus aria-hidden="true" size={18} />}
             sx={{ minHeight: 44 }}
             variant="contained"
@@ -196,7 +188,8 @@ export function NeedsPage() {
             >
               <Button
                 disabled={!isOnline}
-                onClick={() => openForm(null)}
+                component={Link}
+                href="/needs/new"
                 startIcon={<Plus aria-hidden="true" size={18} />}
                 sx={{ mt: 3, minHeight: 44 }}
                 variant="contained"
@@ -216,7 +209,7 @@ export function NeedsPage() {
                   need={need}
                   onAllocate={setAllocationNeed}
                   onDelete={setDeleteNeed}
-                  onEdit={openForm}
+                  onEdit={(need) => router.push(`/needs/${need.id}/edit`)}
                   onMove={(selectedNeed, direction) =>
                     void moveNeed(selectedNeed, direction)
                   }
@@ -231,23 +224,15 @@ export function NeedsPage() {
       <Fab
         aria-label="Add need"
         className="fixed right-5 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 md:hidden"
+        component={Link}
         disabled={!isOnline}
-        onClick={() => openForm(null)}
+        href="/needs/new"
         color="primary"
         sx={{ minHeight: 56, minWidth: 56 }}
       >
         <Plus aria-hidden="true" size={22} />
       </Fab>
 
-      {formState && (
-        <NeedFormDialog
-          isOnline={isOnline}
-          key={formState.key}
-          need={formState.need}
-          onClose={() => setFormState(null)}
-          onSaved={() => setFormState(null)}
-        />
-      )}
       {allocationNeed && (
         <AllocationDialog
           isOnline={isOnline}

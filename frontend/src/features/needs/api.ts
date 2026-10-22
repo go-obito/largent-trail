@@ -39,6 +39,7 @@ export const needKeys = {
   all: ["needs"] as const,
   list: () => ["needs", "list"] as const,
   summary: () => ["needs", "summary"] as const,
+  detail: (id: string) => ["needs", "detail", id] as const,
   allocations: (id: string) => ["needs", "allocations", id] as const,
 };
 
@@ -152,6 +153,31 @@ export function useNeedsSummary() {
       }
 
       return ensureNeedSummary(data, response.status);
+    },
+  });
+}
+
+export function useNeed(id: string) {
+  const { client, isAuthReady } = useApiClient();
+
+  return useQuery({
+    queryKey: needKeys.detail(id),
+    enabled: isAuthReady && id.length > 0,
+    queryFn: async () => {
+      const { data, error, response } = await client.GET(
+        "/v1/needs/{need_id}",
+        { params: { path: { need_id: id } } },
+      );
+      if (error) {
+        throw new ApiError(
+          response.status,
+          null,
+          response.statusText || "The API request failed.",
+          error,
+        );
+      }
+
+      return ensureNeed(data, response.status);
     },
   });
 }
