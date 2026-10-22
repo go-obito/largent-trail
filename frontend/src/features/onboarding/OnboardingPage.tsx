@@ -36,7 +36,7 @@ function IntroAnimation() {
   return (
     <section
       aria-label={onboardingCopy.welcome.introLabel}
-      className="card-surface overflow-hidden p-2 sm:p-3 motion-reduce:hidden"
+      className="order-2 card-surface overflow-hidden p-2 sm:p-3 motion-reduce:hidden lg:order-1"
     >
       <div
         className="overflow-hidden rounded-[calc(var(--radius-card)-8px)] bg-panel-raised"
@@ -63,7 +63,7 @@ function IntroAnimation() {
 
 function IllustrationCard() {
   return (
-    <section className="card-surface hidden aspect-square flex-col items-center justify-center gap-5 overflow-hidden bg-gradient-to-br from-selected to-panel p-8 text-center motion-reduce:flex">
+    <section className="order-2 card-surface hidden aspect-square flex-col items-center justify-center gap-5 overflow-hidden bg-gradient-to-br from-selected to-panel p-8 text-center motion-reduce:flex lg:order-1">
       <div className="flex size-20 items-center justify-center rounded-3xl bg-panel text-brand shadow-sm">
         <Wallet aria-hidden="true" size={40} strokeWidth={1.7} />
       </div>
@@ -386,7 +386,7 @@ export function OnboardingPage({ isReplay = false }: { isReplay?: boolean }) {
             <IllustrationCard />
             <section
               aria-labelledby="onboarding-step-title"
-              className="card-surface p-6 sm:p-8 lg:p-10"
+              className="order-1 card-surface p-6 sm:p-8 lg:order-2 lg:p-10"
             >
               {progress.step !== 1 && (
                 <div className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-selected text-brand">

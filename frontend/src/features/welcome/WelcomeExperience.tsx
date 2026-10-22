@@ -112,10 +112,10 @@ export function WelcomeExperience({ forceFull }: { forceFull: boolean }) {
 
   return (
     <section className="grid grid-cols-1 items-center gap-8 pb-12 pt-2 lg:grid-cols-2 lg:gap-14 lg:pb-20 lg:pt-8">
-      <div className="order-1 lg:order-2">
+      <div className="order-2 lg:order-2">
         {isReady ? <IntroVideo /> : <IntroStaticFrame />}
       </div>
-      <div className="order-2 flex flex-col gap-7 lg:order-1">
+      <div className="order-1 flex flex-col gap-7 lg:order-1">
         <div className="space-y-4">
           <h1 className="max-w-[13ch] text-4xl font-bold leading-[1.08] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
             {welcomeCopy.headline}

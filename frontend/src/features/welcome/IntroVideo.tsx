@@ -3,7 +3,7 @@
 import Button from "@mui/material/Button";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { Pause, Play, RotateCcw, Wallet } from "lucide-react";
 import { welcomeCopy } from "./copy";
 
 const videoAspectRatio = welcomeCopy.video.aspectRatio;
@@ -14,15 +14,22 @@ export function IntroStaticFrame() {
       className="card-surface flex w-full flex-col items-center justify-center overflow-hidden bg-panel p-4 sm:p-6"
       style={{ aspectRatio: videoAspectRatio }}
     >
-      <Image
-        alt=""
-        aria-hidden="true"
-        className="h-3/4 w-full object-contain"
-        height={500}
-        priority={false}
-        src="/manage-money-script.svg"
-        width={500}
-      />
+      <div className="h-3/4 w-full motion-reduce:hidden">
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="size-full object-contain"
+          height={500}
+          priority={false}
+          src="/manage-money-animate.svg"
+          width={500}
+        />
+      </div>
+      <div className="hidden h-3/4 w-full items-center justify-center motion-reduce:flex">
+        <span className="flex size-20 items-center justify-center rounded-3xl bg-selected text-brand">
+          <Wallet aria-hidden="true" size={40} strokeWidth={1.7} />
+        </span>
+      </div>
       <h2 className="text-center text-xl font-bold tracking-tight text-foreground sm:text-2xl">
         {welcomeCopy.video.fallbackTitle}
       </h2>
