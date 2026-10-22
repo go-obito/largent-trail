@@ -96,7 +96,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             try:
                 actual_revision = await get_schema_revision(app.state.engine)
-            except SQLAlchemyError as error:
+            except (SQLAlchemyError, OSError) as error:
                 logger.warning(
                     "database_schema_revision_check_failed",
                     error_type=type(error).__name__,

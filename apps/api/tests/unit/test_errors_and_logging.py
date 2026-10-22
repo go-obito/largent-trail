@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import socket
 from unittest.mock import AsyncMock
 
 import httpx
@@ -92,3 +93,20 @@ async def test_schema_revision_mismatch_warns_without_blocking_startup(
     captured = capsys.readouterr().out
     assert "database_schema_revision_mismatch" in captured
     assert "stale-revision" in captured
+
+
+async def test_schema_revision_dns_error_warns_without_blocking_startup(
+    capsys: CaptureFixture[str], monkeypatch: MonkeyPatch
+) -> None:
+    app = create_app(make_settings())
+    monkeypatch.setattr(
+        "largent.main.get_schema_revision",
+        AsyncMock(side_effect=socket.gaierror("database host could not be resolved")),
+    )
+
+    async with app.router.lifespan_context(app):
+        assert app.state.engine is not None
+
+    captured = capsys.readouterr().out
+    assert "database_schema_revision_check_failed" in captured
+    assert "gaierror" in captured
