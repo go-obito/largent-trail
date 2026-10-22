@@ -17,18 +17,20 @@ import TextField from "@mui/material/TextField";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import {
   Controller,
   useForm,
   useWatch,
-  type UseFormReturn,
 } from "react-hook-form";
 import { z } from "zod";
 import { EmptyState } from "@/components/states/EmptyState";
 import { CategoryBadge } from "@/components/CategoryBadge";
+import { CategoryFormDialog } from "@/components/CategoryFormDialog";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
-import { useAccounts, useCreateAccount } from "@/features/accounts/api";
+import { AccountFormDialog } from "@/features/accounts/components/AccountFormDialog";
+import { useAccounts } from "@/features/accounts/api";
 import { useCategories } from "@/features/categories/api";
 import { dateInTimezone } from "@/lib/date";
 import { useMe } from "@/features/me/api";
@@ -48,8 +50,8 @@ import { parseGhsInput } from "@/lib/money";
 import { showToast } from "@/lib/toast";
 
 type TransactionKind = components["schemas"]["CategoryKind"];
-type AccountType = components["schemas"]["AccountType"];
 type AccountRead = components["schemas"]["AccountRead"];
+type CategoryRead = components["schemas"]["CategoryRead"];
 type TransactionRead = components["schemas"]["TransactionRead"];
 
 const transactionSchema = z.object({
@@ -73,22 +75,6 @@ const transactionSchema = z.object({
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
-const accountSchema = z.object({
-  name: z.string().trim().min(1, "Enter an account name.").max(100),
-  type: z.enum(["cash", "bank", "mobile_money", "other"]),
-  openingBalance: z
-    .string()
-    .refine(
-      (value) => {
-        const parsed = parseGhsInput(value);
-        return parsed !== null && parsed >= 0;
-      },
-      "Enter zero or a positive amount, with up to two decimal places.",
-    ),
-});
-
-type AccountFormValues = z.infer<typeof accountSchema>;
-
 type TransactionFormProps = {
   mode: "create" | "edit";
   initialKind?: TransactionKind;
@@ -99,84 +85,9 @@ type TransactionFormEditorProps = TransactionFormProps & {
   transaction?: TransactionRead;
 };
 
-const initialAccountValues: AccountFormValues = {
-  name: "",
-  type: "cash",
-  openingBalance: "0.00",
-};
-
-const accountTypeLabels: Record<AccountType, string> = {
-  cash: "Cash",
-  bank: "Bank",
-  mobile_money: "Mobile money",
-  other: "Other",
-};
-
 function addOneDay(date: string) {
   const [year, month, day] = date.split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
-}
-
-function AccountCreationFields({
-  form,
-  idPrefix,
-}: {
-  form: UseFormReturn<AccountFormValues>;
-  idPrefix: string;
-}) {
-  const nameError = form.formState.errors.name?.message;
-  const balanceError = form.formState.errors.openingBalance?.message;
-  const typeError = form.formState.errors.type?.message;
-
-  return (
-    <div className="space-y-3">
-      <TextField
-        {...form.register("name")}
-        autoComplete="off"
-        error={Boolean(nameError)}
-        fullWidth
-        helperText={<span aria-live="polite">{nameError}</span>}
-        id={`${idPrefix}-name`}
-        label="Account name"
-        size="small"
-      />
-      <FormControl error={Boolean(typeError)} fullWidth size="small">
-        <InputLabel id={`${idPrefix}-type-label`}>Account type</InputLabel>
-        <Controller
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <Select
-              {...field}
-              id={`${idPrefix}-type`}
-              label="Account type"
-              labelId={`${idPrefix}-type-label`}
-              sx={{ minHeight: 44 }}
-            >
-              {(Object.keys(accountTypeLabels) as AccountType[]).map((type) => (
-                <MenuItem key={type} value={type}>
-                  {accountTypeLabels[type]}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        />
-        <FormHelperText aria-live="polite">{typeError}</FormHelperText>
-      </FormControl>
-      <TextField
-        {...form.register("openingBalance")}
-        error={Boolean(balanceError)}
-        fullWidth
-        helperText={<span aria-live="polite">{balanceError}</span>}
-        label="Opening balance"
-        size="small"
-        slotProps={{
-          input: { startAdornment: <InputAdornment position="start">₵</InputAdornment> },
-          htmlInput: { inputMode: "decimal" },
-        }}
-      />
-    </div>
-  );
 }
 
 function isMissingTransaction(error: unknown) {
@@ -245,10 +156,11 @@ function TransactionFormEditor({
   const meQuery = useMe();
   const [isOnline, setIsOnline] = useState(true);
   const [submitMessage, setSubmitMessage] = useState("");
-  const [accountMessage, setAccountMessage] = useState("");
   const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [createdAccount, setCreatedAccount] = useState<AccountRead | null>(null);
+  const [createdCategory, setCreatedCategory] = useState<CategoryRead | null>(null);
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -260,14 +172,9 @@ function TransactionFormEditor({
       note: transaction?.note ?? "",
     },
   });
-  const accountForm = useForm<AccountFormValues>({
-    resolver: zodResolver(accountSchema),
-    defaultValues: initialAccountValues,
-  });
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
-  const createAccount = useCreateAccount();
   const kind = useWatch({ control: form.control, name: "kind" });
   const categoryId = useWatch({ control: form.control, name: "category_id" });
   const note = useWatch({ control: form.control, name: "note" });
@@ -277,6 +184,14 @@ function TransactionFormEditor({
   const latestDate = useMemo(() => addOneDay(today), [today]);
   const accounts = useMemo(() => accountQuery.data ?? [], [accountQuery.data]);
   const categories = categoryQuery.data ?? [];
+  const categoryOptions = [
+    ...categories,
+    ...(createdCategory &&
+    createdCategory.kind === kind &&
+    !categories.some(({ id }) => id === createdCategory.id)
+      ? [createdCategory]
+      : []),
+  ];
   const isPending =
     createTransaction.isPending || updateTransaction.isPending || deleteTransaction.isPending;
   const offlineMessage = !isOnline
@@ -323,33 +238,6 @@ function TransactionFormEditor({
       : []),
   ];
   const hasAccountOption = accountOptions.length > 0 || Boolean(archivedAccount);
-
-  async function saveAccount(values: AccountFormValues) {
-    setAccountMessage("");
-    const openingBalance = parseGhsInput(values.openingBalance);
-    if (openingBalance === null) {
-      accountForm.setError("openingBalance", {
-        type: "validate",
-        message: "Enter zero or a positive amount, with up to two decimal places.",
-      });
-      return;
-    }
-    try {
-      const newAccount = await createAccount.mutateAsync({
-        name: values.name.trim(),
-        type: values.type,
-        opening_balance_minor: openingBalance,
-      });
-      if (newAccount) {
-        setCreatedAccount(newAccount);
-        form.setValue("account_id", newAccount.id, { shouldValidate: true });
-      }
-      accountForm.reset(initialAccountValues);
-      setIsAccountDialogOpen(false);
-    } catch {
-      setAccountMessage("We couldn't create this account. Please check the details and try again.");
-    }
-  }
 
   async function submit(values: TransactionFormValues) {
     setSubmitMessage("");
@@ -457,6 +345,7 @@ function TransactionFormEditor({
                 onClick={() => {
                   form.setValue("kind", value, { shouldValidate: true });
                   form.setValue("category_id", "", { shouldValidate: true });
+                  setCreatedCategory(null);
                 }}
                 type="button"
               >
@@ -504,20 +393,14 @@ function TransactionFormEditor({
                 Accounts keep your transactions organized.
               </p>
             </div>
-            <AccountCreationFields form={accountForm} idPrefix="first-account" />
-            {accountMessage && (
-              <p aria-live="polite" className="text-sm text-status-error">
-                {accountMessage}
-              </p>
-            )}
             <Button
-              disabled={createAccount.isPending || !isOnline}
+              disabled={!isOnline}
               fullWidth
-              onClick={() => void accountForm.handleSubmit(saveAccount)()}
+              onClick={() => setIsAccountDialogOpen(true)}
               sx={{ minHeight: 44 }}
               variant="outlined"
             >
-              {createAccount.isPending ? "Creating account…" : "Create account"}
+              Create account
             </Button>
           </section>
         ) : (
@@ -538,7 +421,6 @@ function TransactionFormEditor({
                   labelId="transaction-account-label"
                   onChange={(event: SelectChangeEvent<string>) => {
                     if (event.target.value === "__create_new_account__") {
-                      setAccountMessage("");
                       setIsAccountDialogOpen(true);
                       return;
                     }
@@ -563,9 +445,7 @@ function TransactionFormEditor({
                         {archivedAccount.name} (archived)
                       </MenuItem>
                     )}
-                  {accountOptions.length > 0 && (
-                    <MenuItem value="__create_new_account__">+ New account</MenuItem>
-                  )}
+                  <MenuItem value="__create_new_account__">+ New account</MenuItem>
                 </Select>
               )}
             />
@@ -599,7 +479,7 @@ function TransactionFormEditor({
                 label="Uncategorized"
                 onSelect={() => form.setValue("category_id", "", { shouldValidate: true })}
               />
-              {categories.map((category) => (
+              {categoryOptions.map((category) => (
                 <CategoryChoice
                   key={category.id}
                   isSelected={categoryId === category.id}
@@ -621,6 +501,12 @@ function TransactionFormEditor({
                   }
                 />
               )}
+              <CategoryChoice
+                isAction
+                isSelected={false}
+                label="+ New"
+                onSelect={() => setIsCategoryDialogOpen(true)}
+              />
             </div>
           )}
           <span aria-live="polite" className="sr-only">
@@ -695,38 +581,27 @@ function TransactionFormEditor({
         </div>
       </form>
 
-      <Dialog
-        fullWidth
-        maxWidth="xs"
+      <AccountFormDialog
+        account={null}
+        isOnline={isOnline}
         onClose={() => setIsAccountDialogOpen(false)}
+        onCreated={(account) => {
+          setCreatedAccount(account);
+          form.setValue("account_id", account.id, { shouldValidate: true });
+        }}
         open={isAccountDialogOpen}
-      >
-        <DialogTitle>Create a new account</DialogTitle>
-        <DialogContent className="space-y-3 pt-2">
-          <AccountCreationFields form={accountForm} idPrefix="new-account" />
-          {accountMessage && (
-            <p aria-live="polite" className="text-sm text-status-error">
-              {accountMessage}
-            </p>
-          )}
-        </DialogContent>
-        <DialogActions className="px-6 pb-5">
-          <Button
-            onClick={() => setIsAccountDialogOpen(false)}
-            sx={{ minHeight: 44 }}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={createAccount.isPending || !isOnline}
-            onClick={() => void accountForm.handleSubmit(saveAccount)()}
-            sx={{ minHeight: 44 }}
-            variant="contained"
-          >
-            {createAccount.isPending ? "Creating…" : "Create account"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
+      {isCategoryDialogOpen && (
+        <CategoryFormDialog
+          initialKind={kind}
+          onClose={() => setIsCategoryDialogOpen(false)}
+          onCreated={(category) => {
+            setCreatedCategory(category);
+            form.setValue("category_id", category.id, { shouldValidate: true });
+          }}
+          open
+        />
+      )}
 
       <Dialog
         onClose={() => setIsDeleteDialogOpen(false)}
@@ -776,11 +651,13 @@ function minorToInput(amountMinor: number) {
 
 function CategoryChoice({
   icon,
+  isAction = false,
   isSelected,
   label,
   onSelect,
 }: {
   icon?: string | null;
+  isAction?: boolean;
   isSelected: boolean;
   label: string;
   onSelect: () => void;
@@ -796,7 +673,11 @@ function CategoryChoice({
       onClick={onSelect}
       type="button"
     >
-      <CategoryBadge icon={icon} name={label} size={36} />
+      {isAction ? (
+        <Plus aria-hidden="true" size={18} />
+      ) : (
+        <CategoryBadge icon={icon} name={label} size={36} />
+      )}
       {label}
     </button>
   );

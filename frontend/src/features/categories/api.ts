@@ -7,7 +7,6 @@ import { ApiError, createApiClient } from "@/lib/api/client";
 import { requireOnline } from "@/lib/api/offline";
 import type { components, paths } from "@/lib/api/schema";
 import { uuidv7 } from "@/lib/uuid";
-import type { CategoryIconKey } from "./icons";
 
 type CategoryCreate = components["schemas"]["CategoryCreate"];
 type CategoryRead = components["schemas"]["CategoryRead"];
@@ -26,15 +25,15 @@ type ChangedFields<T> = {
 
 export type CreateCategoryInput = Pick<CategoryCreate, "kind" | "name"> & {
   id?: string;
-  icon?: CategoryIconKey | null;
+  icon?: CategoryCreate["icon"];
   is_archived?: boolean;
   position?: number;
 };
 export type UpdateCategoryInput = {
   id: string;
   changes: ChangedFields<
-    Omit<Pick<CategoryUpdate, "name" | "icon" | "is_archived" | "position">, "icon">
-  > & { icon?: CategoryIconKey | null };
+    Pick<CategoryUpdate, "name" | "is_archived" | "position">
+  > & { icon?: CategoryUpdate["icon"] };
 };
 export type DeleteCategoryInput = {
   id: string;

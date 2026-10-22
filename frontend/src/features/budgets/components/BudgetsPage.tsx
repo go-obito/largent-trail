@@ -18,6 +18,7 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { SpendingOverviewCard } from "@/features/dashboard/components/SpendingOverviewCard";
 import { useCategories } from "@/features/categories/api";
+import { CategoryManager } from "@/features/categories/components/CategoryManager";
 import { useReport, type ReportPeriod } from "@/features/reports/api";
 import { useMe } from "@/features/me/api";
 import {
@@ -322,9 +323,14 @@ function BudgetSection({
   );
 }
 
-export function BudgetsPage() {
+export function BudgetsPage({
+  initialTab = "overview",
+}: {
+  initialTab?: "overview" | "categories";
+}) {
   const router = useRouter();
   const isOnline = useConnectionStatus();
+  const tab = initialTab;
   const budgetsQuery = useBudgets();
   const categoriesQuery = useCategories({ kind: "expense" });
   const meQuery = useMe();
@@ -351,11 +357,11 @@ export function BudgetsPage() {
   const timezone = meQuery.data?.timezone || "Africa/Accra";
   const isPending = budgetsQuery.isPending && !budgetsQuery.data;
 
-  if (isPending) {
+  if (tab === "overview" && isPending) {
     return <LoadingSkeleton label="Loading budgets" rows={4} />;
   }
 
-  if (budgetsQuery.isError && !budgetsQuery.data) {
+  if (tab === "overview" && budgetsQuery.isError && !budgetsQuery.data) {
     return (
       <div className="space-y-6">
         <header>
@@ -377,6 +383,13 @@ export function BudgetsPage() {
     }
   };
 
+  function selectTab(nextTab: "overview" | "categories") {
+    router.push(
+      nextTab === "categories" ? "/budgets?tab=categories" : "/budgets",
+      { scroll: false },
+    );
+  }
+
   return (
     <div className="space-y-6 pb-4">
       <header className="flex items-center justify-between gap-4">
@@ -389,7 +402,7 @@ export function BudgetsPage() {
           </p>
         </div>
         <Button
-          className="hidden md:inline-flex"
+          className={tab === "overview" ? "hidden md:inline-flex" : "hidden"}
           disabled={!isOnline}
           onClick={addBudget}
           startIcon={<Plus aria-hidden="true" size={18} />}
@@ -400,6 +413,46 @@ export function BudgetsPage() {
         </Button>
       </header>
 
+      <div
+        aria-label="Budgets sections"
+        className="flex w-fit gap-1 rounded-2xl bg-panel-raised p-1"
+        role="tablist"
+      >
+        {(["overview", "categories"] as const).map((value) => (
+          <button
+            aria-controls={`budgets-${value}-panel`}
+            aria-selected={tab === value}
+            className={`min-h-11 rounded-xl px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+              tab === value
+                ? "bg-surface text-primary shadow-sm"
+                : "text-muted hover:bg-panel/60"
+            }`}
+            id={`budgets-${value}-tab`}
+            key={value}
+            onClick={() => selectTab(value)}
+            role="tab"
+            type="button"
+          >
+            {value === "overview" ? "Overview" : "Categories"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "categories" ? (
+        <section
+          aria-labelledby="budgets-categories-tab"
+          id="budgets-categories-panel"
+          role="tabpanel"
+        >
+          <CategoryManager />
+        </section>
+      ) : (
+        <section
+          aria-labelledby="budgets-overview-tab"
+          className="space-y-6"
+          id="budgets-overview-panel"
+          role="tabpanel"
+        >
       <SpendingOverviewCard
         data={reportQuery.data}
         isError={reportQuery.isError}
@@ -500,6 +553,8 @@ export function BudgetsPage() {
       >
         <Plus aria-hidden="true" />
       </Fab>
+        </section>
+      )}
     </div>
   );
 }

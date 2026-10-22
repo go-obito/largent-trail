@@ -139,8 +139,10 @@ export function useAccounts(
   });
 }
 
-export function useAccountsSummary() {
-  const accountsQuery = useAccounts();
+export function useAccountsSummary(
+  { includeArchived = false }: { includeArchived?: boolean } = {},
+) {
+  const accountsQuery = useAccounts({ includeArchived });
 
   return {
     ...accountsQuery,

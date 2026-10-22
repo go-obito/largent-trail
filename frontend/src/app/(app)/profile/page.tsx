@@ -8,7 +8,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { Banknote, ChevronRight, Globe2, LockKeyhole, RotateCcw, SunMoon, UserRound } from "lucide-react";
+import { Banknote, ChevronRight, Globe2, LockKeyhole, RotateCcw, Shapes, SunMoon, UserRound, Wallet } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -202,6 +202,22 @@ export default function ProfilePage() {
           label="Password and Security"
           onClick={() => clerk.openUserProfile()}
           value="Manage with Clerk"
+        />
+      </section>
+
+      <section aria-labelledby="profile-manage-heading" className="card-surface px-5">
+        <h2 className="pt-5 text-sm font-bold text-foreground" id="profile-manage-heading">Manage</h2>
+        <ProfileRow
+          icon={<Wallet aria-hidden="true" size={17} />}
+          label="Accounts"
+          onClick={() => router.push("/profile/accounts")}
+          value="Manage your accounts"
+        />
+        <ProfileRow
+          icon={<Shapes aria-hidden="true" size={17} />}
+          label="Categories"
+          onClick={() => router.push("/budgets?tab=categories")}
+          value="Manage your categories"
         />
       </section>
 

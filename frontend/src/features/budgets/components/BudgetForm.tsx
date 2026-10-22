@@ -382,6 +382,15 @@ function BudgetFormEditor({
                         </MenuItem>
                       );
                     })}
+                    {budget &&
+                      budget.category_id &&
+                      !categories.some(
+                        (category) => category.id === budget.category_id,
+                      ) && (
+                        <MenuItem disabled value={budget.category_id}>
+                          {budget.category_name || "Category"} (archived)
+                        </MenuItem>
+                      )}
                   </Select>
                 )}
               />
