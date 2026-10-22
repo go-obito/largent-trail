@@ -66,6 +66,12 @@ Reviewed 2026-10-20 against the official package documentation.
 - The completion flag is stored as JSON (`status` and `timestamp`) in `localStorage` under `largent-onboarding:<Clerk user id>`. The current step is session-only in `sessionStorage` under `largent-onboarding-step:<Clerk user id>`. Replay uses `/onboarding?replay=1`, displays existing setup without writes, bypasses the gate, and leaves the completion flag unchanged.
 - Recommend a backend `users.onboarded_at` field so onboarding status can eventually follow the user across devices instead of depending on browser-local storage.
 
+## F7 public welcome page checkpoint 1
+
+- `/welcome` is a public, indexable entry point. The F9 `robots.txt` must allow `/welcome`.
+- The welcome intro uses the existing MP4 asset only on `/welcome`; the service worker excludes it from precache and uses network-only handling for video files.
+- Open Graph and Twitter images use `NEXT_PUBLIC_SITE_URL` as their metadata base; set it to the canonical frontend origin for deployments.
+
 ## F7b accounts and categories checkpoint 1
 
 - Account summaries aggregate only the backend-provided `balance_minor` values; the frontend never derives an individual account balance.

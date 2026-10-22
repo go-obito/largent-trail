@@ -10,19 +10,36 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 const protectedPath = /(?:^|\/)(?:v1|api|sign-in|sign-up)(?:\/|$)/i;
+const welcomeVideoPath = "/manage%20money%20onboarding%20video.mp4";
 
 function isProtectedPath(pathname: string): boolean {
   return protectedPath.test(pathname);
 }
 
+function isWelcomeVideoEntry(entry: PrecacheEntry | string): boolean {
+  const entryUrl = typeof entry === "string" ? entry : entry.url;
+  return (
+    new URL(entryUrl, self.location.origin).pathname.toLowerCase() ===
+    welcomeVideoPath
+  );
+}
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: self.__SW_MANIFEST?.filter(
+    (entry) => !isWelcomeVideoEntry(entry),
+  ),
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
     {
       matcher: ({ url }) => isProtectedPath(url.pathname),
+      handler: new NetworkOnly(),
+    },
+    {
+      matcher: ({ url }) =>
+        url.pathname.toLowerCase().endsWith(".mp4") ||
+        url.pathname.toLowerCase().endsWith(".webm"),
       handler: new NetworkOnly(),
     },
     {
