@@ -52,6 +52,10 @@ Reviewed 2026-10-20 against the official package documentation.
 
 - Give the report's net amount the dashboard hero treatment in a two-column totals layout; income and total spent stack beside it as supporting figures, matching the report hierarchy sketch.
 
+## F5 needs checkpoint 1
+
+- The generated frontend OpenAPI contract exposes CSV preview at `POST /v1/imports/preview`, but not the requested needs link preview at `POST /v1/needs/import-preview`. Do not call the unrelated CSV endpoint or hand-write an untyped route; add `useImportPreview` when the needs preview route is added to `apps/api/openapi.json` and regenerate the frontend schema.
+
 ## F7 onboarding checkpoint 2
 
 - Save changed display name and timezone through `PATCH /v1/me`; use the device IANA timezone only as an explicit shortcut, and keep account creation online-first.
