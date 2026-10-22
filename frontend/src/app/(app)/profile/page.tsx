@@ -1,6 +1,5 @@
 "use client";
 
-import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -13,6 +12,7 @@ import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { clearPersistedQueryCache } from "@/app/providers";
+import { UserAvatar } from "@/components/UserAvatar";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { ErrorState } from "@/components/states/ErrorState";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -20,11 +20,6 @@ import { useMe, useUpdateMe } from "@/features/me/api";
 import { onboardingCopy } from "@/features/onboarding/copy";
 
 type EditField = "name" | "timezone" | null;
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
-}
 
 function validTimezone(value: string) {
   try {
@@ -183,9 +178,7 @@ export default function ProfilePage() {
       </header>
 
       <div className="card-surface flex items-center gap-4 p-5">
-        <Avatar alt={displayName} src={user?.imageUrl} sx={{ width: 64, height: 64, bgcolor: "var(--color-selected-surface)", color: "var(--color-primary)", fontWeight: 700 }}>
-          {initials(displayName)}
-        </Avatar>
+        <UserAvatar imageUrl={user?.imageUrl} name={displayName} size={64} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-bold text-foreground">{displayName}</h2>
           <p className="mt-1 truncate text-sm text-muted">{email}</p>

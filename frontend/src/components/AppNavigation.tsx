@@ -19,9 +19,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDashboard } from "@/features/dashboard/api";
+import { useMe } from "@/features/me/api";
 import { budgetAlertMessage } from "@/features/budgets/alerts";
 import { budgetsNeedingAttention } from "@/features/budgets/helpers";
 import { clearPersistedQueryCache } from "@/app/providers";
+import { UserAvatar } from "./UserAvatar";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { Logo } from "./brand/Logo";
 
@@ -115,15 +117,19 @@ function NotificationBell() {
 }
 
 function UserMenu() {
-  const { user } = useUser();
+  const { isLoaded, user } = useUser();
   const { userId } = useAuth();
+  const me = useMe();
   const clerk = useClerk();
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
-  const name = user?.firstName?.trim() || user?.fullName?.trim() || "Account";
-  const initial = name.charAt(0).toLocaleUpperCase();
+  const displayName = me.data?.display_name?.trim().split(/\s+/)[0];
+  const name =
+    displayName ||
+    user?.firstName?.trim() ||
+    (!isLoaded || me.isPending ? "Account" : "");
 
   const signOut = async () => {
     if (!userId || isSigningOut) return;
@@ -148,10 +154,8 @@ function UserMenu() {
         onClick={(event) => setAnchor(event.currentTarget)}
         type="button"
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-brand text-sm text-on-brand">
-          {initial}
-        </span>
-        <span className="max-w-32 truncate">{name}</span>
+        <UserAvatar imageUrl={user?.imageUrl} name={name} size={32} />
+        {name && <span className="hidden max-w-32 truncate sm:inline">{name}</span>}
         <ChevronDown aria-hidden="true" size={16} />
       </button>
       <Menu
