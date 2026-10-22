@@ -55,6 +55,10 @@ ARQ worker in dependency order. See
 `docs/product-spec.md` for the current product constraints and `docs/runbooks/`
 for operational notes.
 
+For Render, configure the API as a Docker web service with the repository root
+as its root directory and `./Dockerfile` as its Dockerfile path. Production
+deployments apply database migrations as a separate, explicit step.
+
 ## How to add a tenant table
 
 Define tenant-owned models with `TenantMixin` and `largent.db.base.Base`. In the

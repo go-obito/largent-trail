@@ -58,7 +58,7 @@ jobs:
       - name: Secret scan
         uses: gitleaks/gitleaks-action@v2
       - name: Build Docker image
-        run: docker build --file apps/api/Dockerfile --tag largent-api:ci .
+        run: docker build --file Dockerfile --tag largent-api:ci .
       - name: Verify runtime timezone database
         run: docker run --rm --entrypoint python largent-api:ci -c "from zoneinfo import ZoneInfo; ZoneInfo('Africa/Accra')"
       - name: Verify OpenAPI is current

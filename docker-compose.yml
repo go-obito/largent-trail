@@ -2,7 +2,7 @@ x-api-image: &api-image
     image: largent-api:dev
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: Dockerfile
 
 services:
   postgres:
