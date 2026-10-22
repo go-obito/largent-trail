@@ -56,6 +56,12 @@ Reviewed 2026-10-20 against the official package documentation.
 
 - The generated frontend OpenAPI contract exposes CSV preview at `POST /v1/imports/preview`, but not the requested needs link preview at `POST /v1/needs/import-preview`. Do not call the unrelated CSV endpoint or hand-write an untyped route; add `useImportPreview` when the needs preview route is added to `apps/api/openapi.json` and regenerate the frontend schema.
 
+## F5 needs checkpoints 3-4
+
+- Add and edit needs use dedicated `/needs/new` and `/needs/{id}/edit` routes with one shared form. The form keeps all monetary values in pesewas, generates a UUIDv7 for creates, sends only changed edit fields, and accepts share-target `url`, `title`, and `text` parameters.
+- The needs link-preview API is still absent from `apps/api/openapi.json` and the generated frontend contract. Keep "Fetch details" disabled and explain the limitation; never substitute the unrelated CSV preview endpoint. Backend work needed: define `POST /v1/needs/import-preview` with the cleaned final URL, title and price/currency result, blocked/manual-price statuses, and optional FX estimate/rate/date, then regenerate `src/lib/api/schema.d.ts` before wiring the typed mutation and automatic share-target preview.
+- Allocation shortcuts and prechecks use the server-provided need and savings-summary numbers; mutation results remain authoritative. Purchase reconciliation uses the user's `/v1/me` timezone and transaction date bounds, then invalidates needs, dashboard, transactions, accounts, budgets and reports after success.
+
 ## F7 onboarding checkpoint 2
 
 - Save changed display name and timezone through `PATCH /v1/me`; use the device IANA timezone only as an explicit shortcut, and keep account creation online-first.

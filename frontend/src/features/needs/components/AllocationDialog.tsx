@@ -6,10 +6,11 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import TextField from "@mui/material/TextField";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
 import { z } from "zod";
 import { useAllocate } from "@/features/needs/api";
@@ -42,6 +43,8 @@ export function AllocationDialog({
   onClose: () => void;
 }) {
   const allocate = useAllocate();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [kind, setKind] = useState<"allocate" | "release">("allocate");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -51,6 +54,27 @@ export function AllocationDialog({
     amount.length > 0 && (parsedAmount === null || parsedAmount <= 0)
       ? "Enter an amount greater than zero, with up to two decimal places."
       : null;
+  const availableMinor = summary?.unallocated_minor;
+  const remainingMinor = Math.max(0, need.remaining_minor);
+  const allocatedMinor = Math.max(0, need.allocated_minor);
+  const adjustmentError =
+    parsedAmount === null || parsedAmount <= 0
+      ? amountError ?? "Enter an amount greater than zero."
+      : kind === "allocate" && parsedAmount > remainingMinor
+        ? "That's more than this need still requires."
+        : kind === "allocate" &&
+            availableMinor !== undefined &&
+            parsedAmount > availableMinor
+          ? "That's more than your unallocated savings."
+          : kind === "release" && parsedAmount > allocatedMinor
+            ? "That's more than is set aside for this need."
+            : null;
+  const summaryUnavailable = kind === "allocate" && availableMinor === undefined;
+
+  function setAmountFromMinor(minor: number) {
+    setAmount(`${Math.floor(minor / 100)}.${(minor % 100).toString().padStart(2, "0")}`);
+    setMessage(null);
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,7 +97,9 @@ export function AllocationDialog({
         amount_minor: parsedAmount,
       });
       showToast(
-        kind === "allocate" ? "Money set aside" : "Money taken back",
+        kind === "allocate"
+          ? `${formatGhs(parsedAmount)} set aside for ${need.name}`
+          : `${formatGhs(parsedAmount)} taken back`,
         "success",
       );
       onClose();
@@ -85,12 +111,16 @@ export function AllocationDialog({
   return (
     <Dialog
       fullWidth
+      fullScreen={isPhone}
       maxWidth="xs"
       onClose={() => !allocate.isPending && onClose()}
       open
       slotProps={{
         paper: {
-          sx: { borderRadius: "var(--radius-card)", maxWidth: 440 },
+          sx: {
+            borderRadius: isPhone ? 0 : "var(--radius-card)",
+            maxWidth: isPhone ? "none" : 440,
+          },
         },
       }}
     >
@@ -98,11 +128,15 @@ export function AllocationDialog({
       <form noValidate onSubmit={submit}>
         <DialogContent className="space-y-4 pt-2">
           <p className="font-semibold text-foreground">{need.name}</p>
-          {summary && (
-            <p className="text-sm text-muted">
-              Unallocated savings {formatGhs(summary.unallocated_minor)} ·{" "}
-              {formatGhs(need.allocated_minor)} set aside
-            </p>
+          <p className="text-sm text-muted">
+            {kind === "allocate"
+              ? `Unallocated savings ${availableMinor === undefined ? "unavailable" : formatGhs(availableMinor)} · this need still needs ${formatGhs(remainingMinor)}.`
+              : `${formatGhs(allocatedMinor)} is currently set aside for this need.`}
+          </p>
+          {summaryUnavailable && (
+            <Alert severity="warning">
+              The savings summary isn&apos;t available, so setting money aside is disabled.
+            </Alert>
           )}
           {!isOnline && (
             <Alert severity="info">
@@ -114,35 +148,35 @@ export function AllocationDialog({
               {message}
             </Alert>
           )}
-          <RadioGroup
+          <ToggleButtonGroup
             aria-label="Money adjustment"
-            onChange={(_event, value) =>
-              setKind(value as "allocate" | "release")
-            }
-            row
+            onChange={(_event, value: "allocate" | "release" | null) => {
+              if (value === "allocate" || value === "release") {
+                setKind(value);
+                setMessage(null);
+              }
+            }}
+            exclusive
             value={kind}
           >
-            <FormControlLabel
-              control={<Radio />}
-              label="Set aside"
-              value="allocate"
-            />
-            <FormControlLabel
-              control={<Radio />}
-              label="Take back"
-              value="release"
-            />
-          </RadioGroup>
+            <ToggleButton sx={{ minHeight: 44 }} value="allocate">
+              Set aside
+            </ToggleButton>
+            <ToggleButton sx={{ minHeight: 44 }} value="release">
+              Take back
+            </ToggleButton>
+          </ToggleButtonGroup>
           <TextField
             autoFocus
             error={Boolean(amountError)}
             fullWidth
-            helperText={amountError ?? "Enter an amount in Ghana cedis."}
+            helperText={adjustmentError ?? "Enter an amount in Ghana cedis."}
             inputMode="decimal"
             label="Amount"
             onChange={(event) => setAmount(event.target.value)}
             placeholder="0.00"
             slotProps={{
+              formHelperText: { "aria-live": "polite" },
               input: {
                 startAdornment: (
                   <span className="mr-2 text-muted" aria-hidden="true">
@@ -154,6 +188,40 @@ export function AllocationDialog({
             }}
             value={amount}
           />
+          <div aria-label="Amount shortcuts" className="flex flex-wrap gap-2" role="group">
+            {kind === "allocate" ? (
+              <>
+                <Button
+                  disabled={!isOnline || remainingMinor <= 0}
+                  onClick={() => setAmountFromMinor(remainingMinor)}
+                  size="small"
+                  type="button"
+                  variant="outlined"
+                >
+                  Remaining
+                </Button>
+                <Button
+                  disabled={!isOnline || availableMinor === undefined || availableMinor <= 0}
+                  onClick={() => availableMinor !== undefined && setAmountFromMinor(availableMinor)}
+                  size="small"
+                  type="button"
+                  variant="outlined"
+                >
+                  All available
+                </Button>
+              </>
+            ) : (
+              <Button
+                disabled={!isOnline || allocatedMinor <= 0}
+                onClick={() => setAmountFromMinor(allocatedMinor)}
+                size="small"
+                type="button"
+                variant="outlined"
+              >
+                All
+              </Button>
+            )}
+          </div>
         </DialogContent>
         <DialogActions className="px-6 pb-5">
           <Button
@@ -167,8 +235,8 @@ export function AllocationDialog({
             disabled={
               !isOnline ||
               allocate.isPending ||
-              parsedAmount === null ||
-              parsedAmount <= 0
+              summaryUnavailable ||
+              adjustmentError !== null
             }
             sx={{ minHeight: 44 }}
             type="submit"

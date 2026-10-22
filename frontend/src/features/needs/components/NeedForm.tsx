@@ -74,8 +74,15 @@ function first(value?: string | string[]) {
 }
 
 function sharedUrl(url?: string, text?: string) {
-  const candidate = url?.trim() || text?.match(/https?:\/\/[^\s<>"']+/i)?.[0]?.replace(/[),.!?;:]+$/, "");
-  return candidate && isSafeHttpUrl(candidate) ? candidate : "";
+  const explicitUrl = url?.trim();
+  if (explicitUrl && isSafeHttpUrl(explicitUrl)) {
+    return explicitUrl;
+  }
+
+  const textUrl = text
+    ?.match(/https?:\/\/[^\s<>"']+/i)?.[0]
+    ?.replace(/[),.!?;:]+$/, "");
+  return textUrl && isSafeHttpUrl(textUrl) ? textUrl : "";
 }
 
 export function NeedForm({
@@ -289,7 +296,10 @@ function NeedFormEditor({
           fullWidth
           helperText={form.formState.errors.name?.message}
           label="Name"
-          slotProps={{ htmlInput: { maxLength: 100 } }}
+          slotProps={{
+            formHelperText: { "aria-live": "polite" },
+            htmlInput: { maxLength: 100 },
+          }}
         />
         <TextField
           {...form.register("target")}
@@ -300,6 +310,7 @@ function NeedFormEditor({
           label="Target price"
           placeholder="0.00"
           slotProps={{
+            formHelperText: { "aria-live": "polite" },
             input: {
               startAdornment: <InputAdornment position="start">₵</InputAdornment>,
             },
@@ -343,7 +354,10 @@ function NeedFormEditor({
           label="Note"
           multiline
           minRows={2}
-          slotProps={{ htmlInput: { maxLength: 280 } }}
+          slotProps={{
+            formHelperText: { "aria-live": "polite" },
+            htmlInput: { maxLength: 280 },
+          }}
         />
         <p aria-live="polite" className="-mt-4 text-right text-xs text-muted">
           {note.length}/280
@@ -358,7 +372,10 @@ function NeedFormEditor({
                 helperText={form.formState.errors.source_url?.message ?? "Optional product link"}
                 label="Product link"
                 placeholder="https://example.com/item"
-                slotProps={{ htmlInput: { maxLength: 2048, inputMode: "url" } }}
+                slotProps={{
+                  formHelperText: { "aria-live": "polite" },
+                  htmlInput: { maxLength: 2048, inputMode: "url" },
+                }}
               />
               <div className="flex shrink-0 flex-col gap-1">
                 <Button disabled sx={{ minHeight: 44 }} title="Link preview requires an API endpoint not yet in the contract.">

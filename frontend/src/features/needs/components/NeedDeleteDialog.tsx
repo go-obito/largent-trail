@@ -12,13 +12,17 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 import { useState } from "react";
 import { useAccounts } from "@/features/accounts/api";
 import { useCategories } from "@/features/categories/api";
+import { useMe } from "@/features/me/api";
 import { useDeleteNeed } from "@/features/needs/api";
 import { needErrorMessage } from "@/features/needs/errors";
 import type { components } from "@/lib/api/schema";
+import { addDaysToDate, dateInTimezone, isCalendarDate } from "@/lib/date";
 import { formatGhs } from "@/lib/money";
 import { showToast } from "@/lib/toast";
 
@@ -36,6 +40,8 @@ export function NeedDeleteDialog({
   onDeleted: () => void;
 }) {
   const remove = useDeleteNeed();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [stage, setStage] = useState<"confirm" | "reconcile" | "purchase">(
     "confirm",
   );
@@ -78,12 +84,16 @@ export function NeedDeleteDialog({
   return (
     <Dialog
       fullWidth
+      fullScreen={isPhone}
       maxWidth="sm"
       onClose={() => !remove.isPending && onClose()}
       open
       slotProps={{
         paper: {
-          sx: { borderRadius: "var(--radius-card)", maxWidth: 520 },
+          sx: {
+            borderRadius: isPhone ? 0 : "var(--radius-card)",
+            maxWidth: isPhone ? "none" : 520,
+          },
         },
       }}
     >
@@ -151,7 +161,7 @@ export function NeedDeleteDialog({
                 sx={{ minHeight: 44 }}
                 variant="outlined"
               >
-                Return money to savings
+                Return {formatGhs(need.allocated_minor)} to my unallocated savings
               </Button>
               <Button
                 disabled={!isOnline || remove.isPending}
@@ -159,7 +169,7 @@ export function NeedDeleteDialog({
                 sx={{ minHeight: 44 }}
                 variant="contained"
               >
-                Mark as purchased
+                I bought it, record an expense
               </Button>
             </>
           )}
@@ -180,19 +190,34 @@ function PurchaseReconcileFields({
   onSubmit: (purchase: {
     account_id: string;
     category_id?: string;
-    occurred_on?: string;
+    occurred_on: string;
   }) => void;
   pending: boolean;
 }) {
   const accounts = useAccounts();
   const categories = useCategories({ kind: "expense" });
+  const me = useMe();
+  const timezone = me.data?.timezone || "Africa/Accra";
+  const today = dateInTimezone(new Date(), timezone);
+  const latestDate = addDaysToDate(today, 1);
   const [accountId, setAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [occurredOn, setOccurredOn] = useState("");
+  const [occurredOnOverride, setOccurredOnOverride] = useState<string | null>(
+    null,
+  );
+  const occurredOn = occurredOnOverride ?? today;
   const accountList = accounts.data ?? [];
   const categoryList = categories.data ?? [];
+  const isDateValid =
+    isCalendarDate(occurredOn) &&
+    occurredOn >= "2000-01-01" &&
+    occurredOn <= latestDate;
   const canSubmit =
-    accountId.length > 0 && !accounts.isPending && accountList.length > 0;
+    accountId.length > 0 &&
+    !accounts.isPending &&
+    !accounts.isError &&
+    accountList.length > 0 &&
+    isDateValid;
 
   return (
     <>
@@ -275,11 +300,20 @@ function PurchaseReconcileFields({
         </FormHelperText>
       </FormControl>
       <TextField
+        error={Boolean(occurredOn) && !isDateValid}
         fullWidth
-        helperText="Optional; defaults to today in your timezone."
+        helperText={
+          isDateValid
+            ? "Defaults to today in your timezone."
+            : `Choose a date from 2000-01-01 through ${latestDate}.`
+        }
         label="Date purchased"
-        onChange={(event) => setOccurredOn(event.target.value)}
-        slotProps={{ htmlInput: { max: "9999-12-31" } }}
+        required
+        onChange={(event) => setOccurredOnOverride(event.target.value)}
+        slotProps={{
+          formHelperText: { "aria-live": "polite" },
+          htmlInput: { min: "2000-01-01", max: latestDate, required: true },
+        }}
         type="date"
         value={occurredOn}
       />
@@ -293,7 +327,7 @@ function PurchaseReconcileFields({
             onSubmit({
               account_id: accountId,
               ...(categoryId ? { category_id: categoryId } : {}),
-              ...(occurredOn ? { occurred_on: occurredOn } : {}),
+              occurred_on: occurredOn,
             })
           }
           sx={{ minHeight: 44 }}
