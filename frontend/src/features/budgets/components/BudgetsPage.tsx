@@ -326,7 +326,7 @@ export function BudgetsPage() {
   const router = useRouter();
   const isOnline = useConnectionStatus();
   const budgetsQuery = useBudgets();
-  const categoriesQuery = useCategories("expense");
+  const categoriesQuery = useCategories({ kind: "expense" });
   const meQuery = useMe();
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("month");
   const today = todayInTz(meQuery.data?.timezone || "Africa/Accra");

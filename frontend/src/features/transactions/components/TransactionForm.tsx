@@ -271,7 +271,7 @@ function TransactionFormEditor({
   const kind = useWatch({ control: form.control, name: "kind" });
   const categoryId = useWatch({ control: form.control, name: "category_id" });
   const note = useWatch({ control: form.control, name: "note" });
-  const categoryQuery = useCategories(kind);
+  const categoryQuery = useCategories({ kind });
   const timezone = meQuery.data?.timezone || "Africa/Accra";
   const today = useMemo(() => dateInTimezone(new Date(), timezone), [timezone]);
   const latestDate = useMemo(() => addOneDay(today), [today]);

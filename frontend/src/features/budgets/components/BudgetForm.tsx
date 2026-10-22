@@ -74,7 +74,7 @@ export function BudgetForm({ mode, budgetId = "" }: BudgetFormProps) {
   const isEditing = mode === "edit";
   const budgetQuery = useBudget(isEditing ? budgetId : "");
   const budgetsQuery = useBudgets();
-  const categoriesQuery = useCategories("expense");
+  const categoriesQuery = useCategories({ kind: "expense" });
 
   if (isEditing && budgetQuery.isPending && !budgetQuery.data) {
     return <LoadingSkeleton label="Loading budget" rows={3} />;

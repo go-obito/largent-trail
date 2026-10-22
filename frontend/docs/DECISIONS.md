@@ -65,3 +65,9 @@ Reviewed 2026-10-20 against the official package documentation.
 - The onboarding gate waits for `/v1/me`, active accounts, and the per-user local completion flag. The `/onboarding` route is exempt from the gate; a user with an active account is marked done, while a user without accounts is sent to onboarding unless the flag is `done` or `skipped`.
 - The completion flag is stored as JSON (`status` and `timestamp`) in `localStorage` under `largent-onboarding:<Clerk user id>`. The current step is session-only in `sessionStorage` under `largent-onboarding-step:<Clerk user id>`. Replay uses `/onboarding?replay=1`, displays existing setup without writes, bypasses the gate, and leaves the completion flag unchanged.
 - Recommend a backend `users.onboarded_at` field so onboarding status can eventually follow the user across devices instead of depending on browser-local storage.
+
+## F7b accounts and categories checkpoint 1
+
+- Account summaries aggregate only the backend-provided `balance_minor` values; the frontend never derives an individual account balance.
+- The generated OpenAPI contract does not expose `reassign_to` on `DELETE /v1/categories/{category_id}`. Category deletion therefore uses only the declared path parameter. The `reassignTo` input and replacement choice are gated by `SUPPORTS_CATEGORY_REASSIGN` until the API schema exposes that field; when a category is in use, the UI offers archiving to preserve history.
+- All 35 curated category icon keys are available in the installed Lucide version; no icon substitutions were needed.

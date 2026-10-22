@@ -136,6 +136,6 @@ pnpm gen:tokens   # regenerate src/styles/tokens.css from src/styles/palette.ts
 - [ ] F5 priority needs (allocation, link import)
 - [ ] F6 CSV import wizard (needs backend B9)
 - [x] F7 onboarding (checkpoints 2-4: details, first account, starter budgets, completion and replay complete)
-- [ ] F7b accounts and categories management
+- [ ] F7b accounts and categories management (checkpoint 1 data layer and icons complete)
 - [ ] F8 PWA polish (install prompt, offline reads, share target)
 - [ ] F9 deploy
