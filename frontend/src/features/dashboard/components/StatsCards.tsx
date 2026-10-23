@@ -53,45 +53,51 @@ export function StatsCards({ data }: { data: DashboardRead }) {
   const needsPercent = Math.floor(needsProgress);
 
   return (
-    <div className="hidden grid-cols-2 gap-3 md:col-span-12 md:grid md:grid-cols-4 md:gap-5">
-      <StatCard
-        Icon={TrendingUp}
-        amount={formatGhs(data.week.income_minor)}
-        label="Income"
-        tone="success"
-        footer={<p className="text-xs text-muted">This week</p>}
-      />
-      <StatCard
-        Icon={TrendingDown}
-        amount={formatGhs(data.week.spent_minor)}
-        label="Expenses"
-        tone="error"
-        footer={<p className="text-xs text-muted">This week</p>}
-      />
-      <StatCard
-        Icon={PiggyBank}
-        amount={formatGhs(data.needs.unallocated_savings_minor)}
-        label="Savings"
-        tone="primary"
-        footer={<p className="text-xs text-muted">Unallocated savings</p>}
-      />
-      <StatCard
-        Icon={Target}
-        amount={`${formatGhs(data.needs.total_target_minor)} planned`}
-        label="Needs"
-        tone="secondary"
-        footer={
-          <>
-            <LinearProgress
-              aria-label={`${needsPercent}% of planned needs saved`}
-              sx={{ height: 6, borderRadius: 99 }}
-              value={needsProgress}
-              variant="determinate"
-            />
-            <p className="mt-2 text-xs text-muted">{needsPercent}% saved</p>
-          </>
-        }
-      />
-    </div>
+    <section aria-label="This week's money summary">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="text-lg font-bold tracking-[-0.02em] text-foreground">This week</h2>
+        <span className="text-sm text-muted">A quick snapshot</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+        <StatCard
+          Icon={TrendingUp}
+          amount={formatGhs(data.week.income_minor)}
+          label="Income"
+          tone="success"
+          footer={<p className="text-xs text-muted">This week</p>}
+        />
+        <StatCard
+          Icon={TrendingDown}
+          amount={formatGhs(data.week.spent_minor)}
+          label="Expenses"
+          tone="error"
+          footer={<p className="text-xs text-muted">This week</p>}
+        />
+        <StatCard
+          Icon={PiggyBank}
+          amount={formatGhs(data.needs.unallocated_savings_minor)}
+          label="Savings"
+          tone="primary"
+          footer={<p className="text-xs text-muted">Unallocated savings</p>}
+        />
+        <StatCard
+          Icon={Target}
+          amount={`${formatGhs(data.needs.total_target_minor)} planned`}
+          label="Needs"
+          tone="secondary"
+          footer={
+            <>
+              <LinearProgress
+                aria-label={`${needsPercent}% of planned needs saved`}
+                sx={{ height: 6, borderRadius: 99 }}
+                value={needsProgress}
+                variant="determinate"
+              />
+              <p className="mt-2 text-xs text-muted">{needsPercent}% saved</p>
+            </>
+          }
+        />
+      </div>
+    </section>
   );
 }

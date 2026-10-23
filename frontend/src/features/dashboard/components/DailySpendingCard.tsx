@@ -1,9 +1,7 @@
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import { statusToChip } from "@/features/dashboard/status";
@@ -26,7 +24,6 @@ export function DailySpendingCard({
 }: DailySpendingCardProps) {
   const target = data?.daily_target;
   const chip = target?.status ? statusToChip(target.status) : null;
-  const over = (target?.left_minor ?? 0) < 0;
   const progress =
     target?.target_minor && target.target_minor > 0
       ? Math.min(100, (target.spent_today_minor / target.target_minor) * 100)
@@ -40,98 +37,76 @@ export function DailySpendingCard({
       onRetry={onRetry}
     >
       {data && target && (
-        <section>
-          <div className="mb-3 flex items-center justify-between gap-3">
+        <section className="flex h-full flex-col rounded-[var(--radius-card)] bg-brand p-5 text-on-brand shadow-sm sm:min-h-[220px] sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Daily spending</h2>
-              <p className="mt-1 text-sm text-muted">A simple limit for today</p>
-            </div>
-            <IconButton
-              aria-label="View reports"
-              component={Link}
-              href="/reports"
-              sx={{ minWidth: 44, minHeight: 44, color: "primary.main" }}
-            >
-              <TrendingUp aria-hidden="true" size={20} />
-            </IconButton>
-          </div>
-
-          <div className="card-surface p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  Spent today
+              <p className="text-sm font-semibold text-white/80">Today</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-on-brand">
+                Daily spending
+              </h2>
+              <p className="mt-3 text-sm text-white/80">
+                {target.target_minor === null
+                  ? "Set a budget to get a daily limit"
+                  : "Your remaining amount for today"}
+              </p>
+              {target.target_minor !== null && target.left_minor !== null ? (
+                <p className="money mt-2 text-4xl font-bold tracking-[-0.03em] text-on-brand">
+                  {target.left_minor < 0
+                    ? `${formatGhs(Math.abs(target.left_minor))} over`
+                    : `${formatGhs(target.left_minor)} left`}
                 </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+              ) : (
+                <p className="money mt-2 text-4xl font-bold tracking-[-0.03em] text-on-brand">
                   {formatGhs(target.spent_today_minor)}
                 </p>
-              </div>
-              {chip && (
-                <Chip
-                  color={chip.color}
-                  label={chip.label}
-                  size="small"
-                  variant="outlined"
-                />
               )}
             </div>
+            {chip && (
+              <Chip
+                color={chip.color}
+                label={chip.label}
+                size="small"
+                sx={{ bgcolor: "rgba(255, 255, 255, 0.14)", color: "inherit" }}
+                variant="outlined"
+              />
+            )}
+          </div>
 
             {target.target_minor === null ? (
-              <div className="mt-5 rounded-2xl bg-panel-raised p-4">
-                <p className="font-semibold text-foreground">No daily target yet</p>
-                <p className="mt-1 text-sm text-muted">
-                  Set a weekly budget to get a daily limit
-                </p>
-                <Button
-                  className="mt-2"
-                  component={Link}
-                  href="/budgets"
-                  sx={{ minHeight: 44 }}
-                  variant="text"
-                >
-                  Set a budget
-                </Button>
-              </div>
+              <Link
+                className="mt-6 inline-flex min-h-11 w-fit items-center gap-2 rounded-[var(--radius-control)] bg-white px-4 text-sm font-bold text-brand transition-colors hover:bg-white/90"
+                href="/budgets"
+              >
+                Set a budget
+                <ArrowUpRight aria-hidden="true" size={17} />
+              </Link>
             ) : (
               <>
                 <LinearProgress
                   aria-label="Daily target progress"
-                  color={chip?.color ?? "primary"}
-                  sx={{ mt: 4, height: 8, borderRadius: 99 }}
+                  sx={{
+                    mt: 4,
+                    height: 8,
+                    borderRadius: 99,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    "& .MuiLinearProgress-bar": { backgroundColor: "#FFFFFF" },
+                  }}
                   value={progress}
                   variant="determinate"
                 />
-                <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
-                  <span className="text-muted">
-                    Daily target {formatGhs(target.target_minor)}
-                  </span>
-                  {target.left_minor !== null && (
-                    <span
-                      className={`font-semibold ${
-                        over ? "text-status-error" : "text-foreground"
-                      }`}
-                    >
-                      {over
-                        ? `${formatGhs(Math.abs(target.left_minor))} over`
-                        : `${formatGhs(target.left_minor)} left`}
-                    </span>
-                  )}
+                <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-white/80">
+                  <span>Spent {formatGhs(target.spent_today_minor)}</span>
+                  <span>Target {formatGhs(target.target_minor)}</span>
                 </div>
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  Adjusted for what you&apos;ve spent earlier this week.
-                </p>
               </>
             )}
-            <Button
-              className="mt-4 w-full"
-              component={Link}
-              href="/transactions/new?kind=expense"
-              sx={{ minHeight: 44 }}
-              variant="outlined"
-            >
-              Record today&apos;s spending
-            </Button>
-          </div>
+          <Link
+            className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] border border-white/30 px-4 text-sm font-bold text-on-brand transition-colors hover:bg-white/10"
+            href="/transactions/new?kind=expense"
+          >
+            Record spending
+            <ArrowUpRight aria-hidden="true" size={17} />
+          </Link>
         </section>
       )}
     </DashboardSection>

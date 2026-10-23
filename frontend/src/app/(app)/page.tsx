@@ -39,7 +39,15 @@ export default function HomePage() {
 
   return (
     <div className="grid grid-cols-1 gap-4 pb-4 md:grid-cols-12 md:gap-6">
-      <div className="order-1 md:col-span-8">
+      <header className="order-1 md:col-span-12">
+        <h1 className="max-w-[18ch] text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">
+          Your financial briefing
+        </h1>
+        <p className="mt-2 max-w-[52ch] text-sm leading-6 text-muted sm:text-base">
+          A clear view of what matters for your money today.
+        </p>
+      </header>
+      <div className="order-2 md:col-span-7">
         <HeroBalanceCard
           {...sectionStatus}
           data={data}
@@ -47,13 +55,13 @@ export default function HomePage() {
           range={range}
         />
       </div>
-      <div className="order-2 md:hidden">
+      <div className="order-3 md:hidden">
         <QuickActions />
       </div>
-      <div className="order-3 md:col-span-4 md:row-start-1">
+      <div className="order-4 md:col-span-5 md:row-start-2">
         <DailySpendingCard {...sectionStatus} data={data} />
       </div>
-      <div className="order-4 hidden md:col-span-12 md:block md:row-start-2">
+      <div className="order-5 md:col-span-12 md:row-start-3">
         {data ? (
           <StatsCards data={data} />
         ) : (
@@ -62,14 +70,14 @@ export default function HomePage() {
           </DashboardSection>
         )}
       </div>
-      <div className="order-5 md:col-span-7 md:row-start-3">
+      <div className="order-6 md:col-span-7 md:row-start-4">
         <RecentActivityCard
           {...sectionStatus}
           data={data}
           timezone={timezone}
         />
       </div>
-      <div className="order-6 md:col-span-5 md:row-start-3">
+      <div className="order-7 md:col-span-5 md:row-start-4">
         <SpendingOverviewCard
           {...reportStatus}
           data={report.data}
@@ -77,17 +85,17 @@ export default function HomePage() {
           period={reportPeriod}
         />
       </div>
-      <div className="order-7 md:col-span-4 md:row-start-4">
+      <div className="order-8 md:col-span-4 md:row-start-5">
         <BudgetsCard {...sectionStatus} data={data} />
       </div>
-      <div className="order-8 md:col-span-4 md:row-start-4">
+      <div className="order-9 md:col-span-4 md:row-start-5">
         <WeeklyProgressCard
           {...sectionStatus}
           data={data}
           timezone={timezone}
         />
       </div>
-      <div className="order-9 md:col-span-4 md:row-start-4">
+      <div className="order-10 md:col-span-4 md:row-start-5">
         <PrioritizedNeedsCard {...sectionStatus} data={data} />
       </div>
     </div>
