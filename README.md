@@ -55,9 +55,72 @@ ARQ worker in dependency order. See
 `docs/product-spec.md` for the current product constraints and `docs/runbooks/`
 for operational notes.
 
-For Render, configure the API as a Docker web service with the repository root
-as its root directory and `./Dockerfile` as its Dockerfile path. Production
-deployments apply database migrations as a separate, explicit step.
+## Railway deployment
+
+Deploy the API from this repository with the repository root as the service root.
+For an existing legacy Railway service, `railway.json` selects the root
+`Dockerfile`, applies Alembic migrations in the pre-deploy phase, starts Uvicorn
+on Railway's assigned `$PORT`, and checks `/readyz` before considering the
+deployment healthy.
+
+### API service variables
+
+Add these variables to the Railway API service:
+
+- `ENVIRONMENT=production`
+- `LOG_LEVEL=INFO`
+- `DATABASE_URL`: reference the Railway PostgreSQL service's connection URL.
+- `MIGRATION_DATABASE_URL`: a PostgreSQL URL for a role allowed to apply Alembic
+  migrations. If you have not created a separate migration role, you can initially
+  reference the same PostgreSQL URL as `DATABASE_URL`; that database role must then
+  have schema migration privileges. A separate, least-privilege runtime role is
+  preferable for production.
+- `REDIS_URL`: reference the Railway Redis service's connection URL.
+- `CORS_ALLOWED_ORIGINS`: a JSON array containing the exact deployed frontend origin,
+  for example `["https://your-frontend.example"]`. Do not use a wildcard.
+- `CLERK_ISSUER`: the issuer URL for your production Clerk instance.
+- `CLERK_AUTHORIZED_PARTIES`: a JSON array of trusted frontend origins, for example
+  `["https://your-frontend.example"]`.
+- `CURSOR_SIGNING_KEYS`: generate a strong secret locally with
+  `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Keep it in Railway
+  Variables; do not commit it.
+
+The settings layer converts `postgres://` and `postgresql://` values for both
+PostgreSQL variables to `postgresql+asyncpg://` before validating them, so the
+common Railway PostgreSQL URL format works without manually editing its scheme.
+The Docker image and default command also respect Railway's assigned `PORT`.
+
+Optional variables include `CLERK_JWKS_URL`, `CLERK_AUDIENCE`, `SENTRY_DSN`,
+and `OTLP_ENDPOINT`. Leave `CLERK_AUDIENCE` unset unless your Clerk tokens are
+configured to include the matching audience claim.
+
+### Worker service
+
+The ARQ worker is a separate process. To run it on Railway, create a second service
+from the same repository and Dockerfile, link the same PostgreSQL and Redis services,
+and override that service's start command with:
+
+```sh
+arq largent.workers.settings.WorkerSettings
+```
+
+The worker requires `DATABASE_URL` and `REDIS_URL`; it does not run API migrations.
+Do not use the API migration start command for the worker service.
+
+**Railway configuration compatibility:** Railway is retiring legacy Config as Code
+(`railway.json` / `railway.toml`) on 2026-12-01, and new services cannot opt into
+it. For a newly created service or a long-lived setup, migrate the existing Railway
+project configuration to `.railway/railway.ts` using Railway's CLI
+(`railway config migrate`, then review with `railway config plan` before applying).
+Import the existing project first; do not apply a project-wide IaC definition that
+omits existing services or databases.
+
+### Deployment verification
+
+After deployment, confirm that the API service passes its `/readyz` health check.
+This endpoint checks both PostgreSQL and Redis. If the deployment fails, inspect the
+Railway deployment logs first: migration errors happen before Uvicorn starts, while a
+failed readiness check indicates that a required dependency is unavailable.
 
 ## How to add a tenant table
 
