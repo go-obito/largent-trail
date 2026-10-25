@@ -58,9 +58,10 @@ for operational notes.
 ## Railway deployment
 
 Deploy the API from this repository with the repository root as the service root.
-Railway reads `railway.json`, builds the root `Dockerfile`, applies Alembic
-migrations, starts Uvicorn on Railway's assigned `$PORT`, and checks
-`/readyz` before considering the deployment healthy.
+For an existing legacy Railway service, `railway.json` selects the root
+`Dockerfile`, applies Alembic migrations in the pre-deploy phase, starts Uvicorn
+on Railway's assigned `$PORT`, and checks `/readyz` before considering the
+deployment healthy.
 
 ### API service variables
 
@@ -105,6 +106,14 @@ arq largent.workers.settings.WorkerSettings
 
 The worker requires `DATABASE_URL` and `REDIS_URL`; it does not run API migrations.
 Do not use the API migration start command for the worker service.
+
+**Railway configuration compatibility:** Railway is retiring legacy Config as Code
+(`railway.json` / `railway.toml`) on 2026-12-01, and new services cannot opt into
+it. For a newly created service or a long-lived setup, migrate the existing Railway
+project configuration to `.railway/railway.ts` using Railway's CLI
+(`railway config migrate`, then review with `railway config plan` before applying).
+Import the existing project first; do not apply a project-wide IaC definition that
+omits existing services or databases.
 
 ### Deployment verification
 
