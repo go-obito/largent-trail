@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAccounts } from "@/features/accounts/api";
 import { useMe } from "@/features/me/api";
@@ -21,6 +21,7 @@ function isExcludedPath(pathname: string | null): boolean {
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const me = useMe();
   const accounts = useAccounts();
@@ -49,7 +50,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     }
 
     if (!done && !skipped) {
-      router.replace("/onboarding");
+      const returnTo = `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`;
+      router.replace(`/onboarding?redirect_url=${encodeURIComponent(returnTo)}`);
     }
   }, [
     accounts.isSuccess,
@@ -63,6 +65,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     isSignedIn,
     me.isSuccess,
     router,
+    pathname,
+    searchParams,
     skipped,
     userId,
   ]);

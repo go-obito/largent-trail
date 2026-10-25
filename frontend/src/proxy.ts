@@ -1,7 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import {
+  LAST_PRIVATE_ROUTE_COOKIE,
+  LAST_PRIVATE_ROUTE_MAX_AGE,
+  privatePathname,
+} from "@/lib/routing";
 
 const isPublicRoute = createRouteMatcher([
+  "/",
   "/welcome",
   "/sign-in(.*)",
   "/sign-up(.*)",
@@ -17,15 +23,28 @@ export default clerkMiddleware(async (auth, request) => {
     return;
   }
 
-  if (request.nextUrl.searchParams.has("redirect_url")) {
-    await auth.protect();
-    return;
-  }
-
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.redirect(new URL("/welcome", request.url));
+    const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set(
+      "redirect_url",
+      `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    );
+    return NextResponse.redirect(signInUrl);
   }
+
+  const response = NextResponse.next();
+  const pathname = privatePathname(request.nextUrl.pathname);
+  if (pathname) {
+    response.cookies.set(LAST_PRIVATE_ROUTE_COOKIE, pathname, {
+      httpOnly: true,
+      maxAge: LAST_PRIVATE_ROUTE_MAX_AGE,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+  return response;
 });
 
 export const config = {

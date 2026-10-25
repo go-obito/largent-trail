@@ -138,7 +138,8 @@ function UserMenu() {
     try {
       await clearPersistedQueryCache(userId);
       queryClient.clear();
-      await clerk.signOut({ redirectUrl: "/sign-in" });
+      await fetch("/auth/sign-out", { method: "POST" });
+      await clerk.signOut({ redirectUrl: "/" });
     } catch {
       setSignOutError("We couldn’t sign you out. Please try again.");
       setIsSigningOut(false);

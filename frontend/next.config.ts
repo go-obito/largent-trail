@@ -34,6 +34,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["172.20.10.2"],
   cacheComponents: true,
   partialPrefetching: true,
   async headers() {

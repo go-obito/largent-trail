@@ -144,7 +144,13 @@ function previousStep(step: OnboardingStep): OnboardingStep {
   }
 }
 
-export function OnboardingPage({ isReplay = false }: { isReplay?: boolean }) {
+export function OnboardingPage({
+  isReplay = false,
+  returnTo,
+}: {
+  isReplay?: boolean;
+  returnTo?: string | null;
+}) {
   const { userId } = useAuth();
   const { isLoaded: isClerkUserLoaded, user } = useUser();
   const router = useRouter();
@@ -256,7 +262,7 @@ export function OnboardingPage({ isReplay = false }: { isReplay?: boolean }) {
     }
     if (onboarding.skip()) {
       progress.clear();
-      router.replace("/");
+      router.replace(returnTo ?? "/");
     } else {
       showToast(onboardingCopy.errors.progressSave, "error");
     }
@@ -293,7 +299,7 @@ export function OnboardingPage({ isReplay = false }: { isReplay?: boolean }) {
     if (!progress.clear()) {
       showToast(onboardingCopy.errors.finishClear, "warning");
     }
-    router.replace("/");
+    router.replace(returnTo ?? "/");
   }
 
   function updateBudgetDraft(

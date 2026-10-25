@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { clerkAppearance } from "@/components/auth/ClerkAppearance";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { welcomeCopy } from "@/features/welcome/copy";
+import { safeReturnPath } from "@/lib/routing";
 
 type SignInPageProps = {
   searchParams: Promise<{
@@ -17,9 +18,10 @@ async function SignInContent({ searchParams }: SignInPageProps) {
   const params = await searchParams;
   const query = new URLSearchParams();
   if (params.from === "welcome") query.set("from", "welcome");
-  if (typeof params.redirect_url === "string") {
-    query.set("redirect_url", params.redirect_url);
-  }
+  const redirectUrl = safeReturnPath(
+    typeof params.redirect_url === "string" ? params.redirect_url : undefined,
+  );
+  if (redirectUrl) query.set("redirect_url", redirectUrl);
   const queryString = query.toString();
 
   return (
@@ -27,7 +29,7 @@ async function SignInContent({ searchParams }: SignInPageProps) {
       {params.from === "welcome" ? (
         <Link
           className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-foreground hover:bg-selected"
-          href="/welcome"
+          href="/"
         >
           <ArrowLeft aria-hidden="true" size={18} />
           {welcomeCopy.actions.back}
@@ -35,7 +37,8 @@ async function SignInContent({ searchParams }: SignInPageProps) {
       ) : null}
       <SignIn
         appearance={clerkAppearance}
-        fallbackRedirectUrl="/"
+        fallbackRedirectUrl={redirectUrl ?? "/"}
+        forceRedirectUrl={redirectUrl ?? undefined}
         path="/sign-in"
         routing="path"
         signUpUrl={`${welcomeCopy.paths.signUpPlain}${queryString ? `?${queryString}` : ""}`}

@@ -45,17 +45,14 @@ export function HeroBalanceCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="rounded-[var(--radius-card)] bg-[linear-gradient(115deg,color-mix(in_srgb,var(--color-hero)_82%,var(--color-primary)),var(--color-hero))] p-5 text-[var(--color-on-hero)] shadow-sm sm:min-h-[220px] sm:p-7">
+        <section className="rounded-3xl bg-[linear-gradient(115deg,color-mix(in_srgb,var(--color-hero)_78%,var(--color-primary)),var(--color-hero))] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-[color-mix(in_srgb,var(--color-on-hero)_78%,transparent)]">
+              <p className="text-sm font-semibold opacity-80">
                 Total Balance
               </p>
-              <p className="money mt-3 text-4xl font-bold tracking-[-0.03em] sm:text-5xl">
+              <p className="money mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                 {formatGhs(data.total_balance_minor)}
-              </p>
-              <p className="mt-3 text-sm text-[color-mix(in_srgb,var(--color-on-hero)_78%,transparent)]">
-                Across all your accounts
               </p>
               {data.net_change_minor !== null && (
                 <p
