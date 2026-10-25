@@ -1,0 +1,502 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene-1\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-1",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene-1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene-2\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-2",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene-2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene-3\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-3",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene-3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene-4\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-4",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene-4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 1,
+    "findings": [
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 8.372,
+        "selector": "#scene-3 > div:nth-of-type(1)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 3.59,
+          "top": 8.45,
+          "right": 1916.41,
+          "bottom": 1084.41,
+          "width": 1912.82,
+          "height": 1075.96
+        },
+        "containerSelector": "#scene-3",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 1.94,
+          "right": 1920,
+          "bottom": 1081.94,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "bottom": 2.47
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 3.59,
+          "y": 8.45,
+          "width": 1912.82,
+          "height": 1075.96
+        },
+        "firstSeen": 8.372,
+        "lastSeen": 8.372,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.372
+        ]
+      }
+    ],
+    "duration": 13.7,
+    "samples": [
+      0.761,
+      2.283,
+      3.806,
+      5.328,
+      6.85,
+      8.372,
+      9.894,
+      11.417,
+      12.939
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 1,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      0.761,
+      3.806,
+      6.85,
+      9.894,
+      12.939
+    ],
+    "checked": 57,
+    "passed": 57
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 8,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "first_frame_empty",
+        "severity": "warning",
+        "message": "Frame 0 shows only the background, and the first frame is the thumbnail on social players: have the title or key image already on screen at 0 s instead of entering from nothing; see references/review.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"Track income and spending, plan your weekly food budget b...\" (20 words) is on screen 3.70 s (±0.01 s), under its 4.88 s floor: hold it about 0.5 s + 0.3 s a word (6.50 s here) before it leaves or changes; see references/motion.md.",
+        "text": "Track income and spending, plan your weekly food budget by weekday, and keep essential purchases and savings goals in view.",
+        "selector": "#scene-1 > div:nth-of-type(1) > p:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 123.14,
+          "y": 562.37,
+          "width": 690.64,
+          "height": 134.5
+        },
+        "time": 0.304,
+        "words": 20,
+        "seconds": 3.697,
+        "floorSeconds": 4.875
+      },
+      {
+        "code": "text_below_floor",
+        "severity": "warning",
+        "message": "Type floor is 28 px (2.6% of the 1080 px short side, what a phone can read) and 19 text elements stay under it for 0.5 s or more, the smallest \"Illustrative preview — not live accou...\" at 18 px: set reading text to at least 28 px, or put data-layout-ignore on text that is texture rather than reading; see references/look.md.",
+        "text": "Illustrative preview — not live account data",
+        "selector": "div.meta",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1110.44,
+          "y": 226.63,
+          "width": 363.15,
+          "height": 20.92
+        },
+        "time": 0.374,
+        "times": [
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          0.374,
+          4.359,
+          4.359,
+          4.359,
+          4.359,
+          8.345,
+          8.345,
+          8.345,
+          8.345
+        ],
+        "fontPx": 17.93,
+        "floorPx": 28,
+        "seconds": 3.736,
+        "elements": [
+          {
+            "selector": "div.meta",
+            "text": "Illustrative preview — not live account data",
+            "fontPx": 17.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.spend-card > div:nth-of-type(3)",
+            "text": "available within your plan",
+            "fontPx": 17.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.goal-grid > div:nth-of-type(1) > span:nth-of-type(2)",
+            "text": "Spend today",
+            "fontPx": 19.91,
+            "time": 8.345,
+            "seconds": 4.733
+          },
+          {
+            "selector": "div.goal-grid > div:nth-of-type(2) > span:nth-of-type(2)",
+            "text": "New phone goal",
+            "fontPx": 19.91,
+            "time": 8.345,
+            "seconds": 4.733
+          },
+          {
+            "selector": "div.goal-grid > div:nth-of-type(3) > span:nth-of-type(2)",
+            "text": "Food budget",
+            "fontPx": 19.91,
+            "time": 8.345,
+            "seconds": 4.733
+          },
+          {
+            "selector": "div.badge",
+            "text": "Plan",
+            "fontPx": 19.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.small-label",
+            "text": "Total balance",
+            "fontPx": 19.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.hero-card > div:nth-of-type(3)",
+            "text": "Across cash, bank, and mobile money",
+            "fontPx": 19.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.goal-row > span:nth-of-type(1)",
+            "text": "New phone goal",
+            "fontPx": 19.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.goal-row > strong:nth-of-type(1)",
+            "text": "₵720 saved",
+            "fontPx": 19.93,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.stack > div:nth-of-type(1) > p:nth-of-type(1)",
+            "text": "₵185 of ₵300 planned this week",
+            "fontPx": 21.9,
+            "time": 4.359,
+            "seconds": 3.737
+          },
+          {
+            "selector": "div.stack > div:nth-of-type(2) > p:nth-of-type(1)",
+            "text": "Spot the days that need more attention before your money runs low.",
+            "fontPx": 21.9,
+            "time": 4.359,
+            "seconds": 3.737
+          },
+          {
+            "selector": "div.stack > div:nth-of-type(3) > p:nth-of-type(1)",
+            "text": "Keep the things that matter in front of the plan.",
+            "fontPx": 21.9,
+            "time": 4.359,
+            "seconds": 3.737
+          },
+          {
+            "selector": "div.spend-card > div:nth-of-type(1)",
+            "text": "Spend today",
+            "fontPx": 23.91,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.budget-row > span:nth-of-type(1)",
+            "text": "Food budget",
+            "fontPx": 23.91,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "div.budget-row > strong:nth-of-type(1)",
+            "text": "₵185 of ₵300",
+            "fontPx": 23.91,
+            "time": 0.374,
+            "seconds": 3.736
+          },
+          {
+            "selector": "#scene-2 > div:nth-of-type(1) > div:nth-of-type(1)",
+            "text": "Plan the week",
+            "fontPx": 25.88,
+            "time": 4.359,
+            "seconds": 3.737
+          },
+          {
+            "selector": "#scene-3 > div:nth-of-type(1) > div:nth-of-type(1)",
+            "text": "Why it matters",
+            "fontPx": 25.88,
+            "time": 8.345,
+            "seconds": 4.733
+          },
+          {
+            "selector": "#scene-1 > div:nth-of-type(1) > div:nth-of-type(1)",
+            "text": "Largent",
+            "fontPx": 25.9,
+            "time": 0.374,
+            "seconds": 3.736
+          }
+        ]
+      },
+      {
+        "code": "dead_stretch",
+        "severity": "warning",
+        "message": "Nothing on screen changes for 3.11 s (0.87–3.98 s): start the next move within 3 s, or put data-hold on the element whose stillness is deliberate; see references/motion.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0.872,
+        "seconds": 3.113,
+        "floorSeconds": 3,
+        "until": 3.985
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"Break your food budget into weekday decisions, then keep ...\" (16 words) is on screen 3.70 s (±0.01 s), under its 3.97 s floor: hold it about 0.5 s + 0.3 s a word (5.30 s here) before it leaves or changes; see references/motion.md.",
+        "text": "Break your food budget into weekday decisions, then keep the essentials and your savings in view.",
+        "selector": "#scene-2 > div:nth-of-type(1) > p:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 123.92,
+          "y": 564.11,
+          "width": 751.1,
+          "height": 86.59000000000003
+        },
+        "time": 4.305,
+        "words": 16,
+        "seconds": 3.697,
+        "floorSeconds": 3.975
+      },
+      {
+        "code": "dead_stretch",
+        "severity": "warning",
+        "message": "Nothing on screen changes for 3.11 s (4.86–7.97 s): start the next move within 3 s, or put data-hold on the element whose stillness is deliberate; see references/motion.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 4.857,
+        "seconds": 3.114,
+        "floorSeconds": 3,
+        "until": 7.971
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"Largent\" (1 word) is on screen 0.40 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "Largent",
+        "selector": "div.brand",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 744.64,
+          "y": 402.11,
+          "width": 430.69999999999993,
+          "height": 164.06000000000006
+        },
+        "time": 13.303,
+        "words": 1,
+        "seconds": 0.401,
+        "floorSeconds": 2
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"Everyday money management, made clear.\" (5 words) is on screen 0.40 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "Everyday money management, made clear.",
+        "selector": "div.tag",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 615.98,
+          "y": 576.11,
+          "width": 688.04,
+          "height": 40.75999999999999
+        },
+        "time": 13.303,
+        "words": 5,
+        "seconds": 0.401,
+        "floorSeconds": 2
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 110
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

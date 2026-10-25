@@ -1,0 +1,273 @@
+{
+  "version": 1,
+  "historyId": "a4949b42-e471-4ade-882e-3bb0af9e3154",
+  "currentRevision": "d5ab1957-a798-4b63-a819-0d9fc4dab8c3",
+  "pendingChanges": false,
+  "files": {
+    "index.html": {
+      "hash": "f054ccc6f5a1bc10e51d0a3a8d240b42f028e45f9bde949ebacb30081ef2d17d",
+      "content": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\f0\\f054ccc6f5a1bc10e51d0a3a8d240b42f028e45f9bde949ebacb30081ef2d17d"
+    },
+    "assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3": {
+      "hash": "aa56ab1cdcbef6b05566c6a7c114323078580ccf6a740a9e6c6b6c4b40b4389f",
+      "content": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\aa\\aa56ab1cdcbef6b05566c6a7c114323078580ccf6a740a9e6c6b6c4b40b4389f"
+    }
+  },
+  "revisions": {
+    "75087a83-d01f-4767-8d30-c410b33e9ba1": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792952026330,
+      "endedAt": 1792952026333,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\5e\\5edb622cc0796384f4d7b470d0b08ef0fc245f079f87a2d579addbb4c7ffca80",
+          "after": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\7e\\7e76aeeb55167688c94364a64611c0b697b491faa6d7d40e90fc90b9e2781e28"
+        }
+      }
+    },
+    "061d7339-4701-4cea-8a8a-b73b49c5ddce": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792952081239,
+      "endedAt": 1792952081250,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\7e\\7e76aeeb55167688c94364a64611c0b697b491faa6d7d40e90fc90b9e2781e28",
+          "after": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\b1\\b14d9c4bae1e197b2e1fdac66dc05408b4f279b8f55305f43a1560a5859679e6"
+        }
+      }
+    },
+    "d5ab1957-a798-4b63-a819-0d9fc4dab8c3": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792952149454,
+      "endedAt": 1792952149456,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\b1\\b14d9c4bae1e197b2e1fdac66dc05408b4f279b8f55305f43a1560a5859679e6",
+          "after": "C:\\Users\\young\\.cache\\hyperframes\\history\\a4949b42-e471-4ade-882e-3bb0af9e3154\\blobs\\f0\\f054ccc6f5a1bc10e51d0a3a8d240b42f028e45f9bde949ebacb30081ef2d17d"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "d5ab1957-a798-4b63-a819-0d9fc4dab8c3",
+      "id": "ad7ee7e0-f4bd-4877-8219-3041c557e031"
+    },
+    "revisions": {
+      "75087a83-d01f-4767-8d30-c410b33e9ba1": [
+        {
+          "id": "9fd0acc6-687a-41bd-9ef9-5eaa439c14af",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\9fd0acc6-687a-41bd-9ef9-5eaa439c14af.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792952045642,
+          "contentHash": "edd4fc8d9caf14bd7e6f55f9a53d27213269d700f3604fdbdf4e194786642b27",
+          "revision": "75087a83-d01f-4767-8d30-c410b33e9ba1",
+          "inputFingerprint": "267c0132f36b7581a019c5e1165c65878cd08a081f7add1ec9731c820a0d7c32",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "061d7339-4701-4cea-8a8a-b73b49c5ddce": [
+        {
+          "id": "81e2dde0-23a9-4789-ba37-a0ab218512eb",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\81e2dde0-23a9-4789-ba37-a0ab218512eb.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792952091162,
+          "contentHash": "568ca2f270abedb98eb8e7b58984af3c863110c6a1f516d0bd6485f70db286cd",
+          "revision": "061d7339-4701-4cea-8a8a-b73b49c5ddce",
+          "inputFingerprint": "4188787334df64bcfde21bad90efb0b0b9fb357961efa342442e6f2ba45c4f3d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "a1b33e6e-e36b-4254-9c79-8e56fdb52df2",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\a1b33e6e-e36b-4254-9c79-8e56fdb52df2.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792952125300,
+          "contentHash": "568ca2f270abedb98eb8e7b58984af3c863110c6a1f516d0bd6485f70db286cd",
+          "revision": "061d7339-4701-4cea-8a8a-b73b49c5ddce",
+          "inputFingerprint": "4188787334df64bcfde21bad90efb0b0b9fb357961efa342442e6f2ba45c4f3d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "d5ab1957-a798-4b63-a819-0d9fc4dab8c3": [
+        {
+          "id": "fcda3324-ac18-4683-8f88-2f8d5093151d",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\fcda3324-ac18-4683-8f88-2f8d5093151d.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792952162400,
+          "contentHash": "bddb87d1dd7932988fc0db2eb9ac518f3f29ae9a5d2f03a35de5cea385775eea",
+          "revision": "d5ab1957-a798-4b63-a819-0d9fc4dab8c3",
+          "inputFingerprint": "5219570a42ef435d92f3ec1f0d26713f15226a495c2dd7c34735b37b1aced1b7",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "08f1a077-ca4b-48ec-b9d1-1697066286ff",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\08f1a077-ca4b-48ec-b9d1-1697066286ff.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792953902555,
+          "contentHash": "bddb87d1dd7932988fc0db2eb9ac518f3f29ae9a5d2f03a35de5cea385775eea",
+          "revision": "d5ab1957-a798-4b63-a819-0d9fc4dab8c3",
+          "inputFingerprint": "5219570a42ef435d92f3ec1f0d26713f15226a495c2dd7c34735b37b1aced1b7",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "ad7ee7e0-f4bd-4877-8219-3041c557e031",
+          "scope": "project",
+          "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\ad7ee7e0-f4bd-4877-8219-3041c557e031.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792953924079,
+          "contentHash": "bddb87d1dd7932988fc0db2eb9ac518f3f29ae9a5d2f03a35de5cea385775eea",
+          "revision": "d5ab1957-a798-4b63-a819-0d9fc4dab8c3",
+          "inputFingerprint": "5219570a42ef435d92f3ec1f0d26713f15226a495c2dd7c34735b37b1aced1b7",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "6dd2cf45-1e12-4301-a25a-56ccdf9586ee",
+        "scope": "project",
+        "report": "C:\\Users\\young\\largentproject\\brag-output-2026-10-25-175453\\composition\\.hyperframes\\artifacts\\checks\\6dd2cf45-1e12-4301-a25a-56ccdf9586ee.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": true,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 3000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1792951337233,
+        "contentHash": "115902a499b0bf5db961d1d9854e71aa6dc3ad02505551ab85e8f6b42e8601b4",
+        "revision": null,
+        "inputFingerprint": "5e054debf0601c198f7d2a17b19812dc9dc594f5df362955bd7dc737e4604d72",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  }
+}
