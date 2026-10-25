@@ -82,18 +82,14 @@ async def bootstrap_database_roles() -> None:
     engine = create_async_engine(admin_url, pool_pre_ping=True)
     try:
         async with engine.begin() as connection:
-            privileges = (
-                await connection.execute(
-                    text(
-                        "SELECT rolsuper, rolcreaterole "
-                        "FROM pg_roles WHERE rolname = current_user"
-                    )
-                )
-            ).one_or_none()
-            if privileges is None or not (privileges.rolsuper or privileges.rolcreaterole):
+            is_superuser = await connection.scalar(
+                text("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
+            )
+            if is_superuser is not True:
                 raise RuntimeError(
-                    "DATABASE_BOOTSTRAP_URL must use a PostgreSQL role with "
-                    "CREATEROLE or superuser privileges"
+                    "DATABASE_BOOTSTRAP_URL must use a PostgreSQL superuser; role "
+                    "bootstrap transfers public-schema ownership and configures "
+                    "default privileges for largent_migrator"
                 )
 
             await _ensure_role(connection, _ROLE_MIGRATOR, migrator_url.password or "")
