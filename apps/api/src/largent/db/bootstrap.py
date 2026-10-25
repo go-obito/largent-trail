@@ -46,9 +46,7 @@ def _require_role_url(variable: str, expected_role: str) -> URL:
     return url
 
 
-async def _ensure_role(
-    connection: AsyncConnection, role_name: str, password: str
-) -> None:
+async def _ensure_role(connection: AsyncConnection, role_name: str, password: str) -> None:
     """Create a fixed-name restricted role, or synchronize its password and attributes."""
     password_literal = await connection.scalar(
         text("SELECT quote_literal(:password)"), {"password": password}
