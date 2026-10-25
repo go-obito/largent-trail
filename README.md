@@ -68,7 +68,7 @@ and checks `/readyz` before considering the deployment healthy.
 Configure these PostgreSQL variables on the Railway API service:
 
 - `DATABASE_BOOTSTRAP_URL`: the privileged PostgreSQL connection URL. The role
-  must have `CREATEROLE` or superuser privileges. This URL is used only during
+  must be a PostgreSQL superuser. This URL is used only during
   pre-deploy bootstrap and must point to the same database as the two URLs below.
 - `DATABASE_URL`: a PostgreSQL URL with username `largent_app` and the app role's
   password. This restricted role is used by the API at runtime.
