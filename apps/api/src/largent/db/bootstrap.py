@@ -1,7 +1,7 @@
 """Provision the least-privilege PostgreSQL roles before applying migrations.
 
 Run this only as an explicit deployment/bootstrap step using a privileged
-DATABASE_BOOTSTRAP_URL. The normal API and Alembic URLs must use their own
+DATABASE_BOOTSTRAP_URL. The normal API and Alembic URLs use their own
 restricted roles.
 """
 
@@ -49,7 +49,7 @@ def _require_role_url(variable: str, expected_role: str) -> URL:
 async def _ensure_role(
     connection: AsyncConnection, role_name: str, password: str
 ) -> None:
-    """Create or normalize one fixed-name role without granting elevated privileges."""
+    """Create a fixed-name restricted role, or synchronize its password and attributes."""
     password_literal = await connection.scalar(
         text("SELECT quote_literal(:password)"), {"password": password}
     )
@@ -73,9 +73,7 @@ async def bootstrap_database_roles() -> None:
     app_url = _require_role_url("DATABASE_URL", _ROLE_APP)
     migrator_url = _require_role_url("MIGRATION_DATABASE_URL", _ROLE_MIGRATOR)
 
-    if not (
-        admin_url.database == app_url.database == migrator_url.database
-    ):
+    if not (admin_url.database == app_url.database == migrator_url.database):
         raise RuntimeError(
             "DATABASE_BOOTSTRAP_URL, DATABASE_URL, and MIGRATION_DATABASE_URL "
             "must target the same database"
@@ -111,13 +109,15 @@ async def bootstrap_database_roles() -> None:
                 f"GRANT CONNECT ON DATABASE {database_name} "
                 f"TO {_ROLE_APP}, {_ROLE_MIGRATOR}"
             )
+            # Match infra/postgres/init.sql: the migration role owns the public schema.
+            await connection.exec_driver_sql(
+                f"ALTER SCHEMA public OWNER TO {_ROLE_MIGRATOR}"
+            )
             await connection.exec_driver_sql("REVOKE CREATE ON SCHEMA public FROM PUBLIC")
             await connection.exec_driver_sql(
                 f"GRANT USAGE, CREATE ON SCHEMA public TO {_ROLE_MIGRATOR}"
             )
-            await connection.exec_driver_sql(
-                f"GRANT USAGE ON SCHEMA public TO {_ROLE_APP}"
-            )
+            await connection.exec_driver_sql(f"GRANT USAGE ON SCHEMA public TO {_ROLE_APP}")
             await connection.exec_driver_sql(
                 "ALTER DEFAULT PRIVILEGES FOR ROLE largent_migrator IN SCHEMA public "
                 "GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO largent_app"
