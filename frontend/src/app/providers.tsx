@@ -111,7 +111,7 @@ function ThemePreferenceSync() {
     );
     const updateThemeColor = (dark: boolean) => {
       root.style.colorScheme = dark ? "dark" : "light";
-      if (meta) meta.content = dark ? "#111521" : "#F5F7FB";
+      if (meta) meta.content = dark ? "#111521" : "#F4F6FB";
     };
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const update = () => updateThemeColor(mode === "system" ? media.matches : mode === "dark");

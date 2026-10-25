@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh bg-page text-foreground md:pl-20 lg:pl-60">
       <AppNavigation />
       <ToastViewport />
-      <main className="min-h-dvh w-full pt-[calc(5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-10 md:pb-10 lg:pt-24">
+      <main className="min-h-dvh w-full pt-[calc(5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-10 md:pb-10 lg:pt-20">
         <PageContainer>
           <OfflineBanner />
           <div className="flex-1">{children}</div>

@@ -8,16 +8,22 @@
   --color-panel: var(--color-surface);
   --color-panel-raised: var(--color-surface-elevated);
   --color-brand: var(--color-primary);
+  --color-brand-hover: var(--color-primary-hover);
+  --color-brand-soft: var(--color-primary-container);
+  --color-brand-tint: var(--color-surface-container-low);
   --color-on-brand: var(--color-on-primary);
   --color-foreground: var(--color-text-primary);
   --color-muted: var(--color-text-secondary);
   --color-outline: var(--color-border);
+  --color-divider: var(--color-outline-variant);
   --color-focus: var(--color-focus-ring);
   --color-selected: var(--color-selected-surface);
   --color-alert: var(--color-error);
   --color-status-success: var(--color-success);
   --color-status-error: var(--color-error);
   --color-status-warning: var(--color-warning);
+  --color-income: var(--color-success);
+  --color-expense: var(--color-error);
 }
 
 @layer base {
@@ -32,6 +38,11 @@
     color: var(--color-text-primary);
     font-family: var(--font-inter), Inter, sans-serif;
     font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
   }
 
   :focus-visible {

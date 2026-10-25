@@ -56,6 +56,13 @@ if (Object.keys(light).join(",") !== Object.keys(dark).join(",")) {
 }
 
 const sharedTokens = [
+  `  --radius-none: ${readShape("radiusNone")};`,
+  `  --radius-extra-small: ${readShape("radiusExtraSmall")};`,
+  `  --radius-small: ${readShape("radiusSmall")};`,
+  `  --radius-medium: ${readShape("radiusMedium")};`,
+  `  --radius-large: ${readShape("radiusLarge")};`,
+  `  --radius-extra-large: ${readShape("radiusExtraLarge")};`,
+  `  --radius-full: ${readShape("radiusFull")};`,
   `  --radius-card: ${readShape("radiusCard")};`,
   `  --radius-control: ${readShape("radiusControl")};`,
   `  --radius-pill: ${readShape("radiusPill")};`,

@@ -212,7 +212,7 @@ export function AppNavigation() {
           <Logo className="hidden lg:inline-flex" />
           <Logo markClassName="size-10 text-primary lg:hidden" variant="mark" />
         </Link>
-        <nav aria-label="Main navigation" className="flex flex-col gap-2 px-2 lg:px-3">
+        <nav aria-label="Main navigation" className="flex flex-col gap-2 px-1 lg:px-3">
           {navigationItems.map(({ href, label, Icon }) => {
             const active = isActivePath(pathname, href);
             return (
@@ -220,22 +220,32 @@ export function AppNavigation() {
                 key={href}
                 aria-current={active ? "page" : undefined}
                 aria-label={label}
-                className={`flex min-h-12 items-center justify-center rounded-xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:justify-start lg:gap-3 lg:px-3 ${
+                className={`group flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 ${
                   active
-                    ? "bg-selected text-primary"
-                    : "text-muted hover:bg-selected hover:text-foreground"
+                    ? "text-primary lg:bg-selected"
+                    : "text-muted hover:text-foreground lg:hover:bg-selected"
                 }`}
                 href={href}
                 title={label}
               >
-                <Icon aria-hidden="true" size={21} strokeWidth={2} />
-                <span className="hidden text-sm font-semibold lg:inline">{label}</span>
+                <span
+                  className={`grid h-8 w-14 place-items-center rounded-full transition-colors lg:size-8 lg:rounded-lg ${
+                    active
+                      ? "bg-selected text-primary lg:bg-transparent"
+                      : "group-hover:bg-selected lg:group-hover:bg-transparent"
+                  }`}
+                >
+                  <Icon aria-hidden="true" size={21} strokeWidth={2} />
+                </span>
+                <span className="text-[11px] font-medium leading-4 lg:text-sm lg:font-semibold">
+                  {label}
+                </span>
               </Link>
             );
           })}
         </nav>
       </aside>
-      <header className="fixed left-20 right-0 top-0 z-30 hidden h-[72px] items-center justify-end gap-3 border-b border-outline bg-panel px-8 lg:left-60 lg:flex">
+      <header className="fixed left-20 right-0 top-0 z-30 hidden h-16 items-center justify-end gap-3 border-b border-outline bg-panel px-8 lg:left-60 lg:flex">
         <div aria-hidden="true" className="hidden flex-1" />
         <NotificationBell />
         <UserMenu />

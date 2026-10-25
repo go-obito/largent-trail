@@ -41,10 +41,10 @@ export default function RootLayout({
   return (
     <html className={inter.variable} lang="en">
       <head>
-        <meta content="#F5F7FB" name="theme-color" />
+        <meta content="#F4F6FB" name="theme-color" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{const p=localStorage.getItem("largent-theme");const d=window.matchMedia("(prefers-color-scheme: dark)").matches;const t=p==="light"||p==="dark"?p:(d?"dark":"light");const r=document.documentElement;r.setAttribute("data-theme",t);r.style.colorScheme=t;const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#111521":"#F5F7FB"})();`,
+            __html: `(()=>{const p=localStorage.getItem("largent-theme");const d=window.matchMedia("(prefers-color-scheme: dark)").matches;const t=p==="light"||p==="dark"?p:(d?"dark":"light");const r=document.documentElement;r.setAttribute("data-theme",t);r.style.colorScheme=t;const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#111521":"#F4F6FB"})();`,
           }}
         />
       </head>
