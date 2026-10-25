@@ -59,22 +59,32 @@ for operational notes.
 
 Deploy the API from this repository with the repository root as the service root.
 For an existing legacy Railway service, `railway.json` selects the root
-`Dockerfile`, applies Alembic migrations in the pre-deploy phase, starts Uvicorn
-on Railway's assigned `$PORT`, and checks `/readyz` before considering the
-deployment healthy.
+`Dockerfile`, bootstraps the restricted PostgreSQL roles, applies Alembic
+migrations in the pre-deploy phase, starts Uvicorn on Railway's assigned `$PORT`,
+and checks `/readyz` before considering the deployment healthy.
 
 ### API service variables
 
-Add these variables to the Railway API service:
+Configure these PostgreSQL variables on the Railway API service:
 
-- `ENVIRONMENT=production`
-- `LOG_LEVEL=INFO`
-- `DATABASE_URL`: reference the Railway PostgreSQL service's connection URL.
-- `MIGRATION_DATABASE_URL`: a PostgreSQL URL for a role allowed to apply Alembic
-  migrations. If you have not created a separate migration role, you can initially
-  reference the same PostgreSQL URL as `DATABASE_URL`; that database role must then
-  have schema migration privileges. A separate, least-privilege runtime role is
-  preferable for production.
+- `DATABASE_BOOTSTRAP_URL`: the privileged PostgreSQL connection URL. The role
+  must have `CREATEROLE` or superuser privileges. This URL is used only during
+  pre-deploy bootstrap and must point to the same database as the two URLs below.
+- `DATABASE_URL`: a PostgreSQL URL with username `largent_app` and the app role's
+  password. This restricted role is used by the API at runtime.
+- `MIGRATION_DATABASE_URL`: a PostgreSQL URL with username `largent_migrator`
+  and the migrator role's password. This role applies Alembic migrations.
+
+The deployment bootstrap creates these roles if absent, synchronizes their passwords
+from the two role-specific URLs, enforces `NOSUPERUSER NOCREATEDB NOCREATEROLE
+NOINHERIT NOBYPASSRLS`, and applies the schema grants expected by migrations.
+It rejects URLs that target different database names. Your Railway database name
+is `railway`, so all three connection URLs must end in `/railway`.
+
+Generate distinct strong passwords for the app and migration roles. Build the two
+role-specific URLs with Railway's PostgreSQL host and port, URL-encoding any
+special characters in passwords. Keep the privileged connection URL separate from
+the runtime API URL.
 - `REDIS_URL`: reference the Railway Redis service's connection URL.
 - `CORS_ALLOWED_ORIGINS`: a JSON array containing the exact deployed frontend origin,
   for example `["https://your-frontend.example"]`. Do not use a wildcard.
