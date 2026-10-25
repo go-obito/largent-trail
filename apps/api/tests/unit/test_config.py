@@ -79,9 +79,18 @@ def test_clerk_audience_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize(
     ("input_url", "expected_url"),
     [
-        ("postgres://sample@db.example:5432/largent", "postgresql+asyncpg://sample@db.example:5432/largent"),
-        ("postgresql://sample@db.example:5432/largent", "postgresql+asyncpg://sample@db.example:5432/largent"),
-        ("postgresql+asyncpg://sample@db.example:5432/largent", "postgresql+asyncpg://sample@db.example:5432/largent"),
+        (
+            "postgres://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
     ],
 )
 def test_settings_normalize_railway_postgres_urls(
@@ -101,8 +110,14 @@ def test_settings_normalize_railway_postgres_urls(
 @pytest.mark.parametrize(
     ("input_url", "expected_url"),
     [
-        ("postgres://sample@db.example:5432/largent", "postgresql+asyncpg://sample@db.example:5432/largent"),
-        ("postgresql://sample@db.example:5432/largent", "postgresql+asyncpg://sample@db.example:5432/largent"),
+        (
+            "postgres://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
     ],
 )
 def test_worker_config_normalizes_railway_postgres_url(
