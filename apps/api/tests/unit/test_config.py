@@ -76,6 +76,59 @@ def test_clerk_audience_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Settings(_env_file=None).clerk_audience is None
 
 
+@pytest.mark.parametrize(
+    ("input_url", "expected_url"),
+    [
+        (
+            "postgres://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+    ],
+)
+def test_settings_normalize_railway_postgres_urls(
+    monkeypatch: pytest.MonkeyPatch, input_url: str, expected_url: str
+) -> None:
+    settings = _settings_from_env(
+        monkeypatch,
+        DATABASE_URL=input_url,
+        MIGRATION_DATABASE_URL=f"  {input_url}  ",
+        CURSOR_SIGNING_KEYS=KEY_A,
+    )
+
+    assert settings.database_url == expected_url
+    assert settings.migration_database_url == expected_url
+
+
+@pytest.mark.parametrize(
+    ("input_url", "expected_url"),
+    [
+        (
+            "postgres://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+        (
+            "postgresql://sample@db.example:5432/largent",
+            "postgresql+asyncpg://sample@db.example:5432/largent",
+        ),
+    ],
+)
+def test_worker_config_normalizes_railway_postgres_url(
+    monkeypatch: pytest.MonkeyPatch, input_url: str, expected_url: str
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", input_url)
+    monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
+
+    assert WorkerConfig(_env_file=None).database_url == expected_url
+
+
 def test_worker_config_needs_only_database_and_redis_urls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

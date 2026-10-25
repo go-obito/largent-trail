@@ -15,9 +15,19 @@ _ENV_FILE = next(
 )
 
 
+def _normalize_postgres_url(value: str) -> str:
+    """Normalize common managed-Postgres URL schemes to SQLAlchemy's asyncpg scheme."""
+    value = value.strip()
+    if value.startswith("postgres://"):
+        return "postgresql+asyncpg://" + value.removeprefix("postgres://")
+    if value.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + value.removeprefix("postgresql://")
+    return value
+
+
 def _check_postgres_url(value: str) -> str:
     if not value.startswith("postgresql+asyncpg://"):
-        msg = "must use the postgresql+asyncpg scheme"
+        msg = "must use the postgresql+asyncpg scheme after URL normalization"
         raise ValueError(msg)
     return value
 
@@ -42,6 +52,11 @@ class WorkerConfig(BaseSettings):
 
     database_url: str = Field(alias="DATABASE_URL")
     redis_url: str = Field(alias="REDIS_URL")
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_postgres_url(cls, value: str) -> str:
+        return _normalize_postgres_url(value)
 
     @field_validator("database_url")
     @classmethod
@@ -110,6 +125,11 @@ class Settings(BaseSettings):
             if len(key.encode("utf-8")) < 32:
                 raise ValueError("each CURSOR_SIGNING_KEYS value must be at least 32 bytes")
         return items
+
+    @field_validator("database_url", "migration_database_url", mode="before")
+    @classmethod
+    def normalize_database_urls(cls, value: str) -> str:
+        return _normalize_postgres_url(value)
 
     @field_validator("database_url", "migration_database_url")
     @classmethod
