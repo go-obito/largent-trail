@@ -5,7 +5,10 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "/bin/sh -c 'alembic -c alembic.ini upgrade head && exec uvicorn largent.main:create_app --factory --host 0.0.0.0 --port $PORT'",
+    "preDeployCommand": [
+      "alembic -c alembic.ini upgrade head"
+    ],
+    "startCommand": "/bin/sh -c 'exec uvicorn largent.main:create_app --factory --host 0.0.0.0 --port $PORT'",
     "healthcheckPath": "/readyz",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
