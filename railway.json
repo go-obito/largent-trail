@@ -5,9 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": [
-      "alembic -c alembic.ini upgrade head"
-    ],
+    "preDeployCommand": "/bin/sh -c 'python -m largent.db.bootstrap && alembic -c alembic.ini upgrade head'",
     "startCommand": "/bin/sh -c 'exec uvicorn largent.main:create_app --factory --host 0.0.0.0 --port $PORT'",
     "healthcheckPath": "/readyz",
     "healthcheckTimeout": 60,
