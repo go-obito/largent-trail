@@ -17,6 +17,7 @@ type SpendingOverviewCardProps = {
   data?: ReportRead;
   isError: boolean;
   isLoading: boolean;
+  compact?: boolean;
   onPeriodChange: (period: ReportPeriod) => void;
   onRetry: () => void;
   period: ReportPeriod;
@@ -26,6 +27,7 @@ export function SpendingOverviewCard({
   data,
   isError,
   isLoading,
+  compact = false,
   onPeriodChange,
   onRetry,
   period,
@@ -56,15 +58,26 @@ export function SpendingOverviewCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface h-full p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-foreground">Spending overview</h2>
-            <FormControl size="small">
+        <section className={`card-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className={`min-w-0 font-bold tracking-tight text-foreground ${compact ? "text-sm sm:text-base" : "text-lg"}`}>
+              {compact ? "Spending by category" : "Spending overview"}
+            </h2>
+            <FormControl size="small" sx={compact ? { flexShrink: 0, minWidth: 0, maxWidth: 94 } : undefined}>
               <Select
                 aria-label="Spending overview range"
                 onChange={(event: SelectChangeEvent<ReportPeriod>) =>
                   onPeriodChange(event.target.value as ReportPeriod)
                 }
+                renderValue={(selected) => compact
+                  ? selected === "month" ? "Month" : "Week"
+                  : selected === "month" ? "This month" : "This week"}
+                sx={compact ? {
+                  height: 36,
+                  fontSize: 12,
+                  "& .MuiSelect-select": { py: 0.75, pl: 1, pr: "26px !important" },
+                  "& .MuiSelect-icon": { right: 4 },
+                } : undefined}
                 value={period}
               >
                 <MenuItem value="month">This month</MenuItem>
@@ -72,8 +85,8 @@ export function SpendingOverviewCard({
               </Select>
             </FormControl>
           </div>
-          <div className="mt-5 grid grid-cols-1 items-center gap-5 sm:grid-cols-[minmax(150px,0.9fr)_1fr]">
-            <div className="relative mx-auto size-44">
+          <div className={`mt-4 grid items-center ${compact ? "grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] sm:gap-2 lg:gap-4" : "grid-cols-1 gap-5 sm:grid-cols-[minmax(150px,0.9fr)_1fr]"}`}>
+            <div className={`relative mx-auto ${compact ? "size-24 sm:size-28 lg:size-40" : "size-44"}`}>
               <svg
                 aria-label={`Spending by category totaling ${formatGhs(data.expense_minor)}`}
                 className="size-full -rotate-90"
@@ -102,7 +115,7 @@ export function SpendingOverviewCard({
                   const style = {
                     "--chart-color": chartColors[index % chartColors.length],
                   } as CSSProperties;
-                  const circle = (
+                  return (
                     <circle
                       key={`${item.name ?? "uncategorized"}-${index}`}
                       cx="80"
@@ -117,18 +130,17 @@ export function SpendingOverviewCard({
                       style={style}
                     />
                   );
-                  return circle;
                 })}
               </svg>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
-                <span className="text-xs text-muted">Total spent</span>
-                <span className="money mt-1 max-w-full truncate text-lg font-bold text-foreground">
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
+                <span className={`text-muted ${compact ? "text-[10px] sm:text-xs" : "text-xs"}`}>Total spent</span>
+                <span className={`money mt-0.5 max-w-full truncate font-bold text-foreground ${compact ? "text-sm sm:text-base lg:text-lg" : "text-lg"}`}>
                   {formatGhs(data.expense_minor)}
                 </span>
               </div>
             </div>
             {categories.length ? (
-              <ul className="space-y-3">
+              <ul className={compact ? "space-y-2 sm:space-y-2.5" : "space-y-3"}>
                 {categories.map((item, index) => {
                   const percent = data.expense_minor > 0
                     ? Math.round((item.total_minor / data.expense_minor) * 100)
@@ -136,7 +148,7 @@ export function SpendingOverviewCard({
                   return (
                     <li
                       key={`${item.name ?? "uncategorized"}-${index}`}
-                      className="flex min-w-0 items-center gap-2 text-sm"
+                      className={`flex min-w-0 items-center gap-2 ${compact ? "text-xs sm:text-sm" : "text-sm"}`}
                     >
                       <span
                         aria-hidden="true"
@@ -157,7 +169,7 @@ export function SpendingOverviewCard({
                 })}
               </ul>
             ) : (
-              <p className="text-center text-sm text-muted">
+              <p className="text-center text-xs text-muted sm:text-sm">
                 No spending in this period yet.
               </p>
             )}
