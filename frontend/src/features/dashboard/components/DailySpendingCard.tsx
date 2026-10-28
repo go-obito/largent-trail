@@ -77,7 +77,7 @@ export function DailySpendingCard({
                   : "Set a daily target to stay on track"}
               </p>
             </div>
-            <div aria-hidden="true" className="hidden size-[76px] shrink-0 items-center justify-center rounded-full border-[7px] border-brand/15 sm:flex">
+            <div aria-hidden="true" className="relative hidden size-[76px] shrink-0 items-center justify-center rounded-full border-[7px] border-brand/15 sm:flex">
               <div
                 className="flex size-full items-center justify-center rounded-full"
                 style={{
