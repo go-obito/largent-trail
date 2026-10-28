@@ -49,7 +49,7 @@ export function BudgetsCard({
               sx={{ minHeight: 40, flexShrink: 0, fontSize: compact ? 12 : 14, px: compact ? 0.5 : 1.5, fontWeight: 600 }}
               variant="text"
             >
-              {compact ? "See all" : "See all"}
+              See all
             </Button>
           </div>
 
