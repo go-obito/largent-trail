@@ -60,10 +60,10 @@ export function SpendingOverviewCard({
       {data && (
         <section className={`card-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
           <div className="flex items-center justify-between gap-2">
-            <h2 className={`min-w-0 font-bold tracking-tight text-foreground ${compact ? "text-sm sm:text-base" : "text-lg"}`}>
-              {compact ? "Spending by category" : "Spending overview"}
+            <h2 className={`min-w-0 font-bold tracking-tight text-foreground ${compact ? "text-sm leading-4 sm:text-base" : "text-lg"}`}>
+              {compact ? <>Spending<br />by category</> : "Spending overview"}
             </h2>
-            <FormControl size="small" sx={compact ? { flexShrink: 0, minWidth: 0, maxWidth: 94 } : undefined}>
+            <FormControl size="small" sx={compact ? { flexShrink: 0, minWidth: 0, maxWidth: 82 } : undefined}>
               <Select
                 aria-label="Spending overview range"
                 onChange={(event: SelectChangeEvent<ReportPeriod>) =>
