@@ -85,7 +85,7 @@ export function BudgetsCard({
                           label={statusLabel}
                           size="small"
                           variant="outlined"
-                          sx={compact ? { display: "none" } : undefined}
+                          sx={compact ? { display: { xs: "none", sm: "inline-flex" } } : undefined}
                         />
                       )}
                     </div>
