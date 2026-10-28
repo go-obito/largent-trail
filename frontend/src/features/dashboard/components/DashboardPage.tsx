@@ -38,20 +38,34 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 pb-4 md:grid-cols-12 md:gap-6">
-      <div className="order-1 md:col-span-8">
+    <div className="grid grid-cols-2 gap-3 pb-6 sm:gap-4 md:grid-cols-12 md:gap-6">
+      <div className="order-1 col-span-2 min-w-0 md:col-span-8">
         <HeroBalanceCard {...sectionStatus} data={data} onRangeChange={setRange} range={range} />
       </div>
-      <div className="order-2 md:hidden"><QuickActions /></div>
-      <div className="order-3 md:col-span-4 md:row-start-1"><DailySpendingCard {...sectionStatus} data={data} /></div>
-      <div className="order-4 hidden md:col-span-12 md:block md:row-start-2">
+      <div className="order-2 col-span-2 md:hidden">
+        <QuickActions />
+      </div>
+      <div className="order-3 col-span-2 min-w-0 md:col-span-4 md:row-start-1">
+        <DailySpendingCard {...sectionStatus} data={data} />
+      </div>
+      <div className="order-4 col-span-12 hidden md:row-start-2 md:block">
         {data ? <StatsCards data={data} /> : <DashboardSection {...sectionStatus} label="weekly stats">{null}</DashboardSection>}
       </div>
-      <div className="order-5 md:col-span-7 md:row-start-3"><RecentActivityCard {...sectionStatus} data={data} timezone={timezone} /></div>
-      <div className="order-6 md:col-span-5 md:row-start-3"><SpendingOverviewCard {...reportStatus} data={report.data} onPeriodChange={setReportPeriod} period={reportPeriod} /></div>
-      <div className="order-7 md:col-span-4 md:row-start-4"><BudgetsCard {...sectionStatus} data={data} /></div>
-      <div className="order-8 md:col-span-4 md:row-start-4"><WeeklyProgressCard {...sectionStatus} data={data} timezone={timezone} /></div>
-      <div className="order-9 md:col-span-4 md:row-start-4"><PrioritizedNeedsCard {...sectionStatus} data={data} /></div>
+      <div className="order-5 col-span-2 min-w-0 md:col-span-7 md:row-start-3">
+        <RecentActivityCard {...sectionStatus} data={data} timezone={timezone} />
+      </div>
+      <div className="order-6 col-span-1 min-w-0 md:col-span-5 md:row-start-3">
+        <SpendingOverviewCard {...reportStatus} compact data={report.data} onPeriodChange={setReportPeriod} period={reportPeriod} />
+      </div>
+      <div className="order-7 col-span-1 min-w-0 md:col-span-4 md:row-start-4">
+        <BudgetsCard {...sectionStatus} compact data={data} />
+      </div>
+      <div className="order-8 col-span-2 min-w-0 md:col-span-4 md:row-start-4">
+        <WeeklyProgressCard {...sectionStatus} data={data} timezone={timezone} />
+      </div>
+      <div className="order-9 col-span-2 min-w-0 md:col-span-4 md:row-start-4">
+        <PrioritizedNeedsCard {...sectionStatus} data={data} />
+      </div>
     </div>
   );
 }
