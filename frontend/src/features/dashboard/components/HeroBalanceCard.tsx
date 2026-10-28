@@ -47,14 +47,14 @@ export function HeroBalanceCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(125deg,color-mix(in_srgb,var(--color-primary)_88%,#142C72),var(--color-hero)_88%)] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6 lg:p-7">
+        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(125deg,color-mix(in_srgb,var(--color-primary)_82%,var(--color-hero)),var(--color-hero)_88%)] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6 lg:p-7">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <div className="absolute -right-12 -top-24 size-64 rounded-full bg-brand/15 blur-3xl" />
-            <div className="absolute bottom-0 right-0 hidden h-28 items-end gap-2 pr-8 opacity-30 sm:flex">
+            <div className="absolute bottom-0 right-0 flex h-24 items-end gap-1.5 pr-4 opacity-20 sm:gap-2 sm:pr-8 sm:opacity-30">
               {chartBars.map((height, index) => (
                 <span
                   key={index}
-                  className="w-3 rounded-full bg-[var(--color-on-hero)]/70"
+                  className="w-2 rounded-full bg-[var(--color-on-hero)]/70 sm:w-3"
                   style={{ height: `${height}px` }}
                 />
               ))}
