@@ -96,7 +96,9 @@ async def test_create_read_update_list_and_soft_delete(
     result = created.json()
     assert result["id"] == str(transaction_id)
     assert result["account_id"] == account_id
+    assert result["account_name"] == "Wallet"
     assert result["category_id"] == category_id
+    assert result["category_name"] == "Food"
     assert result["kind"] == "expense"
     assert result["amount_minor"] == 1300
     assert result["currency"] == "GHS"
@@ -105,7 +107,9 @@ async def test_create_read_update_list_and_soft_delete(
     assert set(result) == {
         "id",
         "account_id",
+        "account_name",
         "category_id",
+        "category_name",
         "kind",
         "amount_minor",
         "currency",
