@@ -1,7 +1,7 @@
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import { statusToChip } from "@/features/dashboard/status";
@@ -37,71 +37,93 @@ export function DailySpendingCard({
       onRetry={onRetry}
     >
       {data && target && (
-        <section className="flex h-full flex-col rounded-[var(--radius-card)] bg-brand p-5 text-on-brand shadow-sm sm:min-h-[220px] sm:p-7">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+        <section className="card-surface relative isolate flex h-full flex-col overflow-hidden p-5 sm:p-6">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-12 -z-10 size-44 rounded-full bg-brand/10 blur-2xl" />
+          <div className="relative z-10 flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-white/80">Today</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-on-brand">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Today</p>
+              <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">
                 Daily spending
               </h2>
-              <p className="mt-3 text-sm text-white/80">
-                {target.target_minor === null
-                  ? "Set a budget to get a daily limit"
-                  : "Your remaining amount for today"}
-              </p>
-              {target.target_minor !== null && target.left_minor !== null ? (
-                <p className="money mt-2 text-4xl font-bold tracking-[-0.03em] text-on-brand">
-                  {target.left_minor < 0
-                    ? `${formatGhs(Math.abs(target.left_minor))} over`
-                    : `${formatGhs(target.left_minor)} left`}
-                </p>
-              ) : (
-                <p className="money mt-2 text-4xl font-bold tracking-[-0.03em] text-on-brand">
-                  {formatGhs(target.spent_today_minor)}
-                </p>
-              )}
             </div>
             {chip && (
               <Chip
                 color={chip.color}
                 label={chip.label}
                 size="small"
-                sx={{ bgcolor: "rgba(255, 255, 255, 0.14)", color: "inherit" }}
+                sx={{
+                  flexShrink: 0,
+                  bgcolor: "var(--color-surface-elevated)",
+                  color: "text.primary",
+                  borderColor: "var(--color-border)",
+                  fontWeight: 600,
+                }}
                 variant="outlined"
               />
             )}
           </div>
 
-            {target.target_minor === null ? (
-              <Link
-                className="mt-6 inline-flex min-h-11 w-fit items-center gap-2 rounded-[var(--radius-control)] bg-white px-4 text-sm font-bold text-brand transition-colors hover:bg-white/90"
-                href="/budgets"
-              >
-                Set a budget
-                <ArrowUpRight aria-hidden="true" size={17} />
-              </Link>
-            ) : (
-              <>
-                <LinearProgress
-                  aria-label="Daily target progress"
-                  sx={{
-                    mt: 4,
-                    height: 8,
+          <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm text-muted">Spent today</p>
+              <p className="money mt-1 text-3xl font-bold tracking-[-0.04em] text-foreground sm:text-4xl">
+                {formatGhs(target.spent_today_minor)}
+              </p>
+              <p className="money mt-2 text-sm font-medium text-muted">
+                {target.target_minor !== null && target.left_minor !== null
+                  ? target.left_minor < 0
+                    ? `${formatGhs(Math.abs(target.left_minor))} over today's target`
+                    : `${formatGhs(target.left_minor)} left of ${formatGhs(target.target_minor)}`
+                  : "Set a daily target to stay on track"}
+              </p>
+            </div>
+            <div aria-hidden="true" className="hidden size-[76px] shrink-0 items-center justify-center rounded-full border-[7px] border-brand/15 sm:flex">
+              <div
+                className="flex size-full items-center justify-center rounded-full"
+                style={{
+                  background: `conic-gradient(var(--color-progress-good) ${progress}%, transparent 0)`,
+                  mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
+                  WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
+                }}
+              />
+              <CalendarDays className="absolute text-brand" size={23} />
+            </div>
+          </div>
+
+          {target.target_minor === null ? (
+            <Link
+              className="relative z-10 mt-5 inline-flex min-h-11 w-fit items-center gap-2 rounded-[var(--radius-control)] bg-brand px-4 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90"
+              href="/budgets"
+            >
+              Set a budget
+              <ArrowUpRight aria-hidden="true" size={17} />
+            </Link>
+          ) : (
+            <>
+              <LinearProgress
+                aria-label="Daily target progress"
+                sx={{
+                  mt: 3,
+                  height: 8,
+                  borderRadius: 99,
+                  backgroundColor: "var(--color-progress-track)",
+                  "& .MuiLinearProgress-bar": {
                     borderRadius: 99,
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    "& .MuiLinearProgress-bar": { backgroundColor: "#FFFFFF" },
-                  }}
-                  value={progress}
-                  variant="determinate"
-                />
-                <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-white/80">
-                  <span>Spent {formatGhs(target.spent_today_minor)}</span>
-                  <span>Target {formatGhs(target.target_minor)}</span>
-                </div>
-              </>
-            )}
+                    backgroundColor: "var(--color-progress-good)",
+                  },
+                }}
+                value={progress}
+                variant="determinate"
+              />
+              <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-muted sm:text-sm">
+                <span>Spent {formatGhs(target.spent_today_minor)}</span>
+                <span>Target {formatGhs(target.target_minor)}</span>
+              </div>
+            </>
+          )}
+
           <Link
-            className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] border border-white/30 px-4 text-sm font-bold text-on-brand transition-colors hover:bg-white/10"
+            className="relative z-10 mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] border border-outline px-4 text-sm font-semibold text-foreground transition-colors hover:bg-panel-raised"
             href="/transactions/new?kind=expense"
           >
             Record spending
