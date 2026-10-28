@@ -44,8 +44,11 @@ export function WeeklyProgressCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface p-5">
-          <h2 className="text-lg font-bold text-foreground">Weekly breakdown</h2>
+        <section className="card-surface h-full p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Weekly breakdown</h2>
+            <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand">This week</span>
+          </div>
           <LinearProgress
             aria-label="Weekly budget progress"
             sx={{ mt: 4, height: 8, borderRadius: 99 }}
@@ -75,7 +78,7 @@ export function WeeklyProgressCard({
 
           <div className="mt-7 flex items-center justify-between gap-3">
             <h3 className="font-semibold text-foreground">Spending by day</h3>
-            <span className="text-sm text-muted">This week</span>
+            <span className="text-sm text-muted">7 days</span>
           </div>
           {days.length > 0 ? (
             <>
