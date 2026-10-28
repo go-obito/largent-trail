@@ -72,7 +72,9 @@ class TransactionRead(BaseModel):
 
     id: UUID
     account_id: UUID
+    account_name: str
     category_id: UUID | None
+    category_name: str | None
     kind: TransactionKind
     amount_minor: int
     currency: Currency
@@ -89,7 +91,9 @@ def transaction_read(
         {
             "id": transaction.id,
             "account_id": transaction.account_id,
+            "account_name": account_name,
             "category_id": transaction.category_id,
+            "category_name": category_name,
             "kind": transaction.kind,
             "amount_minor": transaction.amount_minor,
             "currency": transaction.currency,
