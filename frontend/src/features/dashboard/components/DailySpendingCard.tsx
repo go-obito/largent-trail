@@ -86,7 +86,7 @@ export function DailySpendingCard({
                   WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
                 }}
               />
-              <CalendarDays className="absolute text-brand" size={23} />
+              <CalendarDays className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-brand" size={23} />
             </div>
           </div>
 
