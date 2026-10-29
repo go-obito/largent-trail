@@ -29,6 +29,8 @@ function signedAmount(amount: number) {
   return `${amount >= 0 ? "+" : "−"}${formatGhs(Math.abs(amount))}`;
 }
 
+const chartBars = [25, 43, 63, 39, 50, 30, 45];
+
 export function HeroBalanceCard({
   data,
   isError,
@@ -45,18 +47,31 @@ export function HeroBalanceCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="rounded-3xl bg-[linear-gradient(115deg,color-mix(in_srgb,var(--color-hero)_78%,var(--color-primary)),var(--color-hero))] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold opacity-80">
-                Total Balance
+        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(125deg,color-mix(in_srgb,var(--color-primary)_82%,var(--color-hero)),var(--color-hero)_88%)] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6 lg:p-7">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <div className="absolute -right-12 -top-24 size-64 rounded-full bg-brand/15 blur-3xl" />
+            <div className="absolute bottom-0 right-0 flex h-24 items-end gap-1.5 pr-4 opacity-20 sm:gap-2 sm:pr-8 sm:opacity-30">
+              {chartBars.map((height, index) => (
+                <span
+                  key={index}
+                  className="w-2 rounded-full bg-[var(--color-on-hero)]/70 sm:w-3"
+                  style={{ height: `${height}px` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold tracking-wide text-white/75">
+                Total balance
               </p>
-              <p className="money mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              <p className="money mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-4xl lg:text-5xl">
                 {formatGhs(data.total_balance_minor)}
               </p>
               {data.net_change_minor !== null && (
                 <p
-                  className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-[var(--color-on-hero)]"
+                  className={`money mt-4 inline-flex max-w-full items-center rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${data.net_change_minor >= 0 ? "bg-status-success/15 text-status-success" : "bg-status-error/15 text-status-error"}`}
                 >
                   {signedAmount(data.net_change_minor)}{" "}
                   {range === "all_time"
@@ -67,7 +82,7 @@ export function HeroBalanceCard({
                 </p>
               )}
             </div>
-            <FormControl size="small">
+            <FormControl size="small" sx={{ minWidth: 112 }}>
               <Select
                 aria-label="Balance range"
                 onChange={(event: SelectChangeEvent<BalanceRange>) =>
@@ -76,8 +91,13 @@ export function HeroBalanceCard({
                 sx={{
                   minHeight: 44,
                   color: "onHero",
+                  borderRadius: "14px",
+                  backgroundColor: "rgba(255,255,255,0.04)",
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "divider",
+                    borderColor: "rgba(255,255,255,0.22)",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(255,255,255,0.42)",
                   },
                   "& .MuiSvgIcon-root": { color: "onHero" },
                 }}
@@ -91,7 +111,6 @@ export function HeroBalanceCard({
               </Select>
             </FormControl>
           </div>
-
         </section>
       )}
     </DashboardSection>

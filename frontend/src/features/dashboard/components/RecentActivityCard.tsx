@@ -1,5 +1,6 @@
 import Button from "@mui/material/Button";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
@@ -34,13 +35,17 @@ export function RecentActivityCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface p-5">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg font-bold text-foreground">Recent transactions</h2>
+        <section className="card-surface h-full overflow-hidden p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Your money</p>
+              <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">Recent transactions</h2>
+            </div>
             <Button
               component={Link}
               href="/transactions"
-              sx={{ minHeight: 44 }}
+              endIcon={<ChevronRight aria-hidden="true" size={16} />}
+              sx={{ minHeight: 44, flexShrink: 0, fontWeight: 600 }}
               variant="text"
             >
               See all
@@ -48,12 +53,12 @@ export function RecentActivityCard({
           </div>
 
           {transactions?.length ? (
-            <ul className="mt-4 divide-y divide-outline">
+            <ul className="mt-3 divide-y divide-outline">
               {transactions.map((transaction) => {
                 const isIncome = transaction.kind === "income";
                 const title = transaction.note?.trim() || transaction.category_name || "Uncategorized";
                 const subtitle = transaction.note?.trim()
-                  ? transaction.category_name || transaction.account_name
+                  ? `${transaction.category_name || transaction.account_name} · ${transaction.account_name}`
                   : transaction.account_name;
                 const today = todayInTz(timezone);
                 const transactionDate =
@@ -66,14 +71,14 @@ export function RecentActivityCard({
                 return (
                   <li
                     key={transaction.id}
-                    className="flex items-start justify-between gap-3 py-4 first:pt-2 last:pb-1"
+                    className="flex items-center justify-between gap-3 py-3 first:pt-2 last:pb-1 sm:gap-4 sm:py-4"
                   >
                     <CategoryBadge name={transaction.category_name || "Uncategorized"} size={44} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-foreground">
+                      <p className="truncate text-sm font-semibold text-foreground sm:text-base">
                         {title}
                       </p>
-                      <p className="mt-1 text-sm text-muted">
+                      <p className="mt-1 truncate text-xs text-muted sm:text-sm">
                         {subtitle}
                       </p>
                       <p className="mt-1 text-xs text-muted">
@@ -81,9 +86,7 @@ export function RecentActivityCard({
                       </p>
                     </div>
                     <p
-                      className={`shrink-0 text-right font-semibold ${
-                        isIncome ? "text-status-success" : "text-status-error"
-                      }`}
+                      className={`money shrink-0 text-right text-sm font-bold sm:text-base ${isIncome ? "text-status-success" : "text-status-error"}`}
                     >
                       {isIncome ? "+" : "−"}
                       {formatGhs(Math.abs(transaction.amount_minor))}

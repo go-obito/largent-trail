@@ -37,9 +37,12 @@ export function PrioritizedNeedsCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface p-5">
+        <section className="card-surface h-full p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-xl font-bold text-foreground">Prioritized needs</h2>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Save with intention</p>
+              <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">Prioritized needs</h2>
+            </div>
             <Button
               component={Link}
               href="/needs"
@@ -60,7 +63,7 @@ export function PrioritizedNeedsCard({
           )}
 
           {items?.length ? (
-            <div className="mt-5 space-y-5">
+            <div className="mt-5 space-y-4 sm:space-y-5">
               {items.map((item) => (
                 <article key={item.id}>
                   <div className="flex items-start justify-between gap-3">
