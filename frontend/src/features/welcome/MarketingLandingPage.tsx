@@ -32,6 +32,9 @@ function Header() {
           </Link>
         </div>
       </div>
+      <nav aria-label="Mobile navigation" className="flex items-center justify-center gap-7 border-t border-[#E8E5E0] px-4 py-3 text-xs font-medium md:hidden">
+        <Link href="#features">Features</Link><Link href="/about">About</Link><Link href="/install">Install</Link><Link href="/faqs">FAQs</Link>
+      </nav>
     </header>
   );
 }
