@@ -79,7 +79,7 @@ const features = [
 function Footer() {
   return <footer className="border-t bg-[#191919] py-12 text-white" style={{borderColor:"#343434"}}>
     <div className="mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-[1.5fr_1fr_1fr_1fr] lg:px-10">
-      <div><Brand/><p className="mt-4 max-w-xs text-sm leading-6 text-white/65">A practical space to keep track of money, plan spending and make room for what matters.</p><p className="mt-5 text-xs text-white/45">Made in Ghana.</p></div>
+      <div><Brand light/><p className="mt-4 max-w-xs text-sm leading-6 text-white/65">A practical space to keep track of money, plan spending and make room for what matters.</p><p className="mt-5 text-xs text-white/45">Made in Ghana.</p></div>
       <div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Explore</p><div className="mt-4 grid gap-3 text-sm"><Link href="#features">Features</Link><Link href="/about">About Largent</Link><Link href="/install">Install guide</Link></div></div>
       <div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Help</p><div className="mt-4 grid gap-3 text-sm"><Link href="/faqs">FAQs</Link><Link href="/sign-in">Log in</Link><Link href="/sign-up">Create account</Link></div></div>
       <div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Get started</p><p className="mt-4 text-sm leading-6 text-white/65">Use Largent in your browser, or add it to your phone's Home Screen.</p><Link className="mt-4 inline-flex items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-[#191919]" href="/install">How to install <ArrowRight size={16}/></Link></div>
