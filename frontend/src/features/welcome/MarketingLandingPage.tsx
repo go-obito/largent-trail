@@ -40,37 +40,19 @@ function Header() {
 
 function HeroArtwork() {
   return (
-    <div className="relative mx-auto min-h-[430px] w-full max-w-[620px] sm:min-h-[510px]" aria-label="Illustration of Largent's money planning features" role="img">
-      <div className="absolute right-[5%] top-[5%] h-[76%] w-[75%] bg-brand-soft" />
-      <div className="absolute right-[12%] top-[13%] h-[68%] w-[76%] border border-outline bg-panel p-5 shadow-[0_24px_60px_-38px_rgba(25,25,25,.45)] sm:p-7">
-        <div className="flex items-center justify-between border-b border-outline pb-4">
-          <div><div className="text-xs font-semibold text-foreground">Your money overview</div><div className="mt-1 text-[10px] text-muted">A clearer picture of your spending</div></div>
-          <span className="bg-brand-soft px-2 py-1 text-[10px] font-semibold text-brand">OVERVIEW</span>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="bg-brand p-4 text-on-hero"><div className="text-[10px] text-on-hero/75">Account balance</div><div className="mt-2 text-2xl font-bold tracking-tight">Your balance</div><div className="mt-4 text-[10px] text-on-hero/75">Across your accounts</div></div>
-          <div className="border border-outline p-4"><div className="text-[10px] text-muted">Daily spending</div><div className="mt-2 text-lg font-bold text-foreground">Stay aware</div><div className="mt-4 h-2 bg-surface-container-high"><div className="h-full w-2/3 bg-brand"/></div><div className="mt-2 text-[10px] text-muted">Track your day</div></div>
-        </div>
-        <div className="mt-4 border border-outline p-4">
-          <div className="flex items-center justify-between"><span className="text-xs font-semibold text-foreground">Spending by day</span><span className="text-[10px] text-muted">Weekly view</span></div>
-          <div className="mt-5 flex h-24 items-end gap-2">{[42,66,51,82,58,74,38].map((h,i)=><span key={i} className="flex-1" style={{height:`${h}%`,background:i===3?blue:"#C8D6F5"}}/>)}</div>
-          <div className="mt-2 flex justify-between text-[9px] text-muted"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-        </div>
-        <div className="mt-4 flex items-center gap-3 border-t border-outline pt-4">
-          <span className="flex h-9 w-9 items-center justify-center bg-status-success/10 text-status-success"><ListChecks size={18}/></span>
-          <div><div className="text-xs font-semibold text-foreground">Priority needs</div><div className="text-[10px] text-muted">Keep important purchases in view</div></div>
-        </div>
+    <div className="relative mx-auto min-h-[430px] w-full max-w-[660px] sm:min-h-[540px]" aria-label="Largent money overview interface over a monochrome geometric grid" role="img">
+      <div className="absolute inset-[3%_2%_5%_8%] overflow-hidden bg-[#f7f7f4]"><div className="absolute inset-0 bg-[url('/largent-grid.svg')] bg-cover bg-center opacity-95" /></div>
+      <div className="absolute left-[3%] top-[8%] z-10 border border-black/15 bg-white px-4 py-3 shadow-lg"><p className="text-[9px] font-bold uppercase tracking-[.18em] text-black/50">A clearer view</p><p className="mt-1 text-sm font-semibold text-black">Money, with direction.</p></div>
+      <div className="absolute right-[5%] top-[13%] z-10 w-[76%] border border-black/15 bg-white p-4 shadow-[0_28px_70px_-34px_rgba(0,0,0,.5)] sm:right-[8%] sm:w-[72%] sm:p-6">
+        <div className="flex items-center justify-between border-b border-black/10 pb-4"><div><div className="text-xs font-semibold text-black">Your money overview</div><div className="mt-1 text-[10px] text-black/50">A little more clarity, every day</div></div><span className="bg-[#315BEA] px-2 py-1 text-[9px] font-bold tracking-wider text-white">LARGENT</span></div>
+        <div className="mt-4 grid grid-cols-2 gap-3"><div className="bg-[#171717] p-3 text-white sm:p-4"><div className="text-[9px] text-white/65">Account balance</div><div className="mt-2 text-lg font-bold sm:text-2xl">GHS 4,280</div><div className="mt-3 text-[9px] text-white/60">Across your accounts</div></div><div className="border border-black/10 p-3 sm:p-4"><div className="text-[9px] text-black/50">Daily spending</div><div className="mt-2 text-sm font-bold text-black sm:text-lg">Stay on track</div><div className="mt-3 h-1.5 bg-black/10"><div className="h-full w-2/3 bg-[#315BEA]"/></div><div className="mt-2 text-[9px] text-black/45">Your daily target</div></div></div>
+        <div className="mt-3 border border-black/10 p-3 sm:mt-4 sm:p-4"><div className="flex items-center justify-between"><span className="text-[10px] font-semibold text-black sm:text-xs">Spending through the week</span><span className="text-[9px] text-black/45">This week</span></div><div className="mt-4 flex h-16 items-end gap-2 sm:h-20">{[38,62,48,82,56,72,42].map((h,i)=><span key={i} className="flex-1" style={{height: h + "%",background:i===3?"#315BEA":"#D5D5D2"}}/>)}</div><div className="mt-2 flex justify-between text-[8px] text-black/40"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div></div>
       </div>
-      <div className="absolute bottom-[4%] left-[1%] w-[39%] border-[7px] border-foreground bg-panel p-3 shadow-[0_20px_50px_-25px_rgba(25,25,25,.5)] sm:left-0 sm:w-[36%]">
-        <div className="mx-auto mb-3 h-1 w-10 bg-hero"/>
-        <div className="bg-brand p-3 text-on-hero"><div className="text-[9px] text-on-hero/75">Your accounts</div><div className="mt-2 text-sm font-bold">One clear view</div><div className="mt-4 h-1 w-full bg-panel/30"><div className="h-1 w-2/3 bg-panel"/></div></div>
-        <div className="mt-3 space-y-2"><div className="h-2 w-4/5 bg-surface-container-high"/><div className="h-2 w-3/5 bg-surface-container-high"/><div className="h-2 w-2/3 bg-surface-container-high"/></div>
-      </div>
-      <div className="absolute bottom-[12%] right-[2%] flex items-center gap-2 bg-status-success/10 px-4 py-3 text-xs font-semibold text-status-success"><Check size={16}/> Built around everyday money</div>
+      <div className="absolute bottom-[5%] left-[2%] z-20 w-[35%] border-[6px] border-[#171717] bg-white p-2 shadow-xl sm:w-[32%] sm:border-[8px] sm:p-3"><div className="mx-auto mb-2 h-1 w-8 bg-black"/><div className="bg-[#315BEA] p-3 text-white"><div className="text-[8px] text-white/70">PRIORITY NEEDS</div><div className="mt-2 text-xs font-bold sm:text-sm">What matters next</div><div className="mt-3 h-1 bg-white/30"><div className="h-1 w-3/5 bg-white"/></div></div><div className="mt-3 space-y-2"><div className="h-1.5 w-4/5 bg-black/10"/><div className="h-1.5 w-3/5 bg-black/10"/></div></div>
+      <div className="absolute bottom-[12%] right-[1%] z-20 bg-white px-3 py-2 text-[9px] font-bold uppercase tracking-[.12em] text-black shadow-lg sm:px-4 sm:py-3 sm:text-[10px]">Plan with intention <span className="ml-2 text-[#315BEA]">↗</span></div>
     </div>
   );
 }
-
 const features = [
   {icon:Wallet,title:"See your accounts together",text:"Keep track of the balances you choose to record, with a clear view of your accounts."},
   {icon:BarChart3,title:"Understand your spending",text:"Record transactions and review spending patterns over daily, weekly and monthly periods."},
@@ -94,14 +76,14 @@ export default function LandingPage() {
   return <div className="min-h-screen bg-page text-foreground">
     <Header/>
     <main>
-      <section className="overflow-hidden">
-        <div className="mx-auto grid max-w-7xl items-center gap-4 px-5 pb-12 pt-14 lg:grid-cols-[.88fr_1.12fr] lg:px-10 lg:pb-20 lg:pt-20">
+      <section className="relative isolate overflow-hidden bg-[#f4f4f0] text-[#171717]"><div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-[url('/largent-grid.svg')] bg-cover bg-center opacity-[.08] lg:block" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-5 pb-12 pt-14 lg:grid-cols-[.88fr_1.12fr] lg:px-10 lg:pb-20 lg:pt-20">
           <div className="relative z-10">
             
-            <h1 className="mt-6 max-w-xl text-5xl font-semibold leading-[1.04] tracking-[-.055em] sm:text-6xl lg:text-[4.6rem]">Make your money feel <span className="text-brand">more manageable.</span></h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-muted">Largent helps you record your money, understand everyday spending, plan budgets and keep the things you’re saving for in view.</p>
-            <div className="mt-8 flex flex-wrap gap-3"><Link className="inline-flex min-h-12 items-center gap-3 bg-brand px-6 text-sm font-semibold text-on-hero hover:bg-brand-hover" href="/sign-up">Get started <ArrowRight size={17}/></Link><Link className="inline-flex min-h-12 items-center border border-outline px-6 text-sm font-semibold hover:bg-panel" href="/sign-in">I already have an account</Link></div>
-            <p className="mt-5 text-xs text-muted">A web app. No App Store or Google Play download required.</p>
+            <p className="mb-5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.2em] text-black/55"><span className="h-2 w-2 bg-[#315BEA]"/> A more intentional way to manage money</p><h1 className="mt-2 max-w-xl text-5xl font-semibold leading-[1.04] tracking-[-.055em] text-black sm:text-6xl lg:text-[4.6rem]">Make your money feel <span className="text-brand">more manageable.</span></h1>
+            <p className="mt-6 max-w-lg text-base leading-7 text-black/65">Largent helps you record your money, understand everyday spending, plan budgets and keep the things you’re saving for in view.</p>
+            <div className="mt-8 flex flex-wrap gap-3"><Link className="inline-flex min-h-12 items-center gap-3 bg-[#171717] px-6 text-sm font-semibold text-white hover:bg-[#315BEA]" href="/sign-up">Get started <ArrowRight size={17}/></Link><Link className="inline-flex min-h-12 items-center border border-black/20 px-6 text-sm font-semibold text-black hover:bg-white" href="/sign-in">I already have an account</Link></div>
+            <p className="mt-5 text-xs text-black/50">A web app. No App Store or Google Play download required.</p>
           </div>
           <HeroArtwork/>
         </div>
