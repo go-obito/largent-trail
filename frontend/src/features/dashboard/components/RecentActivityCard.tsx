@@ -53,7 +53,8 @@ export function RecentActivityCard({
           </div>
 
           {transactions?.length ? (
-            <ul className="mt-3 divide-y divide-outline">
+            <>
+              <ul className="mt-3 divide-y divide-outline">
               {transactions.map((transaction) => {
                 const isIncome = transaction.kind === "income";
                 const title = transaction.note?.trim() || transaction.category_name || "Uncategorized";
@@ -94,8 +95,9 @@ export function RecentActivityCard({
                   </li>
                 );
               })}
-            </ul>
-            <LogoDevAttribution className="mt-3 text-right" />
+              </ul>
+              <LogoDevAttribution className="mt-3 text-right" />
+            </>
           ) : (
             <p className="mt-5 rounded-2xl bg-panel-raised p-4 text-center font-medium text-muted">
               No transactions yet
