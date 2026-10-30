@@ -271,7 +271,7 @@ function TransactionFormEditor({
       : null;
   const selectedCategoryName = categoryOptions.find(({ id }) => id === categoryId)?.name ??
     (selectedArchivedCategory?.id === categoryId ? selectedArchivedCategory.name : "");
-  const merchantGroup = getMerchantGroup(selectedCategoryName);
+  const merchantGroup = kind === "expense" ? getMerchantGroup(selectedCategoryName) : null;
   const merchantOptions = merchantGroup ? MERCHANT_OPTIONS[merchantGroup] : [];
   const accountOptions = [
     ...accounts,
