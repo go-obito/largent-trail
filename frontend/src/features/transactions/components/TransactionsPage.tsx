@@ -466,9 +466,7 @@ export function TransactionsPage() {
       <div className="space-y-6">
         {header}
         <LoadingSkeleton label="Loading transactions" rows={5} />
-        {transactions.length > 0 && <LogoDevAttribution className="py-2 text-center" />}
-
-      {addFab}
+        {addFab}
       </div>
     );
   }
@@ -682,6 +680,8 @@ export function TransactionsPage() {
           )}
         </div>
       )}
+
+      {transactions.length > 0 && <LogoDevAttribution className="py-2 text-center" />}
 
       {addFab}
 
