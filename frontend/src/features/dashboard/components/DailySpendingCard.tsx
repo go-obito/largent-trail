@@ -37,8 +37,7 @@ export function DailySpendingCard({
       onRetry={onRetry}
     >
       {data && target && (
-        <section className="card-surface relative isolate flex h-full flex-col overflow-hidden p-5 sm:p-6">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-12 -z-10 size-44 rounded-full bg-brand/10 blur-2xl" />
+        <section className="rounded-xl border border-outline bg-surface relative isolate flex h-full flex-col overflow-hidden p-5 sm:p-6">
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Today</p>
