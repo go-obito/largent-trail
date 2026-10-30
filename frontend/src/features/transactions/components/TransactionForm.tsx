@@ -269,7 +269,7 @@ function TransactionFormEditor({
           name: transaction.category_name ?? "Category",
         }
       : null;
-  const selectedCategoryName = categories.find(({ id }) => id === categoryId)?.name ??
+  const selectedCategoryName = categoryOptions.find(({ id }) => id === categoryId)?.name ??
     (selectedArchivedCategory?.id === categoryId ? selectedArchivedCategory.name : "");
   const merchantGroup = getMerchantGroup(selectedCategoryName);
   const merchantOptions = merchantGroup ? MERCHANT_OPTIONS[merchantGroup] : [];
@@ -317,7 +317,7 @@ function TransactionFormEditor({
         kind: values.kind,
         amount_minor: amountMinor,
         occurred_on: values.occurred_on,
-        note: values.note.trim() || null,
+        note: combinedNote || null,
       };
 
       if (isEditing) {
@@ -680,6 +680,7 @@ function TransactionFormEditor({
           onCreated={(category) => {
             setCreatedCategory(category);
             form.setValue("category_id", category.id, { shouldValidate: true });
+            form.setValue("merchant", "", { shouldValidate: true });
           }}
           open
         />
