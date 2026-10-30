@@ -12,7 +12,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Clipboard } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { EmptyState } from "@/components/states/EmptyState";
@@ -156,7 +156,9 @@ function NeedFormEditor({
   const isEditing = mode === "edit";
   const createNeed = useCreateNeed();
   const updateNeed = useUpdateNeed();
-  const [createId] = useState(() => (isEditing ? "" : uuidv7()));
+  // Keep the same ID when a request fails so retries remain idempotent, but
+  // rotate it after a successful create in case this form instance is reused.
+  const createId = useRef(isEditing ? "" : uuidv7());
   const [isOnline, setIsOnline] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
@@ -234,14 +236,14 @@ function NeedFormEditor({
         }
       } else {
         await createNeed.mutateAsync({
-          id: createId,
+          id: createId.current,
           name: values.name.trim(),
           target_minor: targetMinor,
           priority: values.priority,
           note: values.note.trim() || null,
           source_url: values.source_url.trim() || null,
         });
-        showToast("Need added", "success");
+        showToast("Need added", "success");\n        createId.current = uuidv7();
       }
       router.push("/needs");
     } catch (error) {
