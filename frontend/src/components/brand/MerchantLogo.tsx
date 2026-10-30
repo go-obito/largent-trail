@@ -37,7 +37,7 @@ function normalizeMerchantName(value: string) {
     .normalize("NFKC")
     .trim()
     .toLocaleLowerCase()
-    .replace(/\\s+/g, " ");
+    .replace(/\s+/g, " ");
 }
 
 function findMerchantDomain(merchantName: string | null | undefined) {
