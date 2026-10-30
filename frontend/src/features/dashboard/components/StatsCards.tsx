@@ -28,7 +28,7 @@ function StatCard({
   } as const;
 
   return (
-    <article className="card-surface min-w-0 p-4 sm:p-5">
+    <article className="rounded-xl border border-outline bg-surface min-w-0 p-4 sm:p-5">
       <span className={`inline-flex size-10 items-center justify-center rounded-full ${toneClasses[tone]}`}>
         <Icon aria-hidden="true" size={20} />
       </span>
