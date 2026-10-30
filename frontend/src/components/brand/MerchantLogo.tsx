@@ -77,9 +77,9 @@ export function MerchantLogo({
 }: MerchantLogoProps) {
   const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN?.trim();
   const domain = findMerchantDomain(merchantName);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedDomain, setFailedDomain] = useState<string | null>(null);
 
-  if (!token || !domain || imageFailed) {
+  if (!token || !domain || failedDomain === domain) {
     return <CategoryBadge icon={categoryIcon} name={categoryName || "Uncategorized"} size={size} />;
   }
 
@@ -104,7 +104,7 @@ export function MerchantLogo({
         className="h-full w-full object-contain"
         height={size * 2}
         loading="lazy"
-        onError={() => setImageFailed(true)}
+        onError={() => setFailedDomain(domain)}
         src={src.toString()}
         width={size * 2}
       />
