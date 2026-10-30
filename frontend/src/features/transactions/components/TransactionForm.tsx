@@ -90,7 +90,7 @@ function getMerchantGroup(categoryName: string): MerchantGroup | null {
   if (/food|restaurant|dining|grocer|meal|eatery|catering/.test(name)) return "food";
   if (/transport|transit|taxi|ride|fuel|petrol|trotro|commut/.test(name)) return "transport";
   if (/entertain|stream|subscription|music|movie|cinema|gaming/.test(name)) return "entertainment";
-  if (/airtime|\\bdata\\b|internet bundle|telecom/.test(name)) return "airtime-data";
+  if (/airtime|\bdata\b|internet bundle|telecom/.test(name)) return "airtime-data";
   return null;
 }
 
@@ -109,7 +109,7 @@ function getStoredMerchant(note: string): string {
 function stripStoredMerchant(note: string): string {
   const merchant = getStoredMerchant(note);
   if (!merchant) return note;
-  return note.slice(merchant.length).replace(/^\\s*·\\s*/, "").trim();
+  return note.slice(merchant.length).replace(/^\s*·\s*/, "").trim();
 }
 
 type TransactionFormProps = {
