@@ -90,7 +90,7 @@ function getMerchantGroup(categoryName: string): MerchantGroup | null {
   if (/food|restaurant|dining|grocer|meal|eatery|catering/.test(name)) return "food";
   if (/transport|transit|taxi|ride|fuel|petrol|trotro|commut/.test(name)) return "transport";
   if (/entertain|stream|subscription|music|movie|cinema|gaming/.test(name)) return "entertainment";
-  if (/airtime|data bundle|mobile data|internet bundle|telecom/.test(name)) return "airtime-data";
+  if (/airtime|\\bdata\\b|internet bundle|telecom/.test(name)) return "airtime-data";
   return null;
 }
 
@@ -215,7 +215,6 @@ function TransactionFormEditor({
   const deleteTransaction = useDeleteTransaction();
   const kind = useWatch({ control: form.control, name: "kind" });
   const categoryId = useWatch({ control: form.control, name: "category_id" });
-  const merchant = useWatch({ control: form.control, name: "merchant" });
   const note = useWatch({ control: form.control, name: "note" });
   const categoryQuery = useCategories({ kind });
   const timezone = meQuery.data?.timezone || "Africa/Accra";
@@ -223,10 +222,6 @@ function TransactionFormEditor({
   const latestDate = useMemo(() => addOneDay(today), [today]);
   const accounts = useMemo(() => accountQuery.data ?? [], [accountQuery.data]);
   const categories = categoryQuery.data ?? [];
-  const selectedCategoryName = categories.find(({ id }) => id === categoryId)?.name ??
-    (selectedArchivedCategory?.id === categoryId ? selectedArchivedCategory.name : "");
-  const merchantGroup = getMerchantGroup(selectedCategoryName);
-  const merchantOptions = merchantGroup ? MERCHANT_OPTIONS[merchantGroup] : [];
   const categoryOptions = [
     ...categories,
     ...(createdCategory &&
@@ -274,6 +269,10 @@ function TransactionFormEditor({
           name: transaction.category_name ?? "Category",
         }
       : null;
+  const selectedCategoryName = categories.find(({ id }) => id === categoryId)?.name ??
+    (selectedArchivedCategory?.id === categoryId ? selectedArchivedCategory.name : "");
+  const merchantGroup = getMerchantGroup(selectedCategoryName);
+  const merchantOptions = merchantGroup ? MERCHANT_OPTIONS[merchantGroup] : [];
   const accountOptions = [
     ...accounts,
     ...(createdAccount && !accounts.some(({ id }) => id === createdAccount.id)
@@ -305,6 +304,11 @@ function TransactionFormEditor({
           type: "validate",
           message: `Choose a date from 2000-01-01 through ${latestDate}.`,
         });
+        return;
+      }
+      const combinedNote = [values.merchant.trim(), values.note.trim()].filter(Boolean).join(" · ");
+      if (combinedNote.length > 280) {
+        form.setError("note", { type: "validate", message: "Merchant and note together must be 280 characters or fewer." });
         return;
       }
       const data = {
