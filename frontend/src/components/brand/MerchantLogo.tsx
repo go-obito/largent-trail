@@ -105,7 +105,7 @@ export function MerchantLogo({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         alt=""
-        className="h-full w-full object-contain"
+        className="h-[72%] w-[72%] object-contain"
         height={size * 2}
         loading="lazy"
         onError={() => setFailedDomain(domain)}
