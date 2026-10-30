@@ -51,12 +51,12 @@ export function HeroBalanceCard({
       {data && (
         <section className="relative isolate overflow-hidden rounded-2xl bg-[#2457D6] p-5 text-white sm:p-7 lg:p-8">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute -right-12 -top-24 size-64 rounded-full bg-brand/15 blur-3xl" />
+            <div className="absolute -right-8 -top-10 size-48 rotate-12 border-[24px] border-white/10" />
             <div className="absolute bottom-0 right-0 flex h-24 items-end gap-1.5 pr-4 opacity-20 sm:gap-2 sm:pr-8 sm:opacity-30">
               {chartBars.map((height, index) => (
                 <span
                   key={index}
-                  className="w-2 rounded-full bg-[var(--color-on-hero)]/70 sm:w-3"
+                  className="w-2 bg-white/60 sm:w-3"
                   style={{ height: `${height}px` }}
                 />
               ))}
@@ -93,7 +93,7 @@ export function HeroBalanceCard({
                 sx={{
                   minHeight: 44,
                   color: "#ffffff",
-                  borderRadius: "14px",
+                  borderRadius: "8px",
                   backgroundColor: "rgba(255,255,255,0.10)",
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: "rgba(255,255,255,0.22)",
