@@ -69,11 +69,48 @@ const transactionSchema = z.object({
     ),
   account_id: z.string().min(1, "Choose an account."),
   category_id: z.string(),
+  merchant: z.string(),
   occurred_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date."),
   note: z.string().max(280, "Notes can be up to 280 characters."),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
+
+type MerchantGroup = "food" | "transport" | "entertainment" | "airtime-data";
+
+const MERCHANT_OPTIONS: Record<MerchantGroup, readonly string[]> = {
+  food: ["McDonald's", "Starbucks", "KFC", "Papaye", "Restaurant / food vendor", "Grocery shop", "Market vendor"],
+  transport: ["Uber", "Bolt", "Yango", "Trotro", "Taxi", "Shell", "TotalEnergies", "Fuel station"],
+  entertainment: ["Netflix", "Spotify", "YouTube", "DStv", "Showmax", "Apple", "Google Play", "Cinema", "Gaming service"],
+  "airtime-data": ["MTN Ghana", "Telecel Ghana", "AT Ghana", "Other network"],
+};
+
+function getMerchantGroup(categoryName: string): MerchantGroup | null {
+  const name = categoryName.normalize("NFKC").trim().toLocaleLowerCase();
+  if (/food|restaurant|dining|grocer|meal|eatery|catering/.test(name)) return "food";
+  if (/transport|transit|taxi|ride|fuel|petrol|trotro|commut/.test(name)) return "transport";
+  if (/entertain|stream|subscription|music|movie|cinema|gaming/.test(name)) return "entertainment";
+  if (/airtime|data bundle|mobile data|internet bundle|telecom/.test(name)) return "airtime-data";
+  return null;
+}
+
+const ALL_MERCHANTS = Object.values(MERCHANT_OPTIONS).flat().concat("Other");
+
+function getStoredMerchant(note: string): string {
+  const normalized = note.normalize("NFKC").trim().toLocaleLowerCase();
+  const match = ALL_MERCHANTS.find((merchant) =>
+    normalized === merchant.toLocaleLowerCase() ||
+    normalized.startsWith(`${merchant.toLocaleLowerCase()} ·`),
+  );
+  if (!match) return "";
+  return match;
+}
+
+function stripStoredMerchant(note: string): string {
+  const merchant = getStoredMerchant(note);
+  if (!merchant) return note;
+  return note.slice(merchant.length).replace(/^\\s*·\\s*/, "").trim();
+}
 
 type TransactionFormProps = {
   mode: "create" | "edit";
@@ -168,8 +205,9 @@ function TransactionFormEditor({
       amount: transaction ? minorToInput(transaction.amount_minor) : "",
       account_id: transaction?.account_id ?? "",
       category_id: transaction?.category_id ?? "",
+      merchant: getStoredMerchant(transaction?.note ?? ""),
       occurred_on: transaction?.occurred_on ?? "",
-      note: transaction?.note ?? "",
+      note: stripStoredMerchant(transaction?.note ?? ""),
     },
   });
   const createTransaction = useCreateTransaction();
@@ -177,6 +215,7 @@ function TransactionFormEditor({
   const deleteTransaction = useDeleteTransaction();
   const kind = useWatch({ control: form.control, name: "kind" });
   const categoryId = useWatch({ control: form.control, name: "category_id" });
+  const merchant = useWatch({ control: form.control, name: "merchant" });
   const note = useWatch({ control: form.control, name: "note" });
   const categoryQuery = useCategories({ kind });
   const timezone = meQuery.data?.timezone || "Africa/Accra";
@@ -184,6 +223,10 @@ function TransactionFormEditor({
   const latestDate = useMemo(() => addOneDay(today), [today]);
   const accounts = useMemo(() => accountQuery.data ?? [], [accountQuery.data]);
   const categories = categoryQuery.data ?? [];
+  const selectedCategoryName = categories.find(({ id }) => id === categoryId)?.name ??
+    (selectedArchivedCategory?.id === categoryId ? selectedArchivedCategory.name : "");
+  const merchantGroup = getMerchantGroup(selectedCategoryName);
+  const merchantOptions = merchantGroup ? MERCHANT_OPTIONS[merchantGroup] : [];
   const categoryOptions = [
     ...categories,
     ...(createdCategory &&
@@ -242,6 +285,10 @@ function TransactionFormEditor({
   async function submit(values: TransactionFormValues) {
     setSubmitMessage("");
     try {
+      if (merchantGroup && !values.merchant.trim()) {
+        form.setError("merchant", { type: "validate", message: "Choose a merchant for this category." });
+        return;
+      }
       const amountMinor = parseGhsInput(values.amount);
       if (amountMinor === null || amountMinor <= 0) {
         form.setError("amount", {
@@ -345,6 +392,7 @@ function TransactionFormEditor({
                 onClick={() => {
                   form.setValue("kind", value, { shouldValidate: true });
                   form.setValue("category_id", "", { shouldValidate: true });
+                  form.setValue("merchant", "", { shouldValidate: true });
                   setCreatedCategory(null);
                 }}
                 type="button"
@@ -477,7 +525,7 @@ function TransactionFormEditor({
               <CategoryChoice
                 isSelected={!categoryId}
                 label="Uncategorized"
-                onSelect={() => form.setValue("category_id", "", { shouldValidate: true })}
+                onSelect={() => { form.setValue("category_id", "", { shouldValidate: true }); form.setValue("merchant", "", { shouldValidate: true }); }}
               />
               {categoryOptions.map((category) => (
                 <CategoryChoice
@@ -486,7 +534,7 @@ function TransactionFormEditor({
                   label={category.name}
                   icon={category.icon}
                   onSelect={() =>
-                    form.setValue("category_id", category.id, { shouldValidate: true })
+                    { form.setValue("category_id", category.id, { shouldValidate: true }); form.setValue("merchant", "", { shouldValidate: true }); }
                   }
                 />
               ))}
@@ -513,6 +561,36 @@ function TransactionFormEditor({
             {form.formState.errors.category_id?.message}
           </span>
         </fieldset>
+
+        {merchantGroup && (
+          <FormControl fullWidth error={Boolean(form.formState.errors.merchant)}>
+            <InputLabel id="transaction-merchant-label">Merchant</InputLabel>
+            <Controller
+              control={form.control}
+              name="merchant"
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  id="transaction-merchant"
+                  label="Merchant"
+                  labelId="transaction-merchant-label"
+                  onChange={(event: SelectChangeEvent<string>) => field.onChange(event.target.value)}
+                  sx={{ minHeight: 44 }}
+                >
+                  <MenuItem value="">Choose a merchant</MenuItem>
+                  {merchantOptions.map((option) => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              )}
+            />
+            <FormHelperText>
+              {form.formState.errors.merchant?.message ??
+                "Choose the business or service you paid."}
+            </FormHelperText>
+          </FormControl>
+        )}
 
         <TextField
           {...form.register("occurred_on")}
