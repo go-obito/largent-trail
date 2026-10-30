@@ -11,7 +11,7 @@ type Merchant = {
  * so only known aliases are resolved; arbitrary text is never treated as a URL.
  */
 const merchants: readonly Merchant[] = [
-  { domain: "mtn.com.gh", aliases: ["mtn", "mtn ghana", "mtn airtime", "mtn momo", "mobile money"] },
+  { domain: "mtn.com.gh", aliases: ["mtn", "mtn ghana", "mtn airtime", "mtn momo"] },
   { domain: "telecel.com.gh", aliases: ["telecel", "telecel ghana", "vodafone ghana", "vodafone"] },
   { domain: "airteltigo.com.gh", aliases: ["airteltigo", "airtel tigo", "tigo"] },
   { domain: "ecg.com.gh", aliases: ["ecg", "electricity company of ghana"] },
@@ -27,7 +27,7 @@ const merchants: readonly Merchant[] = [
   { domain: "uber.com", aliases: ["uber", "uber eats"] },
   { domain: "bolt.eu", aliases: ["bolt", "bolt food"] },
   { domain: "shell.com", aliases: ["shell"] },
-  { domain: "totalenergies.com", aliases: ["total", "totalenergies"] },
+  { domain: "totalenergies.com", aliases: ["totalenergies"] },
   { domain: "mcdonalds.com", aliases: ["mcdonald's", "mcdonalds"] },
   { domain: "starbucks.com", aliases: ["starbucks"] },
 ] as const;
@@ -85,7 +85,7 @@ export function MerchantLogo({
 
   const src = new URL(`https://img.logo.dev/${domain}`);
   src.searchParams.set("token", token);
-  src.searchParams.set("size", String(size * 2));
+  src.searchParams.set("size", String(size));
   src.searchParams.set("format", "png");
   src.searchParams.set("retina", "true");
   src.searchParams.set("fallback", "404");
