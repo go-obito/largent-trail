@@ -243,7 +243,8 @@ function NeedFormEditor({
           note: values.note.trim() || null,
           source_url: values.source_url.trim() || null,
         });
-        showToast("Need added", "success");\n        createId.current = uuidv7();
+        showToast("Need added", "success");
+        createId.current = uuidv7();
       }
       router.push("/needs");
     } catch (error) {
