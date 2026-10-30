@@ -10,7 +10,7 @@ const muted = "var(--color-text-secondary)";
 const line = "var(--color-border)";
 
 function Brand({ light = false }: { light?: boolean }) {
-  return <Link href="/" className="text-[1.65rem] font-black tracking-[-0.07em]" style={{ color: light ? "#FFFFFF" : ink }}>largent<span style={{ color: light ? "#A9C0FF" : blue }}>.</span></Link>;
+  return <Link href="/" className="text-[1.65rem] font-black tracking-[-0.07em]" style={{ color: "var(--color-text-primary)" }}>largent<span style={{ color: blue }}>.</span></Link>;
 }
 
 function Header() {
@@ -19,14 +19,14 @@ function Header() {
       <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-10">
         <Brand />
         <nav aria-label="Main navigation" className="hidden items-center gap-8 md:flex">
-          <Link className="text-sm font-medium hover:text-blue-700" href="#features">Features</Link>
+          <Link className="text-sm font-medium hover:text-brand" href="#features">Features</Link>
           <Link className="text-sm font-medium hover:text-blue-700" href="/about">About</Link>
           <Link className="text-sm font-medium hover:text-blue-700" href="/install">Install</Link>
           <Link className="text-sm font-medium hover:text-blue-700" href="/faqs">FAQs</Link>
         </nav>
         <div className="flex items-center gap-3">
           <Link className="hidden px-3 py-2 text-sm font-semibold sm:inline-flex" href="/sign-in">Log in</Link>
-          <Link className="inline-flex min-h-11 items-center gap-2 bg-hero px-5 text-sm font-semibold text-on-hero transition hover:bg-[#333]" href="/sign-up">
+          <Link className="inline-flex min-h-11 items-center gap-2 bg-hero px-5 text-sm font-semibold text-on-hero transition hover:bg-hero/85" href="/sign-up">
             Get started <ArrowUpRight size={16}/>
           </Link>
         </div>
@@ -79,7 +79,7 @@ const features = [
 ];
 
 function Footer() {
-  return <footer className="border-t bg-hero py-12 text-on-hero" style={{borderColor:"#343434"}}>
+  return <footer className="border-t bg-hero py-12 text-on-hero" style={{borderColor:"var(--color-border)"}}>
     <div className="mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-[1.5fr_1fr_1fr_1fr] lg:px-10">
       <div><Brand light/><p className="mt-4 max-w-xs text-sm leading-6 text-on-hero/65">A practical space to keep track of money, plan spending and make room for what matters.</p><p className="mt-5 text-xs text-on-hero/45">Made in Ghana.</p></div>
       <div><div className="mt-4 grid gap-3 text-sm"><Link href="#features">Features</Link><Link href="/about">About Largent</Link><Link href="/install">Install guide</Link></div></div>
@@ -117,7 +117,7 @@ export default function LandingPage() {
       <section id="features" className="py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 lg:px-10">
           <div className="max-w-2xl"><h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-.04em] sm:text-5xl">A clearer view of the money decisions you make every day.</h2><p className="mt-5 text-base leading-7 text-muted">Largent brings a few useful money-management tools into one straightforward workspace.</p></div>
-          <div className="mt-12 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">{features.map(({icon:Icon,title,text},i)=><article key={title} className="border-t-2 border-[#2457D6] pt-6"><div className="flex h-12 w-12 items-center justify-center bg-panel text-brand"><Icon size={22}/></div><p className="mt-6 text-xs font-bold text-brand">0{i+1}</p><h3 className="mt-2 text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-6 text-muted">{text}</p></article>)}</div>
+          <div className="mt-12 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">{features.map(({icon:Icon,title,text},i)=><article key={title} className="border-t-2 border-brand pt-6"><div className="flex h-12 w-12 items-center justify-center bg-panel text-brand"><Icon size={22}/></div><p className="mt-6 text-xs font-bold text-brand">0{i+1}</p><h3 className="mt-2 text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-6 text-muted">{text}</p></article>)}</div>
         </div>
       </section>
       <section className="bg-brand-soft py-20 lg:py-24">
@@ -126,7 +126,7 @@ export default function LandingPage() {
           <ol className="grid gap-4">{[{n:"01",t:"Create your account",d:"Sign up to keep your Largent data associated with your account."},{n:"02",t:"Set up your accounts",d:"Add the accounts and starting balances you want to track."},{n:"03",t:"Record and review",d:"Add transactions, set budgets and check your spending over time."}].map(s=><li key={s.n} className="flex gap-5 border-b border-outline py-5"><span className="text-sm font-bold text-brand">{s.n}</span><div><h3 className="font-semibold">{s.t}</h3><p className="mt-1 text-sm leading-6 text-muted">{s.d}</p></div></li>)}</ol>
         </div>
       </section>
-      <section className="py-20 lg:py-24"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 md:flex-row md:items-center md:justify-between lg:px-10"><div className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[.2em] text-brand">Take it with you</p><h2 className="mt-4 text-4xl font-semibold tracking-[-.04em]">Add Largent to your phone’s Home Screen.</h2><p className="mt-4 text-sm leading-7 text-muted">Largent is a progressive web app. You can open it in a browser or install it from the browser menu for a more app-like shortcut.</p></div><Link href="/install" className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-foreground px-6 text-sm font-semibold hover:bg-panel">See installation steps <ArrowUpRight size={17}/></Link></div></section>
+      <section className="py-20 lg:py-24"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 md:flex-row md:items-center md:justify-between lg:px-10"><div className="max-w-2xl"><h2 className="mt-4 text-4xl font-semibold tracking-[-.04em]">Add Largent to your phone’s Home Screen.</h2><p className="mt-4 text-sm leading-7 text-muted">Largent is a progressive web app. You can open it in a browser or install it from the browser menu for a more app-like shortcut.</p></div><Link href="/install" className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-foreground px-6 text-sm font-semibold hover:bg-panel">See installation steps <ArrowUpRight size={17}/></Link></div></section>
       <section className="bg-hero py-20 text-on-hero"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 md:flex-row md:items-center md:justify-between lg:px-10"><div><h2 className="mt-4 max-w-2xl text-4xl font-semibold tracking-[-.04em]">Make a little more sense of your money.</h2><p className="mt-4 text-sm text-on-hero/65">Create an account and start with the information you already have.</p></div><Link href="/sign-up" className="inline-flex min-h-12 items-center gap-3 bg-panel px-6 text-sm font-semibold text-foreground">Create your account <ArrowRight size={17}/></Link></div></section>
     </main>
     <Footer/>
