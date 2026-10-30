@@ -58,7 +58,7 @@ export function SpendingOverviewCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className={`card-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
+        <section className={`rounded-xl border border-outline bg-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
           <div className="flex items-center justify-between gap-2">
             <h2 className={`min-w-0 font-bold tracking-tight text-foreground ${compact ? "text-sm leading-4 sm:text-base" : "text-lg"}`}>
               {compact ? <>Spending<br />by category</> : "Spending overview"}
