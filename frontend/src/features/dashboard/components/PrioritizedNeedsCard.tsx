@@ -37,7 +37,7 @@ export function PrioritizedNeedsCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface h-full p-4 sm:p-5">
+        <section className="rounded-xl border border-outline bg-surface h-full p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Save with intention</p>

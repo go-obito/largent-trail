@@ -36,7 +36,7 @@ export function BudgetsCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className={`card-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
+        <section className={`rounded-xl border border-outline bg-surface h-full ${compact ? "p-3 sm:p-4 lg:p-5" : "p-5"}`}>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h2 className={`font-bold tracking-tight text-foreground ${compact ? "text-sm sm:text-base" : "text-xl"}`}>Your budgets</h2>

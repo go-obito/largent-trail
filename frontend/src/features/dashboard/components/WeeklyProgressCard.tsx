@@ -44,7 +44,7 @@ export function WeeklyProgressCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface h-full p-4 sm:p-5">
+        <section className="rounded-xl border border-outline bg-surface h-full p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Weekly breakdown</h2>
             <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand">This week</span>

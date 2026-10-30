@@ -6,6 +6,8 @@ import Select, { type SelectChangeEvent } from "@mui/material/Select";
 import type { BalanceRange } from "@/features/dashboard/api";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
+import Link from "next/link";
+import { ArrowUpRight, WalletCards } from "lucide-react";
 import { DashboardSection } from "./DashboardSection";
 
 type DashboardRead = components["schemas"]["DashboardRead"];
@@ -47,14 +49,14 @@ export function HeroBalanceCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(125deg,color-mix(in_srgb,var(--color-primary)_82%,var(--color-hero)),var(--color-hero)_88%)] p-5 text-[var(--color-on-hero)] shadow-sm sm:p-6 lg:p-7">
+        <section className="relative isolate overflow-hidden rounded-2xl bg-[#2457D6] p-5 text-white sm:p-7 lg:p-8">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute -right-12 -top-24 size-64 rounded-full bg-brand/15 blur-3xl" />
+            <div className="absolute -right-8 -top-10 size-48 rotate-12 border-[24px] border-white/10" />
             <div className="absolute bottom-0 right-0 flex h-24 items-end gap-1.5 pr-4 opacity-20 sm:gap-2 sm:pr-8 sm:opacity-30">
               {chartBars.map((height, index) => (
                 <span
                   key={index}
-                  className="w-2 rounded-full bg-[var(--color-on-hero)]/70 sm:w-3"
+                  className="w-2 bg-white/60 sm:w-3"
                   style={{ height: `${height}px` }}
                 />
               ))}
@@ -63,15 +65,15 @@ export function HeroBalanceCard({
 
           <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-sm font-semibold tracking-wide text-white/75">
+              <p className="text-sm font-medium tracking-wide text-white/80">
                 Total balance
               </p>
-              <p className="money mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-4xl lg:text-5xl">
+              <p className="money mt-3 text-4xl font-bold tracking-[-0.045em] sm:text-5xl lg:text-[3.25rem]">
                 {formatGhs(data.total_balance_minor)}
               </p>
               {data.net_change_minor !== null && (
                 <p
-                  className={`money mt-4 inline-flex max-w-full items-center rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${data.net_change_minor >= 0 ? "bg-status-success/15 text-status-success" : "bg-status-error/15 text-status-error"}`}
+                  className={`money mt-4 inline-flex max-w-full items-center border px-3 py-1.5 text-xs font-semibold sm:text-sm ${data.net_change_minor >= 0 ? "border-white/20 bg-white/10 text-white" : "border-white/20 bg-black/10 text-white"}`}
                 >
                   {signedAmount(data.net_change_minor)}{" "}
                   {range === "all_time"
@@ -90,16 +92,16 @@ export function HeroBalanceCard({
                 }
                 sx={{
                   minHeight: 44,
-                  color: "onHero",
-                  borderRadius: "14px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
+                  color: "#ffffff",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(255,255,255,0.10)",
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: "rgba(255,255,255,0.22)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
                     borderColor: "rgba(255,255,255,0.42)",
                   },
-                  "& .MuiSvgIcon-root": { color: "onHero" },
+                  "& .MuiSvgIcon-root": { color: "#ffffff" },
                 }}
                 value={range}
               >
@@ -110,6 +112,20 @@ export function HeroBalanceCard({
                 ))}
               </Select>
             </FormControl>
+          </div>
+
+          <div className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-white/20 pt-4 sm:mt-8">
+            <p className="text-xs font-medium text-white/75 sm:text-sm">
+              Across your Largent accounts
+            </p>
+            <Link
+              className="inline-flex min-h-11 items-center gap-2 border border-white/30 bg-white px-4 text-sm font-semibold text-[#173C9D] transition-colors hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              href="/profile/accounts"
+            >
+              <WalletCards aria-hidden="true" size={17} />
+              View accounts
+              <ArrowUpRight aria-hidden="true" size={16} />
+            </Link>
           </div>
         </section>
       )}
