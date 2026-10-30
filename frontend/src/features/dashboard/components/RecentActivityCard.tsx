@@ -95,6 +95,7 @@ export function RecentActivityCard({
                 );
               })}
             </ul>
+            <LogoDevAttribution className="mt-3 text-right" />
           ) : (
             <p className="mt-5 rounded-2xl bg-panel-raised p-4 text-center font-medium text-muted">
               No transactions yet
