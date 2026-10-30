@@ -9,6 +9,9 @@ import {
 const isPublicRoute = createRouteMatcher([
   "/",
   "/welcome",
+  "/about",
+  "/install",
+  "/faqs",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/offline",
