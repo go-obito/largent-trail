@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/brand/Logo";
 import {
   ArrowRight, ArrowUpRight, BarChart3, Check, ChevronRight, CircleHelp,
   Download, Heart, ListChecks, Menu, Smartphone, Wallet, Utensils,
@@ -10,7 +11,7 @@ const muted = "var(--color-text-secondary)";
 const line = "var(--color-border)";
 
 function Brand({ light = false }: { light?: boolean }) {
-  return <Link href="/" className="text-[1.65rem] font-black tracking-[-0.07em]" style={{ color: "var(--color-text-primary)" }}>largent<span style={{ color: blue }}>.</span></Link>;
+  return <Link href="/" aria-label="Largent home" className="inline-flex items-center gap-2 text-[1.65rem] font-semibold lowercase tracking-[-0.055em]" style={{ color: light ? "var(--color-text-on-hero, #fff)" : "var(--color-text-primary)" }}><Logo variant="mark" className="size-8" />largent</Link>;
 }
 
 function Header() {
