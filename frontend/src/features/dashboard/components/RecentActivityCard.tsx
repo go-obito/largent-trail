@@ -35,7 +35,7 @@ export function RecentActivityCard({
       onRetry={onRetry}
     >
       {data && (
-        <section className="card-surface h-full overflow-hidden p-4 sm:p-5">
+        <section className="rounded-xl border border-outline bg-surface h-full overflow-hidden p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Your money</p>
