@@ -10,8 +10,8 @@ const muted = "#686868";
 const line = "#E8E5E0";
 const cream = "#FFF8F1";
 
-function Brand() {
-  return <Link href="/" className="text-[1.65rem] font-black tracking-[-0.07em]" style={{color:ink}}>largent<span style={{color:blue}}>.</span></Link>;
+function Brand({ light = false }: { light?: boolean }) {
+  return <Link href="/" className="text-[1.65rem] font-black tracking-[-0.07em]" style={{ color: light ? "#FFFFFF" : ink }}>largent<span style={{ color: light ? "#A9C0FF" : blue }}>.</span></Link>;
 }
 
 function Header() {
