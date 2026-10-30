@@ -76,3 +76,22 @@
     }
   }
 }
+
+/* Mobile viewport fixes: prevent iOS focus zoom and page-level horizontal overflow. */
+@layer base {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea,
+    [contenteditable="true"] {
+      font-size: 16px;
+    }
+  }
+}
