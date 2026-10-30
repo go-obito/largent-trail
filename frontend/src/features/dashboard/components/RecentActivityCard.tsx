@@ -1,7 +1,7 @@
 import Button from "@mui/material/Button";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { CategoryBadge } from "@/components/CategoryBadge";
+import { LogoDevAttribution, MerchantLogo } from "@/components/brand/MerchantLogo";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import { addDaysToDate, formatDateInTimezone } from "@/lib/date";
@@ -53,7 +53,8 @@ export function RecentActivityCard({
           </div>
 
           {transactions?.length ? (
-            <ul className="mt-3 divide-y divide-outline">
+            <>
+              <ul className="mt-3 divide-y divide-outline">
               {transactions.map((transaction) => {
                 const isIncome = transaction.kind === "income";
                 const title = transaction.note?.trim() || transaction.category_name || "Uncategorized";
@@ -73,7 +74,7 @@ export function RecentActivityCard({
                     key={transaction.id}
                     className="flex items-center justify-between gap-3 py-3 first:pt-2 last:pb-1 sm:gap-4 sm:py-4"
                   >
-                    <CategoryBadge name={transaction.category_name || "Uncategorized"} size={44} />
+                    <MerchantLogo categoryName={transaction.category_name || "Uncategorized"} merchantName={title} size={44} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground sm:text-base">
                         {title}
@@ -94,7 +95,9 @@ export function RecentActivityCard({
                   </li>
                 );
               })}
-            </ul>
+              </ul>
+              <LogoDevAttribution className="mt-3 text-right" />
+            </>
           ) : (
             <p className="mt-5 rounded-2xl bg-panel-raised p-4 text-center font-medium text-muted">
               No transactions yet

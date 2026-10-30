@@ -24,6 +24,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { EmptyState } from "@/components/states/EmptyState";
 import { CategoryBadge } from "@/components/CategoryBadge";
+import { LogoDevAttribution, MerchantLogo } from "@/components/brand/MerchantLogo";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
 import { useAccounts } from "@/features/accounts/api";
@@ -574,7 +575,7 @@ export function TransactionsPage() {
                             className="flex min-h-11 items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-focus"
                             href={`/transactions/${transaction.id}/edit`}
                           >
-                            <CategoryBadge icon={category?.icon} name={transaction.category_name || "Uncategorized"} size={36} />
+                            <MerchantLogo categoryIcon={category?.icon} categoryName={transaction.category_name || "Uncategorized"} merchantName={transaction.note || ""} size={36} />
                             <span className="min-w-0">
                               <span className="block truncate font-semibold text-foreground">{transaction.note || transaction.category_name || "Uncategorized"}</span>
                               <span className="block truncate text-sm text-muted">{transaction.account_name}</span>
@@ -618,7 +619,7 @@ export function TransactionsPage() {
                     return (
                       <li key={transaction.id} className="flex min-h-[76px] items-center gap-2 py-2">
                         <Link className="flex min-w-0 flex-1 items-center gap-3 py-1 focus-visible:outline-2 focus-visible:outline-focus" href={`/transactions/${transaction.id}/edit`}>
-                          <CategoryBadge icon={category?.icon} name={transaction.category_name || "Uncategorized"} size={44} />
+                          <MerchantLogo categoryIcon={category?.icon} categoryName={transaction.category_name || "Uncategorized"} merchantName={transaction.note || ""} size={44} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold text-foreground">{transaction.note || transaction.category_name || "Uncategorized"}</span>
                             <span className="mt-0.5 block truncate text-sm text-muted">{transaction.category_name || "Uncategorized"} · {transactionTime(transaction.created_at, timezone)}</span>
@@ -679,6 +680,8 @@ export function TransactionsPage() {
           )}
         </div>
       )}
+
+      {transactions.length > 0 && <LogoDevAttribution className="py-2 text-center" />}
 
       {addFab}
 
