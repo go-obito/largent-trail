@@ -6,15 +6,15 @@ page instructions, or exposes the HTML it was given.
 
 from __future__ import annotations
 
+import asyncio
+import ipaddress
 import json
 import re
+import socket
 import unicodedata
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from html.parser import HTMLParser
-import asyncio
-import ipaddress
-import socket
 from urllib.parse import urljoin, urlsplit
 
 import httpx
