@@ -28,6 +28,7 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - largent
+              - site.largent.ios
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: site.largent.ios
