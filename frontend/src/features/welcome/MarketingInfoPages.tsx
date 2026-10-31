@@ -57,7 +57,7 @@ function Footer() {
         </nav>
       </div>
       <div className="mx-auto mt-8 max-w-7xl border-t border-on-hero/15 px-5 pt-5 text-xs text-on-hero/45 lg:px-10">
-        © {new Date().getFullYear()} Largent. All rights reserved.
+        © Largent. All rights reserved.
       </div>
     </footer>
   );
