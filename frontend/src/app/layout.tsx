@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-capable": "yes",
   },
   icons: {
-    icon: [{ url: "/icons/favicon.png", sizes: "32x32", type: "image/png" }],
+    icon: [{ url: "/icons/favicon.svg", sizes: "any", type: "image/svg+xml" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
