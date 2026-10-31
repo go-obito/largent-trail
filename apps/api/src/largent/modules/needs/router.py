@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import time
+from collections.abc import Awaitable
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.clock import utc_now
 from largent.core.errors import ProblemHTTPException
+from largent.core.ids import new_uuid7
 from largent.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, get_cursor_signing_keys
 from largent.core.tenancy import get_current_user_id, get_tenant_session
 from largent.domain.needs import need_progress
@@ -24,10 +28,10 @@ from largent.modules.needs.schemas import (
     AllocationPage,
     AllocationRead,
     AllocationResult,
-    NeedCreate,
-    NeedDeleteQuery,
     LinkImportPreviewRead,
     LinkImportPreviewRequest,
+    NeedCreate,
+    NeedDeleteQuery,
     NeedList,
     NeedOrder,
     NeedRead,
@@ -42,6 +46,45 @@ CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
 CursorKeys = Annotated[list[bytes], Depends(get_cursor_signing_keys)]
 Now = Annotated[datetime, Depends(utc_now)]
+LINK_PREVIEWS_PER_HOUR = 10
+_INCREMENT_LINK_RATE_LIMIT = (
+    "local now = tonumber(ARGV[1]); "
+    "local window = tonumber(ARGV[2]); "
+    "redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now - window); "
+    "local count = redis.call('ZCARD', KEYS[1]); "
+    "if count >= tonumber(ARGV[3]) then "
+    "local oldest = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES'); "
+    "return {0, math.ceil(tonumber(oldest[2]) + window - now)}; "
+    "end; "
+    "redis.call('ZADD', KEYS[1], now, ARGV[4]); "
+    "redis.call('EXPIRE', KEYS[1], window); "
+    "return {1, 0}"
+)
+
+
+async def _check_link_preview_rate(redis: Redis, user_id: UUID) -> None:
+    now = time.time()
+    result = cast(
+        Awaitable[list[int]],
+        redis.eval(
+            _INCREMENT_LINK_RATE_LIMIT,
+            1,
+            f"needs:link-preview-rate:{user_id}",
+            str(now),
+            "3600",
+            str(LINK_PREVIEWS_PER_HOUR),
+            str(new_uuid7()),
+        ),
+    )
+    allowed, retry_after = await result
+    if not int(allowed):
+        raise ProblemHTTPException(
+            status_code=429,
+            title="Rate limited",
+            detail="The product preview limit is 10 requests per hour.",
+            code="rate_limited",
+            headers={"Retry-After": str(max(1, int(retry_after)))},
+        )
 
 
 def _not_found() -> ProblemHTTPException:
@@ -108,8 +151,10 @@ async def read_summary(user_id: CurrentUserId, session: TenantSession) -> NeedSu
 
 
 @router.post("/link-preview", response_model=LinkImportPreviewRead)
-async def preview_need_link(payload: LinkImportPreviewRequest) -> LinkImportPreviewRead:
+async def preview_need_link(\n    payload: LinkImportPreviewRequest, request: Request, user_id: CurrentUserId\n) -> LinkImportPreviewRead:
     """Fetch a bounded, best-effort product preview from a public web page."""
+    redis = cast(Redis, request.app.state.redis)
+    await _check_link_preview_rate(redis, user_id)
     try:
         suggestion = await fetch_link_import_suggestion(payload.url)
     except LinkImportFetchError as exc:
