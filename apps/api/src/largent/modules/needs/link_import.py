@@ -217,6 +217,7 @@ def extract_link_import_suggestion(html: bytes) -> LinkImportSuggestion:
         currency = _currency(_first_meta(parser.meta, _CURRENCY_META_KEYS))
     return LinkImportSuggestion(name, price, currency)
 
+
 MAX_PAGE_BYTES = 1_000_000
 MAX_REDIRECTS = 3
 _ALLOWED_PORTS = {80, 443}
@@ -300,8 +301,7 @@ async def fetch_link_import_suggestion(url: str) -> LinkImportSuggestion:
                     if response.status_code >= 400:
                         raise LinkImportFetchError("link_unavailable")
                     content_type = response.headers.get("content-type", "").lower()
-                    if "text/html" not in content_type and "application/xhtml+xml" not in content_type:
-                        raise LinkImportFetchError("not_a_product_page")
+                    if (\n                        "text/html" not in content_type\n                        and "application/xhtml+xml" not in content_type\n                    ):\n                        raise LinkImportFetchError("not_a_product_page")
                     content_length = response.headers.get("content-length")
                     if content_length:
                         try:
