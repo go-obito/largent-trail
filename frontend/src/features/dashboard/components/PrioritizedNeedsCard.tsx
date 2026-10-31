@@ -1,9 +1,9 @@
 import Button from "@mui/material/Button";
-import { ProductBrandLogo } from "@/components/brand/ProductBrandLogo";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import type { components } from "@/lib/api/schema";
+import { ProductBrandLogo } from "@/components/brand/ProductBrandLogo";
 import { formatGhs } from "@/lib/money";
 import { DashboardSection } from "./DashboardSection";
 
