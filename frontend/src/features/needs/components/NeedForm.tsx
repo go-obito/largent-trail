@@ -214,7 +214,7 @@ function NeedFormEditor({
       if (!baseUrl) {
         throw new Error("Product lookup is temporarily unavailable.");
       }
-      const response = await fetch(`${baseUrl.replace(/\\/$/, "")}/v1/needs/link-preview`, {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/v1/needs/link-preview`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
