@@ -205,7 +205,8 @@ async def preview_need_link(
         raise ProblemHTTPException(
             status_code=(
                 422
-                if exc.code in {"invalid_url", "url_not_allowed", "not_a_product_page", "page_too_large"}
+                if exc.code
+                in {"invalid_url", "url_not_allowed", "not_a_product_page", "page_too_large"}
                 else 502
             ),
             title=title,
