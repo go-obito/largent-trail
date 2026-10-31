@@ -93,9 +93,9 @@ export function ProductBrandLogo({
   const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN?.trim();
   const brand = findProductBrand(name);
   const domain = brand?.domain ?? null;
-  const [failedDomain, setFailedDomain] = useState<string | null>(null);
+  const [failedImage, setFailedImage] = useState<string | null>(null);
 
-  if (!brand || !token || failedDomain === domain) {
+  if (!brand) {
     return (
       <span
         aria-label={brand ? `${brand.name} logo unavailable` : "Product brand"}
@@ -108,12 +108,29 @@ export function ProductBrandLogo({
     );
   }
 
-  const src = new URL(`https://img.logo.dev/${domain}`);
-  src.searchParams.set("token", token);
-  src.searchParams.set("size", String(size));
-  src.searchParams.set("format", "png");
-  src.searchParams.set("retina", "true");
-  src.searchParams.set("fallback", "404");
+  const src = token
+    ? new URL(`https://img.logo.dev/${domain}`)
+    : new URL(`https://cdn.simpleicons.org/${brand.name.toLocaleLowerCase().replace(/[^a-z0-9]/g, "")}`);
+  if (token) {
+    src.searchParams.set("token", token);
+    src.searchParams.set("size", String(size));
+    src.searchParams.set("format", "png");
+    src.searchParams.set("retina", "true");
+    src.searchParams.set("fallback", "404");
+  }
+  const imageUrl = src.toString();
+  if (failedImage === imageUrl) {
+    return (
+      <span
+        aria-label={`${brand.name} logo unavailable`}
+        className="inline-flex shrink-0 items-center justify-center rounded-xl bg-selected-surface font-semibold text-primary"
+        role="img"
+        style={{ height: size, width: size, fontSize: size * 0.32 }}
+      >
+        {initials(brand.name)}
+      </span>
+    );
+  }
 
   return (
     <span
@@ -129,8 +146,8 @@ export function ProductBrandLogo({
         className="h-full w-full object-contain"
         height={size * 2}
         loading="lazy"
-        onError={() => setFailedDomain(domain)}
-        src={src.toString()}
+        onError={() => setFailedImage(imageUrl)}
+        src={imageUrl}
         width={size * 2}
       />
     </span>
