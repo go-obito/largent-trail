@@ -16,6 +16,7 @@ import { ArrowLeft, Clipboard } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { ProductBrandLogo } from "@/components/brand/ProductBrandLogo";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingSkeleton } from "@/components/states/LoadingSkeleton";
@@ -179,6 +180,7 @@ function NeedFormEditor({
     },
   });
   const note = useWatch({ control: form.control, name: "note" }) ?? "";
+  const watchedName = useWatch({ control: form.control, name: "name" }) ?? "";
   const isPending = createNeed.isPending || updateNeed.isPending;
 
   useEffect(() => {
@@ -381,18 +383,23 @@ function NeedFormEditor({
             You&apos;re offline. Changes need a connection.
           </Alert>
         )}
-        <TextField
-          {...form.register("name")}
-          autoFocus
-          error={Boolean(form.formState.errors.name)}
-          fullWidth
-          helperText={form.formState.errors.name?.message}
-          label="Name"
-          slotProps={{
-            formHelperText: { "aria-live": "polite" },
-            htmlInput: { maxLength: 100 },
-          }}
-        />
+        <div className="flex items-center gap-3">
+          {watchedName.trim() && (
+            <ProductBrandLogo name={watchedName} size={48} />
+          )}
+          <TextField
+            {...form.register("name")}
+            autoFocus
+            error={Boolean(form.formState.errors.name)}
+            fullWidth
+            helperText={form.formState.errors.name?.message}
+            label="Name"
+            slotProps={{
+              formHelperText: { "aria-live": "polite" },
+              htmlInput: { maxLength: 100 },
+            }}
+          />
+        </div>
         <TextField
           {...form.register("target")}
           error={Boolean(form.formState.errors.target)}
