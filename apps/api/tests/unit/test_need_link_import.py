@@ -38,12 +38,12 @@ def test_product_preview_does_not_duplicate_brand_in_title() -> None:
 
 
 def test_product_preview_prefixes_brand_from_product_metadata() -> None:
-    html = b'''
+    html = b"""
     <html><head>
       <meta property="og:title" content="Galaxy S25 Ultra" />
       <meta property="product:brand" content="Samsung" />
     </head></html>
-    '''
+    """
 
     suggestion = extract_link_import_suggestion(html)
 
