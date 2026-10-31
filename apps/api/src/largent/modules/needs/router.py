@@ -15,6 +15,7 @@ from largent.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, get_cursor_signing
 from largent.core.tenancy import get_current_user_id, get_tenant_session
 from largent.domain.needs import need_progress
 from largent.modules.needs import service
+from largent.modules.needs.link_import import LinkImportFetchError, fetch_link_import_suggestion
 from largent.modules.needs.schemas import (
     AllocationCreate,
     AllocationPage,
@@ -23,6 +24,8 @@ from largent.modules.needs.schemas import (
     NeedCreate,
     NeedDeleteQuery,
     NeedList,
+    LinkImportPreviewRead,
+    LinkImportPreviewRequest,
     NeedOrder,
     NeedRead,
     NeedSummary,
@@ -99,6 +102,43 @@ async def reorder_needs(
 async def read_summary(user_id: CurrentUserId, session: TenantSession) -> NeedSummary:
     summary = await service.read_summary(session, user_id)
     return NeedSummary.model_validate(summary, from_attributes=True)
+
+
+
+@router.post("/link-preview", response_model=LinkImportPreviewRead)
+async def preview_need_link(payload: LinkImportPreviewRequest) -> LinkImportPreviewRead:
+    """Fetch a bounded, best-effort product preview from a public web page."""
+    try:
+        suggestion = await fetch_link_import_suggestion(payload.url)
+    except LinkImportFetchError as exc:
+        messages = {
+            "invalid_url": ("Invalid product link", "Enter a valid product page URL."),
+            "url_not_allowed": ("Link not allowed", "This address cannot be fetched for security reasons."),
+            "fetch_timeout": ("Link timed out", "The product page took too long to respond."),
+            "site_blocked": ("Website blocked the request", "This website does not allow automated previews. Enter the details manually."),
+            "not_a_product_page": ("Unsupported page", "The link did not return a product page."),
+            "page_too_large": ("Page too large", "This product page is too large to preview."),
+            "link_unavailable": ("Link unavailable", "The product page could not be reached. Try again or enter the details manually."),
+        }
+        title, detail = messages.get(
+            exc.code,
+            ("Link unavailable", "The product page could not be previewed."),
+        )
+        raise ProblemHTTPException(
+            status_code=422 if exc.code in {"invalid_url", "url_not_allowed", "not_a_product_page", "page_too_large"} else 502,
+            title=title,
+            detail=detail,
+            code=exc.code,
+        ) from None
+
+    currency = suggestion.price_currency
+    target_minor = suggestion.target_minor if currency == "GHS" else None
+    return LinkImportPreviewRead(
+        name=suggestion.name,
+        target_minor=target_minor,
+        price_minor=suggestion.target_minor,
+        price_currency=currency,
+    )
 
 
 @router.get("/{need_id}", response_model=NeedRead)
