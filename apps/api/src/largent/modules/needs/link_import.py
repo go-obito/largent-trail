@@ -210,3 +210,111 @@ def extract_link_import_suggestion(html: bytes) -> LinkImportSuggestion:
         price = parse_price_minor(_first_meta(parser.meta, _PRICE_META_KEYS))
         currency = _currency(_first_meta(parser.meta, _CURRENCY_META_KEYS))
     return LinkImportSuggestion(name, price, currency)
+
+
+import asyncio
+import ipaddress
+import socket
+from urllib.parse import urljoin, urlsplit
+
+import httpx
+
+MAX_PAGE_BYTES = 1_000_000
+MAX_REDIRECTS = 3
+_ALLOWED_PORTS = {80, 443}
+
+
+class LinkImportFetchError(Exception):
+    """A product page could not be fetched safely or did not return HTML."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
+async def _validate_public_url(url: str) -> None:
+    """Reject non-web URLs and hosts resolving to non-public IP addresses."""
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError:
+        raise LinkImportFetchError("invalid_url") from None
+
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or (port is not None and port not in _ALLOWED_PORTS)
+    ):
+        raise LinkImportFetchError("url_not_allowed")
+
+    host = parsed.hostname.rstrip(".").encode("idna").decode("ascii")
+    if host.casefold() in {"localhost", "localhost.localdomain"}:
+        raise LinkImportFetchError("url_not_allowed")
+
+    try:
+        records = await asyncio.to_thread(
+            socket.getaddrinfo,
+            host,
+            port or (443 if parsed.scheme == "https" else 80),
+            socket.AF_UNSPEC,
+            socket.SOCK_STREAM,
+        )
+    except OSError:
+        raise LinkImportFetchError("link_unavailable") from None
+
+    addresses = {record[4][0] for record in records}
+    if not addresses or any(not ipaddress.ip_address(address).is_global for address in addresses):
+        raise LinkImportFetchError("url_not_allowed")
+
+
+async def fetch_link_import_suggestion(url: str) -> LinkImportSuggestion:
+    """Fetch a public product page with bounded size, time, and redirects."""
+    current_url = url
+    timeout = httpx.Timeout(8.0, connect=4.0)
+    headers = {
+        "Accept": "text/html,application/xhtml+xml;q=0.9",
+        "User-Agent": "LargentLinkPreview/1.0 (+https://largent.site)",
+    }
+
+    async with httpx.AsyncClient(
+        timeout=timeout,
+        follow_redirects=False,
+        trust_env=False,
+        headers=headers,
+    ) as client:
+        for redirect_count in range(MAX_REDIRECTS + 1):
+            await _validate_public_url(current_url)
+            try:
+                async with client.stream("GET", current_url) as response:
+                    if response.is_redirect:
+                        location = response.headers.get("location")
+                        if not location or redirect_count >= MAX_REDIRECTS:
+                            raise LinkImportFetchError("link_unavailable")
+                        current_url = urljoin(current_url, location)
+                        continue
+                    if response.status_code in {403, 429}:
+                        raise LinkImportFetchError("site_blocked")
+                    if response.status_code >= 400:
+                        raise LinkImportFetchError("link_unavailable")
+                    content_type = response.headers.get("content-type", "").lower()
+                    if "text/html" not in content_type and "application/xhtml+xml" not in content_type:
+                        raise LinkImportFetchError("not_a_product_page")
+                    content_length = response.headers.get("content-length")
+                    if content_length and int(content_length) > MAX_PAGE_BYTES:
+                        raise LinkImportFetchError("page_too_large")
+                    chunks: list[bytes] = []
+                    total = 0
+                    async for chunk in response.aiter_bytes():
+                        total += len(chunk)
+                        if total > MAX_PAGE_BYTES:
+                            raise LinkImportFetchError("page_too_large")
+                        chunks.append(chunk)
+                    return extract_link_import_suggestion(b"".join(chunks))
+            except httpx.TimeoutException:
+                raise LinkImportFetchError("fetch_timeout") from None
+            except httpx.HTTPError:
+                raise LinkImportFetchError("link_unavailable") from None
+
+    raise LinkImportFetchError("link_unavailable")
