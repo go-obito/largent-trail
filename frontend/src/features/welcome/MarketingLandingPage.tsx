@@ -104,41 +104,121 @@ export default function LandingPage() {
       <main>
         <section
           aria-labelledby="hero-title"
-          className="relative isolate flex min-h-[570px] items-center overflow-hidden bg-[#f4f4f0] sm:min-h-[620px]"
-          style={{
-            backgroundImage: `linear-gradient(90deg, rgba(247,247,244,.97) 0%, rgba(247,247,244,.91) 42%, rgba(247,247,244,.58) 72%, rgba(247,247,244,.34) 100%), url("${gridImage}")`,
-            backgroundPosition: "center",
-            backgroundSize: "cover",
-          }}
+          className="relative isolate overflow-hidden bg-page"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/[0.035]" />
-          <div className="relative mx-auto w-full max-w-7xl px-5 py-20 lg:px-10 lg:py-28">
-            <div className="max-w-[760px]">
-              <h1 id="hero-title" className="text-5xl font-semibold leading-[1.04] tracking-[-0.045em] text-[#171717] sm:text-6xl lg:text-[5.25rem]">
-                Your money.
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-70"
+            style={{
+              backgroundImage: `linear-gradient(90deg, var(--color-background) 0%, color-mix(in srgb, var(--color-background) 94%, transparent) 54%, color-mix(in srgb, var(--color-background) 84%, transparent) 100%), url("${gridImage}")`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          />
+          <div className="relative mx-auto grid min-h-[640px] max-w-7xl items-center gap-14 px-5 py-16 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:px-10 lg:py-24">
+            <div className="max-w-[590px]">
+              <h1 id="hero-title" className="text-[2.8rem] font-semibold leading-[1.04] tracking-[-0.045em] text-foreground sm:text-6xl lg:text-[4.6rem]">
+                Know your money.
                 <br />
-                <span className="text-[#315BEA]">More manageable.</span>
+                <span className="text-brand">Plan what matters.</span>
               </h1>
-              <p className="mt-7 max-w-[590px] text-base leading-7 text-black/70 sm:text-lg sm:leading-8">
-                Know what you can spend today, plan for what matters and make better money decisions before it runs out.
+              <p className="mt-6 max-w-[510px] text-base leading-7 text-muted sm:text-lg sm:leading-8">
+                Bring your balances, daily spending, budgets and priorities into one practical view. Make clearer decisions with the money you have.
               </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  className="inline-flex min-h-12 items-center justify-center gap-3 bg-[#171717] px-6 text-sm font-semibold text-white transition hover:bg-[#315BEA]"
+                  className="inline-flex min-h-12 items-center justify-center gap-3 bg-brand px-6 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
                   href="/sign-up"
                 >
                   Get started <ArrowRight size={17} />
                 </Link>
                 <Link
-                  className="inline-flex min-h-12 items-center justify-center border border-black/25 bg-white/55 px-6 text-sm font-semibold text-black transition hover:bg-white"
+                  className="inline-flex min-h-12 items-center justify-center border border-outline bg-panel/80 px-6 text-sm font-semibold text-foreground transition hover:bg-panel"
                   href="/sign-in"
                 >
                   I already have an account
                 </Link>
               </div>
-              <p className="mt-5 text-xs text-black/55">
+              <p className="mt-5 text-xs font-medium text-muted">
                 Everyday money management, made for real life in Ghana.
               </p>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-[590px] lg:ml-auto">
+              <div aria-hidden="true" className="absolute -inset-5 -z-10 rounded-[2rem] bg-brand/10 blur-2xl" />
+              <div className="overflow-hidden rounded-2xl border border-outline/70 bg-panel shadow-[0_24px_80px_rgba(17,21,33,0.14)]">
+                <div className="flex items-center justify-between border-b border-outline/70 px-5 py-4 sm:px-7">
+                  <div className="flex items-center gap-3">
+                    <Logo variant="mark" className="size-8" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Your overview</p>
+                      <p className="text-xs text-muted">A clearer view of your money</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-semibold text-brand">Preview</span>
+                </div>
+
+                <div className="p-4 sm:p-6">
+                  <div className="rounded-xl bg-hero p-5 text-on-hero sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-on-hero/70">Total balance</p>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-on-hero/15 px-2.5 py-1 text-[11px] text-on-hero/75">
+                        <span className="size-1.5 rounded-full bg-[#7C9AFF]" />
+                        Private view
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-end justify-between gap-4">
+                      <p className="text-3xl font-semibold tracking-[0.08em] sm:text-4xl">••••••</p>
+                      <span className="text-xs text-on-hero/55">GHS</span>
+                    </div>
+                    <div className="mt-6 grid grid-cols-3 gap-3 border-t border-on-hero/15 pt-4">
+                      {["Cash", "Bank", "Mobile money"].map((label) => (
+                        <div key={label} className="min-w-0">
+                          <p className="truncate text-[11px] text-on-hero/55">{label}</p>
+                          <p className="mt-1 text-sm font-medium tracking-widest text-on-hero/85">••••</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border border-outline/70 p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">Daily spending</p>
+                        <BarChart3 className="size-4 text-brand" />
+                      </div>
+                      <p className="mt-5 text-sm text-muted">Know where your money goes</p>
+                      <div className="mt-4 flex h-2 gap-1 overflow-hidden rounded-full bg-brand-soft">
+                        <span className="w-[38%] rounded-full bg-brand" />
+                        <span className="w-[24%] rounded-full bg-brand/45" />
+                        <span className="w-[15%] rounded-full bg-brand/20" />
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-outline/70 p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">Your priorities</p>
+                        <Heart className="size-4 text-brand" />
+                      </div>
+                      <p className="mt-5 text-sm text-muted">Keep important plans in sight</p>
+                      <div className="mt-4 flex items-center gap-2">
+                        <span className="size-2 rounded-full bg-brand" />
+                        <span className="h-1.5 flex-1 rounded-full bg-brand-soft" />
+                        <span className="size-2 rounded-full bg-brand/35" />
+                        <span className="h-1.5 flex-1 rounded-full bg-brand-soft" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -bottom-5 -left-4 hidden items-center gap-3 rounded-xl border border-outline/70 bg-panel px-4 py-3 shadow-lg sm:flex">
+                <span className="flex size-9 items-center justify-center rounded-full bg-brand-soft text-brand">
+                  <Wallet className="size-4" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">One practical money view</p>
+                  <p className="mt-0.5 text-[11px] text-muted">Balances · budgets · priorities</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
