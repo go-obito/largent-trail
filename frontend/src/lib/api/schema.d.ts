@@ -2194,7 +2194,9 @@ export interface operations {
     preview_need_link_v1_needs_link_preview_post: {
         parameters: {
             query?: never;
-            header?: { authorization?: string | null };
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2205,16 +2207,33 @@ export interface operations {
         };
         responses: {
             200: {
-                headers: { [name: string]: unknown };
+                headers: {
+                    [name: string]: unknown;
+                };
                 content: {
                     "application/json": components["schemas"]["LinkImportPreviewRead"];
                 };
             };
             422: {
-                headers: { [name: string]: unknown };
-                content: {
-                    "application/problem+json": components["schemas"]["HTTPValidationError"];
+                headers: {
+                    [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            429: {
+                headers: {
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
