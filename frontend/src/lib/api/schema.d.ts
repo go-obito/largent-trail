@@ -973,13 +973,14 @@ export interface components {
              */
             has_header_guess: boolean;
         };
-        /** NeedCreate */
+        /** LinkImportPreviewRead */
         LinkImportPreviewRead: {
             name: string | null;
             target_minor: number | null;
             price_minor: number | null;
             price_currency: string | null;
         };
+        /** LinkImportPreviewRequest */
         LinkImportPreviewRequest: {
             url: string;
         };
