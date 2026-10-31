@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@clerk/nextjs";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
@@ -153,6 +154,7 @@ function NeedFormEditor({
   sharedLink: string;
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const isEditing = mode === "edit";
   const createNeed = useCreateNeed();
   const updateNeed = useUpdateNeed();
@@ -162,6 +164,10 @@ function NeedFormEditor({
   const [isOnline, setIsOnline] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
+  const [linkMessageSeverity, setLinkMessageSeverity] = useState<
+    "success" | "info" | "warning" | "error"
+  >("info");
+  const [isFetchingLink, setIsFetchingLink] = useState(false);
   const form = useForm<NeedFormValues>({
     resolver: zodResolver(needFormSchema),
     defaultValues: {
@@ -185,6 +191,89 @@ function NeedFormEditor({
       window.removeEventListener("offline", update);
     };
   }, []);
+
+  async function fetchProductDetails() {
+    const url = form.getValues("source_url").trim();
+    setLinkMessage(null);
+    if (!isSafeHttpUrl(url)) {
+      form.setError("source_url", { type: "validate", message: "Enter a valid http or https product link." });
+      return;
+    }
+    if (!navigator.onLine) {
+      setLinkMessageSeverity("warning");
+      setLinkMessage("Connect to the internet before fetching product details.");
+      return;
+    }
+
+    setIsFetchingLink(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Your session could not be verified. Sign in again and retry.");
+      }
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!baseUrl) {
+        throw new Error("Product lookup is temporarily unavailable.");
+      }
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/v1/needs/link-preview`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
+      const result = await response.json().catch(() => null) as {
+        name?: string | null;
+        target_minor?: number | null;
+        price_minor?: number | null;
+        price_currency?: string | null;
+        detail?: string;
+        code?: string;
+      } | null;
+
+      if (!response.ok) {
+        const messages: Record<string, string> = {
+          site_blocked: "This website blocks automatic previews. Enter the product details manually.",
+          fetch_timeout: "The product page took too long to respond. Try again.",
+          url_not_allowed: "This product link cannot be fetched safely.",
+          not_a_product_page: "This link doesn't appear to be a product page.",
+          page_too_large: "This product page is too large to preview.",
+        };
+        throw new Error((result?.code && messages[result.code]) || result?.detail || "We couldn't fetch this product. Try again or enter the details manually.");
+      }
+
+      let populated = false;
+      if (result?.name && !form.getFieldState("name").isDirty) {
+        form.setValue("name", result.name.slice(0, 100), { shouldDirty: true, shouldValidate: true });
+        populated = true;
+      }
+      if (typeof result?.target_minor === "number" && result.target_minor > 0 && !form.getFieldState("target").isDirty) {
+        form.setValue("target", minorToInput(result.target_minor), { shouldDirty: true, shouldValidate: true });
+        populated = true;
+      }
+
+      if (!result?.name && typeof result?.price_minor !== "number") {
+        setLinkMessageSeverity("warning");
+        setLinkMessage("The page opened, but it didn't expose product details. You can still enter them manually.");
+      } else if (result.price_currency && result.price_currency !== "GHS") {
+        setLinkMessageSeverity("info");
+        setLinkMessage(`Product details found. The price is in ${result.price_currency}; enter the Ghana cedi equivalent yourself.`);
+      } else if (populated) {
+        setLinkMessageSeverity("success");
+        setLinkMessage("Product details fetched. Review the suggested name and price before saving.");
+      } else {
+        setLinkMessageSeverity("info");
+        setLinkMessage("Product details found, but your edited fields were left unchanged.");
+      }
+    } catch (error) {
+      setLinkMessageSeverity("error");
+      setLinkMessage(error instanceof Error ? error.message : "We couldn't fetch this product. Enter the details manually.");
+    } finally {
+      setIsFetchingLink(false);
+    }
+  }
 
   async function pasteLink() {
     setLinkMessage(null);
@@ -381,8 +470,13 @@ function NeedFormEditor({
                 }}
               />
               <div className="flex shrink-0 flex-col gap-1">
-                <Button disabled sx={{ minHeight: 44 }} title="Link preview requires an API endpoint not yet in the contract.">
-                  Fetch details
+                <Button
+                  disabled={!isOnline || isFetchingLink}
+                  onClick={() => void fetchProductDetails()}
+                  sx={{ minHeight: 44 }}
+                  type="button"
+                >
+                  {isFetchingLink ? "Fetching…" : "Fetch details"}
                 </Button>
                 <Button
                   onClick={() => void pasteLink()}
@@ -395,10 +489,10 @@ function NeedFormEditor({
               </div>
             </div>
             <p className="text-sm text-muted">
-              Link previews aren&apos;t available yet. You can still save the link and enter details yourself.
+              Fetch product information from a supported public product page. Some marketplaces block automatic previews.
             </p>
             {linkMessage && (
-              <Alert aria-live="polite" severity="warning">
+              <Alert aria-live="polite" severity={linkMessageSeverity}>
                 {linkMessage}
               </Alert>
             )}

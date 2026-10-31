@@ -231,7 +231,7 @@ Update this checklist at the end of every step.
 - [x] B3 accounts and categories
 - [x] B4 transactions
 - [x] B5 budgets and daily-target logic
-- [x] B6 priority needs (B6a core and allocations complete; B6b link import pending)
+- [x] B6 priority needs (B6a core and allocations complete; B6b product link preview complete)
 - [x] B7 reports and dashboard aggregates (transaction/account/category names and weekly budget totals in responses)
 - [ ] B8 sync push/pull
 - [x] B9 CSV import (preview, parse, commit, undo, and history)

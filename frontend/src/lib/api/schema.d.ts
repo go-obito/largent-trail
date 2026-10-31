@@ -222,6 +222,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/needs/link-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        post: operations["preview_need_link_v1_needs_link_preview_post"];
+        get?: never;
+        put?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/needs/{need_id}": {
         parameters: {
             query?: never;
@@ -957,7 +973,17 @@ export interface components {
              */
             has_header_guess: boolean;
         };
-        /** NeedCreate */
+        /** LinkImportPreviewRead */
+        LinkImportPreviewRead: {
+            name: string | null;
+            target_minor: number | null;
+            price_minor: number | null;
+            price_currency: string | null;
+        };
+        /** LinkImportPreviewRequest */
+        LinkImportPreviewRequest: {
+            url: string;
+        };
         NeedCreate: {
             /** Id */
             id?: string | null;
@@ -2163,6 +2189,52 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    preview_need_link_v1_needs_link_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkImportPreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkImportPreviewRead"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            429: {
+                headers: {
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
