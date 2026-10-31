@@ -9,7 +9,7 @@ export default function AuthLayout({
     <main className="min-h-dvh bg-page text-foreground">
       <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6">
         <header className="flex min-h-16 items-center">
-          <Logo />
+          <Logo markClassName="size-8 shrink-0 text-brand" />
         </header>
         <div className="grid flex-1 items-center gap-7 pb-6 pt-2 lg:grid-cols-[minmax(0,1fr)_minmax(400px,440px)] lg:gap-20">
           <section
