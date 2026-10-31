@@ -93,7 +93,8 @@ export function ProductBrandLogo({
   const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN?.trim();
   const brand = findProductBrand(name);
   const domain = brand?.domain ?? null;
-  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const [failedLogoDev, setFailedLogoDev] = useState<string | null>(null);
+  const [failedSimpleIcon, setFailedSimpleIcon] = useState<string | null>(null);
 
   if (!brand) {
     return (
@@ -108,18 +109,20 @@ export function ProductBrandLogo({
     );
   }
 
-  const src = token
-    ? new URL(`https://img.logo.dev/${domain}`)
-    : new URL(`https://cdn.simpleicons.org/${brand.name.toLocaleLowerCase().replace(/[^a-z0-9]/g, "")}`);
-  if (token) {
-    src.searchParams.set("token", token);
-    src.searchParams.set("size", String(size));
-    src.searchParams.set("format", "png");
-    src.searchParams.set("retina", "true");
-    src.searchParams.set("fallback", "404");
-  }
-  const imageUrl = src.toString();
-  if (failedImage === imageUrl) {
+  const simpleIconUrl = `https://cdn.simpleicons.org/${brand.name.toLocaleLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  const useLogoDev = Boolean(token && failedLogoDev !== domain);
+  const imageUrl = useLogoDev
+    ? (() => {
+        const logoUrl = new URL(`https://img.logo.dev/${domain}`);
+        logoUrl.searchParams.set("token", token as string);
+        logoUrl.searchParams.set("size", String(size));
+        logoUrl.searchParams.set("format", "png");
+        logoUrl.searchParams.set("retina", "true");
+        logoUrl.searchParams.set("fallback", "404");
+        return logoUrl.toString();
+      })()
+    : simpleIconUrl;
+  if (!useLogoDev && failedSimpleIcon === simpleIconUrl) {
     return (
       <span
         aria-label={`${brand.name} logo unavailable`}
@@ -146,7 +149,10 @@ export function ProductBrandLogo({
         className="h-full w-full object-contain"
         height={size * 2}
         loading="lazy"
-        onError={() => setFailedImage(imageUrl)}
+        onError={() => {
+          if (useLogoDev) setFailedLogoDev(domain);
+          else setFailedSimpleIcon(simpleIconUrl);
+        }}
         src={imageUrl}
         width={size * 2}
       />
