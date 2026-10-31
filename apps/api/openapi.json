@@ -4456,6 +4456,77 @@
         ],
         "title": "ImportRowError"
       },
+      "LinkImportPreviewRead": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "target_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Minor"
+          },
+          "price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Minor"
+          },
+          "price_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "target_minor",
+          "price_minor",
+          "price_currency"
+        ],
+        "title": "LinkImportPreviewRead"
+      },
+      "LinkImportPreviewRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2048,
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "LinkImportPreviewRequest"
+      },
       "NeedCreate": {
         "properties": {
           "id": {
@@ -5331,77 +5402,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "LinkImportPreviewRequest": {
-        "properties": {
-          "url": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 2048,
-            "title": "Url"
-          }
-        },
-        "type": "object",
-        "required": [
-          "url"
-        ],
-        "title": "LinkImportPreviewRequest"
-      },
-      "LinkImportPreviewRead": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "target_minor": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Minor"
-          },
-          "price_minor": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price Minor"
-          },
-          "price_currency": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price Currency"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "target_minor",
-          "price_minor",
-          "price_currency"
-        ],
-        "title": "LinkImportPreviewRead"
       }
     }
   }
