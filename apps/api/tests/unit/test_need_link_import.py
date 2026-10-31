@@ -35,3 +35,16 @@ def test_product_preview_does_not_duplicate_brand_in_title() -> None:
     suggestion = extract_link_import_suggestion(html)
 
     assert suggestion.name == "Apple iPhone 16 Pro"
+
+
+def test_product_preview_prefixes_brand_from_product_metadata() -> None:
+    html = b'''
+    <html><head>
+      <meta property="og:title" content="Galaxy S25 Ultra" />
+      <meta property="product:brand" content="Samsung" />
+    </head></html>
+    '''
+
+    suggestion = extract_link_import_suggestion(html)
+
+    assert suggestion.name == "Samsung Galaxy S25 Ultra"
