@@ -12,6 +12,12 @@ import unicodedata
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from html.parser import HTMLParser
+import asyncio
+import ipaddress
+import socket
+from urllib.parse import urljoin, urlsplit
+
+import httpx
 
 MAX_TITLE_LENGTH = 100
 MAX_ORIGINAL_PRICE = Decimal("1000000000")
@@ -211,14 +217,6 @@ def extract_link_import_suggestion(html: bytes) -> LinkImportSuggestion:
         currency = _currency(_first_meta(parser.meta, _CURRENCY_META_KEYS))
     return LinkImportSuggestion(name, price, currency)
 
-
-import asyncio
-import ipaddress
-import socket
-from urllib.parse import urljoin, urlsplit
-
-import httpx
-
 MAX_PAGE_BYTES = 1_000_000
 MAX_REDIRECTS = 3
 _ALLOWED_PORTS = {80, 443}
@@ -249,7 +247,10 @@ async def _validate_public_url(url: str) -> None:
     ):
         raise LinkImportFetchError("url_not_allowed")
 
-    host = parsed.hostname.rstrip(".").encode("idna").decode("ascii")
+    try:
+        host = parsed.hostname.rstrip(".").encode("idna").decode("ascii")
+    except UnicodeError:
+        raise LinkImportFetchError("invalid_url") from None
     if host.casefold() in {"localhost", "localhost.localdomain"}:
         raise LinkImportFetchError("url_not_allowed")
 
@@ -302,8 +303,13 @@ async def fetch_link_import_suggestion(url: str) -> LinkImportSuggestion:
                     if "text/html" not in content_type and "application/xhtml+xml" not in content_type:
                         raise LinkImportFetchError("not_a_product_page")
                     content_length = response.headers.get("content-length")
-                    if content_length and int(content_length) > MAX_PAGE_BYTES:
-                        raise LinkImportFetchError("page_too_large")
+                    if content_length:
+                        try:
+                            declared_size = int(content_length)
+                        except ValueError:
+                            raise LinkImportFetchError("link_unavailable") from None
+                        if declared_size > MAX_PAGE_BYTES:
+                            raise LinkImportFetchError("page_too_large")
                     chunks: list[bytes] = []
                     total = 0
                     async for chunk in response.aiter_bytes():
