@@ -100,7 +100,7 @@ struct LargentWidgetView: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text("SAVINGS PROGRESS").font(.system(size: 8, weight: .bold)).foregroundStyle(.white.opacity(0.7))
                     Text(data.savingsTargetMinor > 0
-                         ? "\(min(100, data.savingsAllocatedMinor * 100 / data.savingsTargetMinor))%" : "—")
+                         ? "\(min(100, Int(Double(data.savingsAllocatedMinor) / Double(data.savingsTargetMinor) * 100)))%" : "—")
                         .font(.headline.bold()).foregroundStyle(.mint)
                 }
             }
