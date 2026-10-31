@@ -469,8 +469,13 @@ function NeedFormEditor({
                 }}
               />
               <div className="flex shrink-0 flex-col gap-1">
-                <Button disabled sx={{ minHeight: 44 }} title="Link preview requires an API endpoint not yet in the contract.">
-                  Fetch details
+                <Button
+                  disabled={!isOnline || isFetchingLink}
+                  onClick={() => void fetchProductDetails()}
+                  sx={{ minHeight: 44 }}
+                  type="button"
+                >
+                  {isFetchingLink ? "Fetching…" : "Fetch details"}
                 </Button>
                 <Button
                   onClick={() => void pasteLink()}
@@ -486,7 +491,7 @@ function NeedFormEditor({
               Fetch product information from a supported public product page. Some marketplaces block automatic previews.
             </p>
             {linkMessage && (
-              <Alert aria-live="polite" severity="warning">
+              <Alert aria-live="polite" severity={linkMessageSeverity}>
                 {linkMessage}
               </Alert>
             )}
