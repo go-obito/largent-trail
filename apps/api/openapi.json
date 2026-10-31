@@ -2578,6 +2578,74 @@
           }
         }
       }
+    },
+    "/v1/needs/link-preview": {
+      "post": {
+        "summary": "Preview Need Link",
+        "description": "Fetch a bounded, best-effort product preview from a public web page.",
+        "operationId": "preview_need_link_v1_needs_link_preview_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkImportPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkImportPreviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed or link rejected",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The external product page could not be fetched",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2607,8 +2675,8 @@
           },
           "opening_balance_minor": {
             "type": "integer",
-            "maximum": 1000000000000.0,
-            "minimum": 0.0,
+            "maximum": 1000000000000,
+            "minimum": 0,
             "title": "Opening Balance Minor",
             "default": 0
           },
@@ -2625,8 +2693,8 @@
           },
           "position": {
             "type": "integer",
-            "maximum": 1000000.0,
-            "minimum": 0.0,
+            "maximum": 1000000,
+            "minimum": 0,
             "title": "Position",
             "default": 0
           }
@@ -2772,8 +2840,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000000000.0,
-                "minimum": 0.0
+                "maximum": 1000000000000,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -2808,8 +2876,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000.0,
-                "minimum": 0.0
+                "maximum": 1000000,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -2842,8 +2910,8 @@
           },
           "amount_minor": {
             "type": "integer",
-            "maximum": 1000000000000.0,
-            "minimum": 1.0,
+            "maximum": 1000000000000,
+            "minimum": 1,
             "title": "Amount Minor"
           }
         },
@@ -2971,8 +3039,8 @@
           },
           "limit_minor": {
             "type": "integer",
-            "maximum": 1000000000000.0,
-            "minimum": 1.0,
+            "maximum": 1000000000000,
+            "minimum": 1,
             "title": "Limit Minor"
           },
           "currency": {
@@ -3116,8 +3184,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000000000.0,
-                "minimum": 1.0
+                "maximum": 1000000000000,
+                "minimum": 1
               },
               {
                 "type": "null"
@@ -3185,8 +3253,8 @@
           },
           "position": {
             "type": "integer",
-            "maximum": 1000000.0,
-            "minimum": 0.0,
+            "maximum": 1000000,
+            "minimum": 0,
             "title": "Position",
             "default": 0
           }
@@ -3378,8 +3446,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000.0,
-                "minimum": 0.0
+                "maximum": 1000000,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -3806,7 +3874,7 @@
             "properties": {
               "date": {
                 "type": "integer",
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based index of the date column.",
                 "examples": [
                   0
@@ -3817,7 +3885,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Optional zero-based index of the description column.",
                 "examples": [
                   1,
@@ -3829,7 +3897,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based amount column index for signed mode.",
                 "examples": [
                   2,
@@ -3841,7 +3909,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based debit column index for debit_credit mode.",
                 "examples": [
                   2,
@@ -3853,7 +3921,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based credit column index for debit_credit mode.",
                 "examples": [
                   3,
@@ -3960,7 +4028,7 @@
             "properties": {
               "date": {
                 "type": "integer",
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based index of the date column.",
                 "examples": [
                   0
@@ -3971,7 +4039,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Optional zero-based index of the description column.",
                 "examples": [
                   1,
@@ -3983,7 +4051,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based amount column index for signed mode.",
                 "examples": [
                   2,
@@ -3995,7 +4063,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based debit column index for debit_credit mode.",
                 "examples": [
                   2,
@@ -4007,7 +4075,7 @@
                   "integer",
                   "null"
                 ],
-                "minimum": 0.0,
+                "minimum": 0,
                 "description": "Zero-based credit column index for debit_credit mode.",
                 "examples": [
                   3,
@@ -4321,8 +4389,8 @@
         "properties": {
           "row_index": {
             "type": "integer",
-            "maximum": 1000.0,
-            "minimum": 1.0,
+            "maximum": 1000,
+            "minimum": 1,
             "title": "Row Index"
           },
           "category_id": {
@@ -4364,8 +4432,8 @@
         "properties": {
           "row_index": {
             "type": "integer",
-            "maximum": 1000.0,
-            "minimum": 1.0,
+            "maximum": 1000,
+            "minimum": 1,
             "title": "Row Index"
           },
           "code": {
@@ -4404,8 +4472,8 @@
           },
           "target_minor": {
             "type": "integer",
-            "maximum": 1000000000000.0,
-            "minimum": 1.0,
+            "maximum": 1000000000000,
+            "minimum": 1,
             "title": "Target Minor"
           },
           "priority": {
@@ -4638,8 +4706,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000000000.0,
-                "minimum": 1.0
+                "maximum": 1000000000000,
+                "minimum": 1
               },
               {
                 "type": "null"
@@ -4884,8 +4952,8 @@
           },
           "amount_minor": {
             "type": "integer",
-            "maximum": 1000000000000.0,
-            "minimum": 1.0,
+            "maximum": 1000000000000,
+            "minimum": 1,
             "title": "Amount Minor"
           },
           "currency": {
@@ -5091,8 +5159,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 1000000000000.0,
-                "minimum": 1.0
+                "maximum": 1000000000000,
+                "minimum": 1
               },
               {
                 "type": "null"
@@ -5257,6 +5325,77 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "LinkImportPreviewRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2048,
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "LinkImportPreviewRequest"
+      },
+      "LinkImportPreviewRead": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "target_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Minor"
+          },
+          "price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Minor"
+          },
+          "price_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "target_minor",
+          "price_minor",
+          "price_currency"
+        ],
+        "title": "LinkImportPreviewRead"
       }
     }
   }
