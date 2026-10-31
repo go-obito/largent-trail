@@ -2581,12 +2581,15 @@
     },
     "/v1/needs/link-preview": {
       "post": {
+        "tags": [
+          "needs"
+        ],
         "summary": "Preview Need Link",
         "description": "Fetch a bounded, best-effort product preview from a public web page.",
         "operationId": "preview_need_link_v1_needs_link_preview_post",
         "parameters": [
           {
-            "name": "Authorization",
+            "name": "authorization",
             "in": "header",
             "required": false,
             "schema": {
@@ -2597,7 +2600,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -2623,12 +2627,11 @@
             }
           },
           "422": {
-            "description": "Validation failed or link rejected",
+            "description": "Validation Error",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2642,26 +2645,10 @@
                   "type": "integer"
                 }
               }
-            },
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
             }
           },
           "502": {
-            "description": "The external product page could not be fetched",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
+            "description": "external_page_unavailable"
           }
         }
       }
