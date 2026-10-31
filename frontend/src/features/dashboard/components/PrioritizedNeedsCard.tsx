@@ -1,4 +1,5 @@
 import Button from "@mui/material/Button";
+import { ProductBrandLogo } from "@/components/brand/ProductBrandLogo";
 import LinearProgress from "@mui/material/LinearProgress";
 import Link from "next/link";
 import { Check } from "lucide-react";
@@ -67,13 +68,16 @@ export function PrioritizedNeedsCard({
               {items.map((item) => (
                 <article key={item.id}>
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="break-words font-semibold text-foreground">
-                        {item.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-muted">
-                        {priorityLabels[item.priority]}
-                      </p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ProductBrandLogo name={item.name} size={40} />
+                      <div className="min-w-0">
+                        <h3 className="break-words font-semibold text-foreground">
+                          {item.name}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted">
+                          {priorityLabels[item.priority]}
+                        </p>
+                      </div>
                     </div>
                     <div className="shrink-0 text-right">
                       {item.is_complete && (
