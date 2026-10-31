@@ -12,7 +12,6 @@ struct LargentApp: App {
         WindowGroup {
             ContentView()
                 .environment(Clerk.shared)
-                .task { try? await Clerk.shared.load() }
         }
     }
 }
