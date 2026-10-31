@@ -164,7 +164,9 @@ function NeedFormEditor({
   const [isOnline, setIsOnline] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
-  const [linkMessageSeverity, setLinkMessageSeverity] = useState<"success" | "info" | "warning" | "error">("info");
+  const [linkMessageSeverity, setLinkMessageSeverity] = useState<
+    "success" | "info" | "warning" | "error"
+  >("info");
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const form = useForm<NeedFormValues>({
     resolver: zodResolver(needFormSchema),
@@ -189,7 +191,6 @@ function NeedFormEditor({
       window.removeEventListener("offline", update);
     };
   }, []);
-
 
   async function fetchProductDetails() {
     const url = form.getValues("source_url").trim();
