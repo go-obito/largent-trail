@@ -222,6 +222,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/needs/link-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        post: operations["preview_need_link_v1_needs_link_preview_post"];
+        get?: never;
+        put?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/needs/{need_id}": {
         parameters: {
             query?: never;
@@ -991,7 +1007,7 @@ export interface components {
          */
         NeedPriority: "high" | "medium" | "low";
         /** NeedRead */
-        NeedRead: {
+        LinkImportPreviewRead: {\n            name: string | null;\n            target_minor: number | null;\n            price_minor: number | null;\n            price_currency: string | null;\n        };\n        LinkImportPreviewRequest: {\n            url: string;\n        };\n        NeedRead: {
             /**
              * Id
              * Format: uuid
@@ -2162,6 +2178,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_need_link_v1_needs_link_preview_post: {
+        parameters: {
+            query?: never;
+            header?: { authorization?: string | null };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkImportPreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/json": components["schemas"]["LinkImportPreviewRead"];
+                };
+            };
+            422: {
+                headers: { [name: string]: unknown };
+                content: {
+                    "application/problem+json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
