@@ -27,6 +27,7 @@ _TITLE_SEPARATORS = (" | ", " — ", " - ", " :: ")
 _SITE_NAME_MARKERS = (".", "amazon", "jiji", "ebay", "walmart", "shop")
 _PRICE_META_KEYS = ("og:price:amount", "product:price:amount")
 _CURRENCY_META_KEYS = ("og:price:currency", "product:price:currency")
+_BRAND_META_KEYS = ("product:brand", "og:brand", "brand")
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,6 +185,13 @@ def _json_ld_suggestion(blocks: list[str]) -> LinkImportSuggestion:
             continue
         for product in _product_entries(decoded):
             name = _clean_title(product.get("name"))
+            raw_brand = product.get("brand")
+            if isinstance(raw_brand, dict):
+                raw_brand = raw_brand.get("name")
+            brand = _clean_title(raw_brand)
+            if name is not None and brand is not None:
+                if brand.casefold() not in name.casefold():
+                    name = _clean_title(f"{brand} {name}")
             price, currency = _offer_price(product)
             if name is not None or price is not None:
                 return LinkImportSuggestion(name, price, currency)
@@ -210,6 +218,10 @@ def extract_link_import_suggestion(html: bytes) -> LinkImportSuggestion:
     json_ld = _json_ld_suggestion(parser.json_ld_blocks)
     name = json_ld.name or _clean_title(parser.meta.get("og:title"))
     name = name or _clean_title("".join(parser.title_parts))
+    brand = _clean_title(_first_meta(parser.meta, _BRAND_META_KEYS))
+    if name is not None and brand is not None:
+        if not name.casefold().startswith(brand.casefold()):
+            name = _clean_title(f"{brand} {name}")
     price = json_ld.target_minor
     currency = json_ld.price_currency
     if price is None:

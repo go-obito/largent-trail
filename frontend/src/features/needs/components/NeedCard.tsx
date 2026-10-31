@@ -9,9 +9,9 @@ import {
   Check,
   Ellipsis,
   ExternalLink,
-  Target,
 } from "lucide-react";
 import { useState } from "react";
+import { ProductBrandLogo } from "@/components/brand/ProductBrandLogo";
 import type { components } from "@/lib/api/schema";
 import { formatGhs } from "@/lib/money";
 import {
@@ -53,9 +53,7 @@ export function NeedCard({
   return (
     <article className="card-surface flex min-h-[310px] flex-col p-5">
       <div className="flex items-start gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-selected-surface text-primary">
-          <Target aria-hidden="true" size={21} strokeWidth={2} />
-        </span>
+        <ProductBrandLogo name={need.name} size={44} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold text-foreground">{need.name}</h2>
           <span
