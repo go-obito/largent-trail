@@ -1007,7 +1007,16 @@ export interface components {
          */
         NeedPriority: "high" | "medium" | "low";
         /** NeedRead */
-        LinkImportPreviewRead: {\n            name: string | null;\n            target_minor: number | null;\n            price_minor: number | null;\n            price_currency: string | null;\n        };\n        LinkImportPreviewRequest: {\n            url: string;\n        };\n        NeedRead: {
+        LinkImportPreviewRead: {
+            name: string | null;
+            target_minor: number | null;
+            price_minor: number | null;
+            price_currency: string | null;
+        };
+        LinkImportPreviewRequest: {
+            url: string;
+        };
+        NeedRead: {
             /**
              * Id
              * Format: uuid
