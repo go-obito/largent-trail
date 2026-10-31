@@ -151,7 +151,11 @@ async def read_summary(user_id: CurrentUserId, session: TenantSession) -> NeedSu
 
 
 @router.post("/link-preview", response_model=LinkImportPreviewRead)
-async def preview_need_link(\n    payload: LinkImportPreviewRequest,\n    request: Request,\n    user_id: CurrentUserId,\n) -> LinkImportPreviewRead:
+async def preview_need_link(
+    payload: LinkImportPreviewRequest,
+    request: Request,
+    user_id: CurrentUserId,
+) -> LinkImportPreviewRead:
     """Fetch a bounded, best-effort product preview from a public web page."""
     redis = cast(Redis, request.app.state.redis)
     await _check_link_preview_rate(redis, user_id)
