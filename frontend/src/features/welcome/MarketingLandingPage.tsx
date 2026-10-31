@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   BarChart3,
   Heart,
-  ListChecks,
   Wallet,
   Utensils,
 } from "lucide-react";
