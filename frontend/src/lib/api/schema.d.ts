@@ -974,6 +974,15 @@ export interface components {
             has_header_guess: boolean;
         };
         /** NeedCreate */
+        LinkImportPreviewRead: {
+            name: string | null;
+            target_minor: number | null;
+            price_minor: number | null;
+            price_currency: string | null;
+        };
+        LinkImportPreviewRequest: {
+            url: string;
+        };
         NeedCreate: {
             /** Id */
             id?: string | null;
@@ -1007,15 +1016,6 @@ export interface components {
          */
         NeedPriority: "high" | "medium" | "low";
         /** NeedRead */
-        LinkImportPreviewRead: {
-            name: string | null;
-            target_minor: number | null;
-            price_minor: number | null;
-            price_currency: string | null;
-        };
-        LinkImportPreviewRequest: {
-            url: string;
-        };
         NeedRead: {
             /**
              * Id
