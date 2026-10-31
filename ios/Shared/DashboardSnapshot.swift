@@ -51,38 +51,20 @@ struct DashboardResponse: Decodable {
     let needs: Needs
     let recentTransactions: [Transaction]
 
-    enum CodingKeys: String, CodingKey {
-        case totalBalanceMinor = "total_balance_minor"
-        case week, dailyTarget = "daily_target", needs
-        case recentTransactions = "recent_transactions"
-    }
-
     struct Week: Decodable {
         let spentMinor: Int
         let budgetTotalMinor: Int?
-        enum CodingKeys: String, CodingKey {
-            case spentMinor = "spent_minor", budgetTotalMinor = "budget_total_minor"
-        }
     }
 
     struct DailyTarget: Decodable {
         let spentTodayMinor: Int
         let targetMinor: Int?
         let leftMinor: Int?
-        enum CodingKeys: String, CodingKey {
-            case spentTodayMinor = "spent_today_minor"
-            case targetMinor = "target_minor"
-            case leftMinor = "left_minor"
-        }
     }
 
     struct Needs: Decodable {
         let totalAllocatedMinor: Int
         let totalTargetMinor: Int
-        enum CodingKeys: String, CodingKey {
-            case totalAllocatedMinor = "total_allocated_minor"
-            case totalTargetMinor = "total_target_minor"
-        }
     }
 
     struct Transaction: Decodable {
@@ -92,12 +74,6 @@ struct DashboardResponse: Decodable {
         let categoryName: String?
         let note: String?
         let occurredOn: String
-        enum CodingKeys: String, CodingKey {
-            case id, kind, note
-            case amountMinor = "amount_minor"
-            case categoryName = "category_name"
-            case occurredOn = "occurred_on"
-        }
     }
 }
 
