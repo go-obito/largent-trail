@@ -2633,6 +2633,25 @@
               }
             }
           },
+          "429": {
+            "description": "rate_limited",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until another product preview request is allowed.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
           "502": {
             "description": "The external product page could not be fetched",
             "content": {
