@@ -18,6 +18,11 @@ enum SharedSnapshotStore {
         try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
     }
 
+    static func clear() {
+        guard let url = snapshotURL else { return }
+        try? FileManager.default.removeItem(at: url)
+    }
+
     static func load() -> DashboardSnapshot? {
         guard let url = snapshotURL, let data = try? Data(contentsOf: url) else { return nil }
         let decoder = JSONDecoder()
