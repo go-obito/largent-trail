@@ -15,6 +15,10 @@ struct ContentView: View {
                 if clerk.user == nil { signedOut } else { dashboard }
             }
             .navigationTitle("Largent")
+        .onOpenURL { url in
+            guard url.host == "callback" else { return }
+            Task { try? await clerk.handle(url) }
+        }
             .toolbar {
                 if clerk.user != nil {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -27,7 +31,13 @@ struct ContentView: View {
             }
         }
         .task(id: clerk.user?.id) {
-            if clerk.user != nil { await refresh() }
+            if clerk.user != nil {
+                await refresh()
+            } else {
+                SharedSnapshotStore.clear()
+                snapshot = nil
+                WidgetCenter.shared.reloadAllTimelines()
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, clerk.user != nil { Task { await refresh() } }
