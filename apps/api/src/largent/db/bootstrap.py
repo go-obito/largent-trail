@@ -93,20 +93,15 @@ async def bootstrap_database_roles() -> None:
             await _ensure_role(connection, _ROLE_MIGRATOR, migrator_url.password or "")
             await _ensure_role(connection, _ROLE_APP, app_url.password or "")
 
-            database_name = await connection.scalar(
-                text("SELECT quote_ident(current_database())")
-            )
+            database_name = await connection.scalar(text("SELECT quote_ident(current_database())"))
             if not isinstance(database_name, str):
                 raise RuntimeError("Could not identify the target PostgreSQL database")
 
             await connection.exec_driver_sql(
-                f"GRANT CONNECT ON DATABASE {database_name} "
-                f"TO {_ROLE_APP}, {_ROLE_MIGRATOR}"
+                f"GRANT CONNECT ON DATABASE {database_name} TO {_ROLE_APP}, {_ROLE_MIGRATOR}"
             )
             # Match infra/postgres/init.sql: the migration role owns the public schema.
-            await connection.exec_driver_sql(
-                f"ALTER SCHEMA public OWNER TO {_ROLE_MIGRATOR}"
-            )
+            await connection.exec_driver_sql(f"ALTER SCHEMA public OWNER TO {_ROLE_MIGRATOR}")
             await connection.exec_driver_sql("REVOKE CREATE ON SCHEMA public FROM PUBLIC")
             await connection.exec_driver_sql(
                 f"GRANT USAGE, CREATE ON SCHEMA public TO {_ROLE_MIGRATOR}"
