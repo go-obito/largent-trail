@@ -122,12 +122,12 @@ export function ProductBrandLogo({
   if (!brand) {
     return (
       <span
-        aria-label={brand ? `${brand.name} logo unavailable` : "Product brand"}
+        aria-label="Product brand"
         className="inline-flex shrink-0 items-center justify-center rounded-xl bg-selected-surface font-semibold text-primary"
         role="img"
         style={{ height: size, width: size, fontSize: size * 0.32 }}
       >
-        {initials(brand?.name ?? name)}
+        {initials(name)}
       </span>
     );
   }
