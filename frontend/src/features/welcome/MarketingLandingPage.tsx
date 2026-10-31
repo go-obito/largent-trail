@@ -91,7 +91,7 @@ function Footer() {
         </nav>
       </div>
       <div className="mx-auto max-w-7xl border-t border-on-hero/15 px-5 py-4 text-xs text-on-hero/45 lg:px-10">
-        © {new Date().getFullYear()} Largent. Made in Ghana.
+        © 2026 Largent. Made in Ghana.
       </div>
     </footer>
   );
