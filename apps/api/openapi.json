@@ -1689,6 +1689,80 @@
         }
       }
     },
+    "/v1/needs/link-preview": {
+      "post": {
+        "tags": [
+          "needs"
+        ],
+        "summary": "Preview Need Link",
+        "description": "Fetch a bounded, best-effort product preview from a public web page.",
+        "operationId": "preview_need_link_v1_needs_link_preview_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkImportPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkImportPreviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until another product preview request is allowed.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "external_page_unavailable"
+          }
+        }
+      }
+    },
     "/v1/needs/{need_id}": {
       "get": {
         "tags": [
@@ -2575,80 +2649,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/v1/needs/link-preview": {
-      "post": {
-        "tags": [
-          "needs"
-        ],
-        "summary": "Preview Need Link",
-        "description": "Fetch a bounded, best-effort product preview from a public web page.",
-        "operationId": "preview_need_link_v1_needs_link_preview_post",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LinkImportPreviewRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkImportPreviewRead"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "rate_limited",
-            "headers": {
-              "Retry-After": {
-                "description": "Seconds until another product preview request is allowed.",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            }
-          },
-          "502": {
-            "description": "external_page_unavailable"
           }
         }
       }
