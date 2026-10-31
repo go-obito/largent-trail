@@ -150,7 +150,22 @@ async def read_summary(user_id: CurrentUserId, session: TenantSession) -> NeedSu
     return NeedSummary.model_validate(summary, from_attributes=True)
 
 
-@router.post("/link-preview", response_model=LinkImportPreviewRead)
+@router.post(
+    "/link-preview",
+    response_model=LinkImportPreviewRead,
+    responses={
+        429: {
+            "description": "rate_limited",
+            "headers": {
+                "Retry-After": {
+                    "description": "Seconds until another product preview request is allowed.",
+                    "schema": {"type": "integer"},
+                }
+            },
+        },
+        502: {"description": "external_page_unavailable"},
+    },
+)
 async def preview_need_link(
     payload: LinkImportPreviewRequest,
     request: Request,
