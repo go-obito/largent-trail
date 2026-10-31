@@ -163,3 +163,18 @@ class NeedSummary(BaseModel):
 class AllocationResult(BaseModel):
     need: NeedRead
     summary: NeedSummary
+
+
+class LinkImportPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    url: Annotated[str, Field(min_length=8, max_length=2048)]
+
+
+class LinkImportPreviewRead(BaseModel):
+    """Product details extracted from an untrusted product page."""
+
+    name: str | None
+    target_minor: int | None
+    price_minor: int | None
+    price_currency: str | None
