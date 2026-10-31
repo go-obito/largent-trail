@@ -301,7 +301,11 @@ async def fetch_link_import_suggestion(url: str) -> LinkImportSuggestion:
                     if response.status_code >= 400:
                         raise LinkImportFetchError("link_unavailable")
                     content_type = response.headers.get("content-type", "").lower()
-                    if (\n                        "text/html" not in content_type\n                        and "application/xhtml+xml" not in content_type\n                    ):\n                        raise LinkImportFetchError("not_a_product_page")
+                    if (
+                        "text/html" not in content_type
+                        and "application/xhtml+xml" not in content_type
+                    ):
+                        raise LinkImportFetchError("not_a_product_page")
                     content_length = response.headers.get("content-length")
                     if content_length:
                         try:
