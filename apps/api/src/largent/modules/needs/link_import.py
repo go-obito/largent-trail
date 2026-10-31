@@ -184,6 +184,13 @@ def _json_ld_suggestion(blocks: list[str]) -> LinkImportSuggestion:
             continue
         for product in _product_entries(decoded):
             name = _clean_title(product.get("name"))
+            raw_brand = product.get("brand")
+            if isinstance(raw_brand, dict):
+                raw_brand = raw_brand.get("name")
+            brand = _clean_title(raw_brand)
+            if name is not None and brand is not None:
+                if not name.casefold().startswith(brand.casefold()):
+                    name = _clean_title(f"{brand} {name}")
             price, currency = _offer_price(product)
             if name is not None or price is not None:
                 return LinkImportSuggestion(name, price, currency)
