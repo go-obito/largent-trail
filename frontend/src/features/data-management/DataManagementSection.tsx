@@ -222,7 +222,7 @@ export function DataManagementSection() {
             </ul>
           </div>
 
-          <div className="rounded-xl bg-surface-container-low p-3">
+          <div className="rounded-xl bg-panel p-3">
             <p className="mb-2 text-sm font-medium text-foreground">Want a copy first?</p>
             <Button
               color="primary"
