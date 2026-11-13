@@ -42,7 +42,6 @@ export function DataManagementSection() {
       if (confirming === "all") {
         // The server reset has succeeded: clear in-memory data and navigate immediately.
         // Persistent browser storage is best-effort and must not block the reset flow.
-        queryClient.clear();
         try {
           // This tombstone prevents a failed IndexedDB deletion from restoring stale data.
           localStorage.setItem(`largent-query-cache-reset:${userId}`, "1");
@@ -50,6 +49,7 @@ export function DataManagementSection() {
         } catch (storageError) {
           console.error("Failed to mark or clear local state after reset.", storageError);
         }
+        queryClient.clear();
         void clearPersistedQueryCache(userId).catch((storageError: unknown) => {
           console.error("Failed to clear persisted query cache after reset.", storageError);
         });
