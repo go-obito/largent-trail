@@ -8,7 +8,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, Response
 from redis.asyncio import Redis
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from largent.core.clock import utc_now
@@ -68,20 +68,14 @@ async def reset_all_financial_data(
     for model in (Transaction, Budget, Need, Category, Account):
         await _soft_delete(session, model, user_id, now)
 
-    # Keep import-batch tombstones because soft-deleted transactions retain their FK.
-    # Redact the imported-file summary and suppress it from the user's import history.
+    # Detach transaction tombstones from import batches, then remove the tenant's
+    # import history. The composite FK uses MATCH SIMPLE, so NULL batch IDs are valid.
     await session.execute(
-        update(ImportBatch)
-        .where(ImportBatch.user_id == user_id, ImportBatch.undone_at.is_(None))
-        .values(
-            undone_at=now,
-            imported_count=0,
-            skipped_duplicate_count=0,
-            skipped_by_user_count=0,
-            error_count=0,
-            errors=[],
-        )
+        update(Transaction)
+        .where(Transaction.user_id == user_id, Transaction.import_batch_id.is_not(None))
+        .values(import_batch_id=None)
     )
+    await session.execute(delete(ImportBatch).where(ImportBatch.user_id == user_id))
 
     # Remove temporary statement contents before the endpoint completes.
     await _invalidate_import_previews(request.app.state.redis, user_id)
