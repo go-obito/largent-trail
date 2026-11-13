@@ -40,9 +40,17 @@ export function DataManagementSection() {
       if (!response.ok) throw new Error("We couldn't reset your financial data. Please try again.");
       setConfirming(null);
       if (confirming === "all") {
-        localStorage.removeItem(`largent-onboarding:${userId}`);
-        await clearPersistedQueryCache(userId);
+        // The server reset has succeeded: clear in-memory data and navigate immediately.
+        // Persistent browser storage is best-effort and must not block the reset flow.
         queryClient.clear();
+        try {
+          localStorage.removeItem(`largent-onboarding:${userId}`);
+        } catch (storageError) {
+          console.error("Failed to clear local onboarding state after reset.", storageError);
+        }
+        void clearPersistedQueryCache(userId).catch((storageError: unknown) => {
+          console.error("Failed to clear persisted query cache after reset.", storageError);
+        });
         router.replace("/onboarding");
       } else {
         await queryClient.invalidateQueries();
@@ -76,7 +84,7 @@ export function DataManagementSection() {
           <Trash2 aria-hidden="true" className="mt-0.5 shrink-0 text-status-error" size={19} />
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-foreground">Clear all financial data</h3>
-            <p className="mt-1 text-sm text-muted">Clear transactions, account balances, budgets, categories, accounts and priorities. Your login and profile stay intact.</p>
+            <p className="mt-1 text-sm text-muted">Clear active transactions, account balances, budgets, categories, accounts and priorities. Temporary statement previews and import summaries are cleared. Immutable savings-allocation audit history is retained. Your login and profile stay intact.</p>
             <Button className="mt-3" color="error" onClick={() => { setError(null); setConfirming("all"); }} sx={{ minHeight: 40 }} variant="outlined">Clear all financial data</Button>
           </div>
         </div>
@@ -92,7 +100,7 @@ export function DataManagementSection() {
           <p className="text-sm text-muted">
             {confirming === "activity"
               ? "All income and spending entries will be cleared and budget progress will return to zero. Your accounts, categories, budgets and priorities will remain untouched."
-              : "This will erase all transactions, account balances, budgets, categories, accounts and priorities, then return you to onboarding. Your login credentials and profile will remain intact. This cannot be undone."}
+              : "This clears active transactions, account balances, budgets, categories, accounts and priorities, then returns you to onboarding. Temporary statement previews and import summaries are cleared. Immutable savings-allocation audit history is retained. Your login credentials and profile remain intact. This cannot be undone."}
           </p>
         </DialogContent>
         <DialogActions>
