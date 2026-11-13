@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -23,7 +24,12 @@ CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
 TenantSession = Annotated[AsyncSession, Depends(get_tenant_session)]
 
 
-async def _soft_delete(session: AsyncSession, model: type, user_id: UUID, now) -> None:
+async def _soft_delete(
+    session: AsyncSession,
+    model: type[Transaction | Budget | Need | Category | Account],
+    user_id: UUID,
+    now: datetime,
+) -> None:
     """Soft-delete every active row owned by this user."""
     await session.execute(
         update(model)
