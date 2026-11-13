@@ -6,7 +6,8 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
+from redis.asyncio import Redis
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +16,7 @@ from largent.core.tenancy import get_current_user_id, get_tenant_session
 from largent.modules.accounts.models import Account
 from largent.modules.budgets.models import Budget
 from largent.modules.categories.models import Category
+from largent.modules.imports.models import ImportBatch
 from largent.modules.needs.models import Need
 from largent.modules.transactions.models import Transaction
 from largent.modules.users.models import User
@@ -39,6 +41,15 @@ async def _soft_delete(
     )
 
 
+async def _invalidate_import_previews(redis: Redis, user_id: UUID) -> None:
+    """Remove only this tenant's temporary uploaded-statement previews."""
+    keys = [
+        key async for key in redis.scan_iter(match=f"import:{user_id}:*", count=100)
+    ]
+    if keys:
+        await redis.delete(*keys)
+
+
 @router.delete("/activity", status_code=204)
 async def reset_activity(user_id: CurrentUserId, session: TenantSession) -> Response:
     """Clear ledger activity while preserving accounts, budgets, categories and priorities."""
@@ -47,12 +58,34 @@ async def reset_activity(user_id: CurrentUserId, session: TenantSession) -> Resp
 
 
 @router.delete("/all", status_code=204)
-async def reset_all_financial_data(user_id: CurrentUserId, session: TenantSession) -> Response:
-    """Clear all financial setup and activity without touching the authenticated user."""
+async def reset_all_financial_data(
+    user_id: CurrentUserId,
+    session: TenantSession,
+    request: Request,
+) -> Response:
+    """Reset active financial data and redact import metadata without touching the user."""
     now = utc_now()
-    # Preserve soft-delete tombstones for sync while hiding all financial setup and activity.
     for model in (Transaction, Budget, Need, Category, Account):
         await _soft_delete(session, model, user_id, now)
+
+    # Keep import-batch tombstones because soft-deleted transactions retain their FK.
+    # Redact the imported-file summary and suppress it from the user's import history.
+    await session.execute(
+        update(ImportBatch)
+        .where(ImportBatch.user_id == user_id, ImportBatch.undone_at.is_(None))
+        .values(
+            undone_at=now,
+            imported_count=0,
+            skipped_duplicate_count=0,
+            skipped_by_user_count=0,
+            error_count=0,
+            errors=[],
+        )
+    )
+
+    # Remove temporary statement contents before the endpoint completes.
+    await _invalidate_import_previews(request.app.state.redis, user_id)
+
     # Re-enable first-run defaults without changing the user profile or auth identity.
     await session.execute(update(User).where(User.id == user_id).values(defaults_seeded_at=None))
     return Response(status_code=204)
