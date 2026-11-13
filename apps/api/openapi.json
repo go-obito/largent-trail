@@ -2652,6 +2652,72 @@
           }
         }
       }
+    },
+    "/v1/data/activity": {
+      "delete": {
+        "tags": [
+          "data"
+        ],
+        "summary": "Reset Activity",
+        "operationId": "reset_activity_v1_data_activity_delete",
+        "description": "Clear transaction activity while preserving financial setup.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/v1/data/all": {
+      "delete": {
+        "tags": [
+          "data"
+        ],
+        "summary": "Reset All Financial Data",
+        "operationId": "reset_all_financial_data_v1_data_all_delete",
+        "description": "Clear active financial data and redact import history while preserving the user profile.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
     }
   },
   "components": {
