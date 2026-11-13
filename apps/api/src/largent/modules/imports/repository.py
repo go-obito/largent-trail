@@ -142,7 +142,10 @@ async def list_import_batches(
     cursor_created_at: datetime | None,
     cursor_id: UUID | None,
 ) -> list[ImportBatch]:
-    statement = select(ImportBatch).where(ImportBatch.user_id == user_id)
+    statement = select(ImportBatch).where(
+        ImportBatch.user_id == user_id,
+        ImportBatch.undone_at.is_(None),
+    )
     if cursor_created_at is not None and cursor_id is not None:
         statement = statement.where(
             tuple_(ImportBatch.created_at, ImportBatch.id) < tuple_(cursor_created_at, cursor_id)
