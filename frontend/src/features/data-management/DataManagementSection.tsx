@@ -190,7 +190,7 @@ export function DataManagementSection() {
         maxWidth="sm"
         onClose={() => !busy && setConfirming(null)}
         open={confirming === "all"}
-        PaperProps={{ sx: { borderRadius: "24px", p: { xs: 0.5, sm: 1 }, bgcolor: "background.paper" } }}
+        slotProps={{ paper: { sx: { borderRadius: "24px", p: { xs: 0.5, sm: 1 }, bgcolor: "background.paper" } } }}
       >
         <DialogTitle className="px-5 pt-5 sm:px-6 sm:pt-6" id="reset-all-title">
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-status-error/10 text-status-error">
@@ -248,7 +248,7 @@ export function DataManagementSection() {
               placeholder="RESET"
               size="small"
               value={confirmationText}
-              inputProps={{ "aria-describedby": "reset-confirmation-help", "aria-label": "Type RESET to confirm" }}
+              slotProps={{ htmlInput: { "aria-describedby": "reset-confirmation-help", "aria-label": "Type RESET to confirm" } }}
             />
             <p className="text-xs text-muted" id="reset-confirmation-help">This action cannot be undone. Immutable savings-allocation audit history is retained.</p>
           </div>
