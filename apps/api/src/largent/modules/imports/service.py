@@ -611,7 +611,7 @@ async def read_idempotent_result(
     session: AsyncSession, user_id: UUID, idempotency_key: str
 ) -> ImportCommitResponse | None:
     batch = await repository.get_import_batch_by_key(session, user_id, idempotency_key)
-    return None if batch is None else commit_response(batch)
+    return None if batch is None or batch.undone_at is not None else commit_response(batch)
 
 
 async def commit_import(
@@ -626,6 +626,13 @@ async def commit_import(
     await repository.lock_idempotency_key(session, user_id, idempotency_key)
     existing = await repository.get_import_batch_by_key(session, user_id, idempotency_key)
     if existing is not None:
+        if existing.undone_at is not None:
+            raise _problem(
+                409,
+                "Import history cleared",
+                "This idempotency key belongs to an import that has been cleared.",
+                "import_history_cleared",
+            )
         return commit_response(existing), False
 
     account = await accounts_service.read_account(session, user_id, payload.account_id)
