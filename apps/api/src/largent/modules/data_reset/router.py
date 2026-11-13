@@ -17,6 +17,7 @@ from largent.modules.budgets.models import Budget
 from largent.modules.categories.models import Category
 from largent.modules.needs.models import Need
 from largent.modules.transactions.models import Transaction
+from largent.modules.users.models import User
 
 router = APIRouter()
 
@@ -52,4 +53,6 @@ async def reset_all_financial_data(user_id: CurrentUserId, session: TenantSessio
     # Preserve soft-delete tombstones for sync while hiding all financial setup and activity.
     for model in (Transaction, Budget, Need, Category, Account):
         await _soft_delete(session, model, user_id, now)
+    # Re-enable first-run defaults without changing the user profile or auth identity.
+    await session.execute(update(User).where(User.id == user_id).values(defaults_seeded_at=None))
     return Response(status_code=204)
