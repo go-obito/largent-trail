@@ -21,6 +21,11 @@ import { useColorScheme } from "@mui/material/styles";
 import { theme } from "../styles/theme";
 
 const QUERY_CACHE_KEY = "largent-query-cache";
+const QUERY_CACHE_RESET_KEY = "largent-query-cache-reset";
+
+function resetMarkerKey(userId: string) {
+  return `${QUERY_CACHE_RESET_KEY}:${userId}`;
+}
 
 function createQueryClient() {
   return new QueryClient({
@@ -39,15 +44,27 @@ function storageKey(userId: string) {
 }
 
 export function clearPersistedQueryCache(userId: string) {
-  return del(storageKey(userId));
+  return del(storageKey(userId)).then(() => {
+    localStorage.removeItem(resetMarkerKey(userId));
+  });
 }
 
 function createPersister(userId: string): Persister {
   const key = storageKey(userId);
 
   return {
-    persistClient: async (client: PersistedClient) => set(key, client),
-    restoreClient: async () => get<PersistedClient | undefined>(key),
+    persistClient: async (client: PersistedClient) => {
+      if (localStorage.getItem(resetMarkerKey(userId)) === "1") return;
+      await set(key, client);
+    },
+    restoreClient: async () => {
+      if (localStorage.getItem(resetMarkerKey(userId)) === "1") {
+        await del(key);
+        localStorage.removeItem(resetMarkerKey(userId));
+        return undefined;
+      }
+      return get<PersistedClient | undefined>(key);
+    },
     removeClient: async () => del(key),
   };
 }
