@@ -18,6 +18,7 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useMe, useUpdateMe } from "@/features/me/api";
 import { onboardingCopy } from "@/features/onboarding/copy";
+import { DataManagementSection } from "@/features/data-management/DataManagementSection";
 
 type EditField = "name" | "timezone" | null;
 
@@ -214,6 +215,8 @@ export default function ProfilePage() {
           value="Manage your categories"
         />
       </section>
+
+      <DataManagementSection />
 
       <section aria-labelledby="profile-preferences-heading" className="card-surface px-5">
         <h2 className="pt-5 text-sm font-bold text-foreground" id="profile-preferences-heading">Preferences</h2>
